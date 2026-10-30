@@ -22,3 +22,6 @@ npm install
 cp .env.example .env
 npm run dev
 ```
+
+## Updating an existing database
+If you already ran `schema.sql` before, run `supabase/update-2.sql` once instead of running schema.sql again.

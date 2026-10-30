@@ -19,14 +19,16 @@ function check({ data, error }) {
 
 const toRoom = (r) => ({
   id: r.id, number: r.number, floor: r.floor, type: r.type, status: r.status,
-  assignedTo: r.assigned_to || null, note: r.note || ''
+  assignedTo: r.assigned_to || null, note: r.note || '',
+  cleanSeconds: r.clean_seconds || 0, cleanRunningSince: r.clean_running_since || null
 });
 const toIssue = (i) => ({
   id: i.id, roomId: i.room_id, roomNumber: i.room?.number || '', title: i.title,
   priority: i.priority, status: i.status, reportedBy: i.reported_by, createdAt: i.created_at
 });
 const toStaff = (s) => ({
-  id: s.id, fullName: s.full_name, username: s.username, role: s.role, active: s.active
+  id: s.id, fullName: s.full_name, username: s.username, role: s.role, active: s.active,
+  pin: s.pin_display || null
 });
 
 export function createLiveBackend(url, key) {
@@ -112,7 +114,7 @@ export function createLiveBackend(url, key) {
       rooms: {
         async list() {
           const rows = check(await supabase.from('rooms')
-            .select('id, number, floor, type, status, assigned_to, note').order('number'));
+            .select('id, number, floor, type, status, assigned_to, note, clean_seconds, clean_running_since').order('number'));
           return rows.map(toRoom);
         },
         async update(id, patch) {
@@ -121,6 +123,7 @@ export function createLiveBackend(url, key) {
           if ('assignedTo' in patch) dbPatch.assigned_to = patch.assignedTo;
           if ('note' in patch) dbPatch.note = patch.note;
           if ('type' in patch) dbPatch.type = patch.type;
+          if ('floor' in patch) dbPatch.floor = patch.floor;
           check(await supabase.from('rooms').update(dbPatch).eq('id', id));
         },
         async create(list) {
@@ -150,7 +153,7 @@ export function createLiveBackend(url, key) {
       staff: {
         async list() {
           const rows = check(await supabase.from('staff')
-            .select('id, full_name, username, role, active').order('full_name'));
+            .select('id, full_name, username, role, active, pin_display').order('full_name'));
           return rows.map(toStaff);
         },
         async create({ fullName, username, pin }) {
@@ -189,6 +192,9 @@ export function createLiveBackend(url, key) {
       },
       async setStatus(roomId, status) {
         check(await supabase.rpc('staff_set_room_status', { p_token: token(), p_room_id: roomId, p_status: status }));
+      },
+      async timer(roomId, action) {
+        check(await supabase.rpc('staff_clean_timer', { p_token: token(), p_room_id: roomId, p_action: action }));
       },
       async reportIssue(roomId, title, priority) {
         check(await supabase.rpc('staff_report_issue', { p_token: token(), p_room_id: roomId || null, p_title: title, p_priority: priority }));

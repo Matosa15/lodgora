@@ -4,6 +4,17 @@
 
 const KEY = 'lodgora-demo-v2';
 const SESSION_KEY = 'lodgora-demo-session';
+// Mesmas regras do relógio que a base de dados real aplica
+function applyStatus(r, status) {
+  const prev = r.status;
+  if (status === 'Cleaning' && prev !== 'Cleaning') { r.cleanSeconds = 0; r.cleanRunningSince = new Date().toISOString(); }
+  else if (prev === 'Cleaning' && status !== 'Cleaning') {
+    if (r.cleanRunningSince) r.cleanSeconds = (r.cleanSeconds || 0) + Math.floor((Date.now() - Date.parse(r.cleanRunningSince)) / 1000);
+    r.cleanRunningSince = null;
+  }
+  if (status === 'Dirty' && prev !== 'Dirty') { r.cleanSeconds = 0; r.cleanRunningSince = null; }
+  r.status = status;
+}
 const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2));
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
 
@@ -15,7 +26,7 @@ function seed() {
     { id: 's4', fullName: 'Rui Almeida', username: 'rui', role: 'housekeeper', active: true, pin: '1234' }
   ];
   const room = (number, floor, type, status, assignedTo = null, note = '') =>
-    ({ id: newId(), number, floor, type, status, assignedTo, note });
+    ({ id: newId(), number, floor, type, status, assignedTo, note, cleanSeconds: 0, cleanRunningSince: null });
   const rooms = [
     room('101', 1, 'Deluxe Queen', 'Ready'),
     room('102', 1, 'Standard Twin', 'Cleaning', 's2'),
@@ -32,6 +43,9 @@ function seed() {
     room('205', 2, 'Standard Double', 'Dirty')
   ];
   const byNumber = (n) => rooms.find((r) => r.number === n);
+  const running = byNumber('102'); running.cleanRunningSince = ago(8);
+  const done = byNumber('104'); done.cleanSeconds = 26 * 60;
+  byNumber('204').cleanSeconds = 31 * 60;
   const issues = [
     { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34) },
     { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120) },
@@ -107,13 +121,17 @@ export function createDemoBackend() {
         async list() { return state.rooms.map((r) => ({ ...r })); },
         async update(id, patch) {
           const r = state.rooms.find((x) => x.id === id);
-          if (r) Object.assign(r, patch);
+          if (r) {
+            const { status, ...rest } = patch;
+            Object.assign(r, rest);
+            if (status && status !== r.status) applyStatus(r, status);
+          }
           save();
         },
         async create(list) {
           list.forEach((n) => {
             if (!state.rooms.some((r) => r.number === n.number)) {
-              state.rooms.push({ id: newId(), number: n.number, floor: n.floor, type: n.type, status: n.status || 'Ready', assignedTo: null, note: '' });
+              state.rooms.push({ id: newId(), number: n.number, floor: n.floor, type: n.type, status: n.status || 'Ready', assignedTo: null, note: '', cleanSeconds: 0, cleanRunningSince: null });
             }
           });
           state.rooms.sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
@@ -134,7 +152,7 @@ export function createDemoBackend() {
         }
       },
       staff: {
-        async list() { return state.staff.map(({ pin, ...s }) => ({ ...s })); },
+        async list() { return state.staff.map((s) => ({ ...s })); },
         async create({ fullName, username, pin }) {
           const u = String(username).trim().toLowerCase();
           if (fullName.trim().length < 2) throw new Error('Enter the full name');
@@ -170,7 +188,7 @@ export function createDemoBackend() {
     staff: {
       async rooms() {
         const s = needMe();
-        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, number, floor, type, status, note }) => ({ id, number, floor, type, status, note }));
+        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, number, floor, type, status, note, cleanSeconds, cleanRunningSince }) => ({ id, number, floor, type, status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
       },
       async setStatus(roomId, status) {
         const s = needMe();
@@ -178,10 +196,24 @@ export function createDemoBackend() {
         if (!r) throw new Error('Room not found');
         const allowed = (r.status === 'Dirty' && status === 'Cleaning') || (r.status === 'Cleaning' && (status === 'Awaiting inspection' || status === 'Dirty'));
         if (!allowed) throw new Error('That change is not allowed');
-        r.status = status;
+        applyStatus(r, status);
+        const took = r.cleanSeconds < 60 ? 'under 1 min' : `${Math.round(r.cleanSeconds / 60)} min`;
         log(status === 'Cleaning' ? `Cleaning started in room ${r.number}`
-          : status === 'Awaiting inspection' ? `Room ${r.number} cleaned, waiting for inspection`
+          : status === 'Awaiting inspection' ? `Room ${r.number} cleaned in ${took}, waiting for inspection`
           : `Room ${r.number} put back on the cleaning list`, s.fullName);
+        save();
+      },
+      async timer(roomId, action) {
+        const s = needMe();
+        const r = state.rooms.find((x) => x.id === roomId && x.assignedTo === s.id);
+        if (!r) throw new Error('Room not found');
+        if (r.status !== 'Cleaning') throw new Error('That change is not allowed');
+        if (action === 'pause' && r.cleanRunningSince) {
+          r.cleanSeconds = (r.cleanSeconds || 0) + Math.floor((Date.now() - Date.parse(r.cleanRunningSince)) / 1000);
+          r.cleanRunningSince = null;
+        } else if (action === 'resume' && !r.cleanRunningSince) {
+          r.cleanRunningSince = new Date().toISOString();
+        }
         save();
       },
       async reportIssue(roomId, title, priority) {

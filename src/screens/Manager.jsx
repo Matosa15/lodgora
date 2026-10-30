@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react';
 import { backend } from '../lib/backend';
 import { useHotelData } from '../lib/useHotelData';
 import {
-  ISSUE_STATUS_LABEL, PRIORITY_STYLE, STATUSES, STATUS_STYLE, initials, statusLabel, timeAgo, timeOfDay
+  ISSUE_STATUS_LABEL, PRIORITY_STYLE, ROOM_TYPES, ROOM_TYPE_GROUPS, STATUSES, STATUS_STYLE, initials, minutesLabel, statusLabel, timeAgo, timeOfDay
 } from '../lib/constants';
 import {
-  CopyButton, EmptyState, Field, Icon, LogoMark, Modal, Panel, Spinner, StatusBadge,
+  CleanTimer, CopyButton, EmptyState, Field, Icon, LogoMark, Modal, Panel, Spinner, StatusBadge,
   btnGhost, btnPrimary, btnSmall, inputCls, useToast
 } from '../components/ui';
 
@@ -66,6 +66,7 @@ export default function Manager({ session, signOut }) {
     }, `Room ${room.number}: ${statusLabel(status)}`),
     approve: (room) => actions.setStatus(room, 'Ready', `Room ${room.number} approved`),
     sendBack: (room) => actions.setStatus(room, 'Dirty', `Room ${room.number} sent back for cleaning`),
+    setDetails: (room, patch) => act(() => m.rooms.update(room.id, patch), `Room ${room.number} updated`),
     assign: (room, staffId) => act(async () => {
       await m.rooms.update(room.id, { assignedTo: staffId || null });
       await m.activity.add(staffId ? `Room ${room.number} assigned to ${staffById[staffId].fullName}` : `Room ${room.number} unassigned`);
@@ -316,7 +317,7 @@ function Dashboard({ stats, rooms, allRooms, staff, issues, activity, search, st
                     <p className="text-xs text-slate-500 mt-0.5">
                       {it.kind === 'issue'
                         ? `${it.issue.roomNumber ? 'Room ' + it.issue.roomNumber + ' · ' : ''}${it.issue.reportedBy} · ${timeAgo(it.issue.createdAt)}`
-                        : `Cleaned by ${it.room.assignee || 'unknown'}`}
+                        : `Cleaned by ${it.room.assignee || 'unknown'}${it.room.cleanSeconds > 0 ? ' in ' + minutesLabel(it.room.cleanSeconds) : ''}`}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {it.kind === 'inspection'
@@ -410,7 +411,14 @@ function ReadinessPanel({ title, subtitle, rooms, search, statusFilter, setStatu
             <button key={r.id} onClick={() => openRoom(r.id)} aria-label={`Room ${r.number}, ${r.type}, ${statusLabel(r.status)}`}
               className={`text-left bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 border-t-[3px] ${STATUS_STYLE[r.status].bar} rounded-xl p-4 transition-colors flex flex-col gap-3 min-w-0`}>
               <div><span className="text-base font-bold text-[#172B4D]">Room {r.number}</span><p className="text-xs text-slate-500">{r.type}</p></div>
-              <StatusBadge status={r.status} />
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={r.status} />
+                {r.status === 'Cleaning' && (
+                  <span className={`inline-flex items-center gap-1 text-xs ${r.cleanRunningSince ? 'text-blue-700' : 'text-slate-500'}`}>
+                    <Icon name="timer" className="w-3.5 h-3.5" /><CleanTimer room={r} />{!r.cleanRunningSince && <span>paused</span>}
+                  </span>
+                )}
+              </div>
               <p className="pt-3 border-t border-slate-200/70 text-xs text-slate-500 truncate">{r.assignee ? `Staff: ${r.assignee}` : 'Not assigned'}</p>
             </button>
           ))}
@@ -431,7 +439,7 @@ function Inspections({ rooms, actions }) {
         <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
           {rooms.map((r) => (
             <li key={r.id} className="py-4 flex flex-wrap items-center gap-3">
-              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#172B4D]">Room {r.number}</p><p className="text-xs text-slate-500">{r.type} · cleaned by {r.assignee || 'unknown'}</p></div>
+              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#172B4D]">Room {r.number}</p><p className="text-xs text-slate-500">{r.type} · cleaned by {r.assignee || 'unknown'}{r.cleanSeconds > 0 && ` in ${minutesLabel(r.cleanSeconds)}`}</p></div>
               <div className="flex gap-2">
                 <button className={btnGhost} onClick={() => actions.sendBack(r)}>Send back</button>
                 <button className={btnPrimary} onClick={() => actions.approve(r)}><Icon name="check" className="w-4 h-4" />Approve</button>
@@ -499,29 +507,48 @@ function Team({ staff, rooms, hotel, setModal, actions }) {
         <CopyButton text={hotel.code} label="Copy code" />
       </section>
 
-      <Panel title="Housekeepers" subtitle={`${staff.length} person${staff.length === 1 ? '' : 's'}`}
+      <Panel title="Housekeepers" subtitle={`${staff.length} ${staff.length === 1 ? 'person' : 'people'}`}
         right={<button className={btnPrimary} onClick={() => setModal({ type: 'staff' })}><Icon name="plus" className="w-4 h-4" />Add housekeeper</button>}>
         {staff.length === 0 ? (
           <EmptyState icon="users" title="No housekeepers yet" text="Add each person and give them a 4-digit PIN." />
         ) : (
           <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
-            {staff.map((s) => (
-              <li key={s.id} className={`py-3 flex flex-wrap items-center gap-3 ${s.active ? '' : 'opacity-60'}`}>
-                <span className="w-10 h-10 rounded-full bg-[#172B4D] text-white text-sm font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
-                <div className="min-w-0 flex-1 basis-40">
-                  <p className="font-semibold text-sm truncate">{s.fullName}{!s.active && <span className="ml-2 text-xs font-medium text-slate-500">(inactive)</span>}</p>
-                  <p className="text-xs text-slate-500">Username <span className="font-mono">{s.username}</span> · {rooms.filter((r) => r.assignedTo === s.id).length} rooms assigned</p>
-                </div>
-                <div className="flex gap-2">
-                  <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => setModal({ type: 'pin', id: s.id })}>Change PIN</button>
-                  <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setActive(s, !s.active)}>{s.active ? 'Deactivate' : 'Activate'}</button>
-                </div>
-              </li>
-            ))}
+            {staff.map((s) => <StaffRow key={s.id} s={s} hotel={hotel} assigned={rooms.filter((r) => r.assignedTo === s.id).length} setModal={setModal} actions={actions} />)}
           </ul>
         )}
       </Panel>
     </>
+  );
+}
+
+function StaffRow({ s, hotel, assigned, setModal, actions }) {
+  const [show, setShow] = useState(false);
+  const details = `Lodgora sign in\nHotel code: ${hotel.code}\nUsername: ${s.username}\nPIN: ${s.pin}`;
+  return (
+    <li className={`py-3 flex flex-wrap items-center gap-3 ${s.active ? '' : 'opacity-60'}`}>
+      <span className="w-10 h-10 rounded-full bg-[#172B4D] text-white text-sm font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
+      <div className="min-w-0 flex-1 basis-40">
+        <p className="font-semibold text-sm truncate">{s.fullName}{!s.active && <span className="ml-2 text-xs font-medium text-slate-500">(inactive)</span>}</p>
+        <p className="text-xs text-slate-500">Username <span className="font-mono">{s.username}</span> · {assigned} {assigned === 1 ? 'room' : 'rooms'} assigned</p>
+        <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2">
+          {s.pin ? (
+            <>
+              <span>PIN</span>
+              <span className="font-mono font-semibold tracking-widest text-[#172B4D] text-sm" data-testid={`pin-${s.username}`}>{show ? s.pin : '••••'}</span>
+              <button type="button" onClick={() => setShow(!show)} aria-label={show ? `Hide PIN of ${s.fullName}` : `Show PIN of ${s.fullName}`}
+                className="inline-flex items-center gap-1 font-semibold text-[#0D7C77] hover:underline"><Icon name={show ? 'eyeoff' : 'eye'} className="w-3.5 h-3.5" />{show ? 'Hide' : 'Show'}</button>
+              <CopyButton text={details} label="Copy login details" />
+            </>
+          ) : (
+            <span>PIN was set before PINs could be shown. Use "Change PIN" once to see it here.</span>
+          )}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => setModal({ type: 'pin', id: s.id })}>Change PIN</button>
+        <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setActive(s, !s.active)}>{s.active ? 'Deactivate' : 'Activate'}</button>
+      </div>
+    </li>
   );
 }
 
@@ -546,6 +573,15 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
     <Modal title={`Room ${room.number}`} subtitle={`${room.type} · Floor ${room.floor}`} onClose={onClose}>
       <div className="p-5 space-y-5">
         <div className="flex items-center justify-between"><span className="text-xs text-slate-500">Current status</span><StatusBadge status={room.status} /></div>
+        {room.status === 'Cleaning' && (
+          <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">
+            <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5"><Icon name="timer" className="w-4 h-4" />{room.cleanRunningSince ? 'Cleaning time' : 'Paused at'}</span>
+            <CleanTimer room={room} className="text-lg text-[#172B4D]" />
+          </div>
+        )}
+        {room.status === 'Awaiting inspection' && room.cleanSeconds > 0 && (
+          <p className="text-xs text-slate-500">Cleaned in {minutesLabel(room.cleanSeconds)}.</p>
+        )}
         <div>
           <p className="text-xs font-semibold text-slate-600 mb-2" id="rm-status">Change status</p>
           <div className="flex flex-wrap gap-2" role="group" aria-labelledby="rm-status">
@@ -555,6 +591,7 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
             ))}
           </div>
         </div>
+        <RoomDetails room={room} onSave={(patch) => actions.setDetails(room, patch)} />
         <Field id="rm-staff" label="Assigned to">
           <select id="rm-staff" className={inputCls} value={room.assignedTo || ''} onChange={(e) => actions.assign(room, e.target.value)}>
             <option value="">Not assigned</option>
@@ -573,6 +610,42 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
         </div>
       </div>
     </Modal>
+  );
+}
+
+// Lista de tipos de quarto agrupada, com opção para escrever um tipo próprio
+function RoomTypeSelect({ id, value, onChange }) {
+  const [custom, setCustom] = useState(value !== '' && !ROOM_TYPES.includes(value));
+  return (
+    <div className="space-y-2">
+      <select id={id} className={inputCls} value={custom ? '__custom' : value}
+        onChange={(e) => {
+          if (e.target.value === '__custom') { setCustom(true); onChange(''); }
+          else { setCustom(false); onChange(e.target.value); }
+        }}>
+        {ROOM_TYPE_GROUPS.map((g) => (
+          <optgroup key={g.label} label={g.label}>{g.types.map((t) => <option key={t} value={t}>{t}</option>)}</optgroup>
+        ))}
+        <option value="__custom">Other (type your own)…</option>
+      </select>
+      {custom && <input aria-label="Custom room type" className={inputCls} value={value} placeholder="e.g. Loft with terrace" onChange={(e) => onChange(e.target.value)} />}
+    </div>
+  );
+}
+
+function RoomDetails({ room, onSave }) {
+  const [type, setType] = useState(room.type);
+  const [floor, setFloor] = useState(String(room.floor));
+  const floorNum = parseInt(floor, 10);
+  const changed = (type.trim() !== room.type || floorNum !== room.floor) && type.trim() && Number.isFinite(floorNum);
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_5rem] gap-3">
+        <Field id="rm-type" label="Room type"><RoomTypeSelect id="rm-type" value={type} onChange={setType} /></Field>
+        <Field id="rm-floor" label="Floor"><input id="rm-floor" inputMode="numeric" className={inputCls} value={floor} onChange={(e) => setFloor(e.target.value)} /></Field>
+      </div>
+      {changed && <button className={`${btnGhost} w-full`} onClick={() => onSave({ type: type.trim(), floor: floorNum })}>Save type and floor</button>}
+    </div>
   );
 }
 
@@ -604,8 +677,7 @@ function AddRoomsModal({ onClose, onSubmit }) {
           <Field id="ar-to" label="To room"><input id="ar-to" inputMode="numeric" className={inputCls} value={f.to} onChange={(e) => set('to', e.target.value)} /></Field>
         </div>
         <Field id="ar-type" label="Room type" error={error}>
-          <input id="ar-type" list="room-types" className={inputCls} value={f.type} onChange={(e) => set('type', e.target.value)} />
-          <datalist id="room-types"><option value="Standard Single" /><option value="Standard Double" /><option value="Standard Twin" /><option value="Superior Double" /><option value="Deluxe King" /><option value="Junior Suite" /><option value="Executive Suite" /></datalist>
+          <RoomTypeSelect id="ar-type" value={f.type} onChange={(v) => set('type', v)} />
         </Field>
         <p className="text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{total ? `This creates ${total} room${total > 1 ? 's' : ''}: ${from} to ${to}.` : 'Enter a valid range.'}</p>
         <div className="flex gap-3"><button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>Cancel</button><button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? 'Adding…' : 'Add rooms'}</button></div>
@@ -667,7 +739,7 @@ function StaffModal({ hotelCode, onClose, onCreate }) {
   if (created) {
     const text = `Lodgora sign in\nHotel code: ${hotelCode}\nUsername: ${created.username}\nPIN: ${created.pin}`;
     return (
-      <Modal title={`${created.fullName} was added`} subtitle="Give these details to your colleague. The PIN is not shown again." onClose={onClose}>
+      <Modal title={`${created.fullName} was added`} subtitle="Give these details to your colleague. You can see the PIN again any time in Team." onClose={onClose}>
         <div className="p-5 space-y-4">
           <dl className="bg-slate-50 rounded-xl border border-slate-200 p-4 grid grid-cols-[6rem_1fr] gap-y-2 text-sm">
             <dt className="text-slate-500">Hotel code</dt><dd className="font-mono font-semibold">{hotelCode}</dd>

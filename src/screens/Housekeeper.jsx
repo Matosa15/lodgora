@@ -1,8 +1,8 @@
 // Ecrã da camareira: pensado para o telemóvel. Lista dos seus quartos e um botão grande por quarto.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
-import { Field, Icon, LogoMark, Modal, Spinner, StatusBadge, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
-import { STATUS_STYLE } from '../lib/constants';
+import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
+import { STATUS_STYLE, minutesLabel } from '../lib/constants';
 
 const ORDER = { Cleaning: 0, Dirty: 1, 'Awaiting inspection': 2, Ready: 3, Occupied: 4, 'Out of service': 5 };
 
@@ -42,6 +42,13 @@ export default function Housekeeper({ session, signOut }) {
       toast(message);
       await load();
     } catch (e) { toast(e.message, 'error'); }
+    finally { setBusyId(null); }
+  };
+
+  const timer = async (room, action) => {
+    setBusyId(room.id);
+    try { await backend.staff.timer(room.id, action); await load(); }
+    catch (e) { toast(e.message, 'error'); }
     finally { setBusyId(null); }
   };
 
@@ -117,10 +124,27 @@ export default function Housekeeper({ session, signOut }) {
                     )}
                     {room.status === 'Cleaning' && (
                       <>
-                        <button className={`${btnPrimary} w-full py-4 text-base`} disabled={busyId === room.id}
-                          onClick={() => change(room, 'Awaiting inspection', `Room ${room.number} sent for inspection`)}>
-                          <Icon name="check" className="w-5 h-5" />Room is clean
-                        </button>
+                        <div className={`rounded-xl border p-4 text-center ${room.cleanRunningSince ? 'bg-blue-50 border-blue-100 text-[#172B4D]' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                          <p className="text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
+                            <Icon name="timer" className="w-3.5 h-3.5" />{room.cleanRunningSince ? 'Cleaning time' : 'Paused'}
+                          </p>
+                          <CleanTimer room={room} big className="block mt-1" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {room.cleanRunningSince ? (
+                            <button className={`${btnGhost} py-3.5`} disabled={busyId === room.id} onClick={() => timer(room, 'pause')}>
+                              <Icon name="pause" className="w-4 h-4" />Pause
+                            </button>
+                          ) : (
+                            <button className={`${btnGhost} py-3.5`} disabled={busyId === room.id} onClick={() => timer(room, 'resume')}>
+                              <Icon name="play" className="w-4 h-4" />Resume
+                            </button>
+                          )}
+                          <button className={`${btnPrimary} py-3.5`} disabled={busyId === room.id}
+                            onClick={() => change(room, 'Awaiting inspection', `Room ${room.number} finished and sent for inspection`)}>
+                            <Icon name="check" className="w-5 h-5" />Finish
+                          </button>
+                        </div>
                         <button className="w-full text-sm text-slate-500 py-1 hover:text-slate-800" disabled={busyId === room.id}
                           onClick={() => change(room, 'Dirty', `Room ${room.number} back on your list`)}>
                           I did not start this room
@@ -128,7 +152,9 @@ export default function Housekeeper({ session, signOut }) {
                       </>
                     )}
                     {room.status === 'Awaiting inspection' && (
-                      <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2.5 text-center font-medium">Waiting for the inspector</p>
+                      <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2.5 text-center font-medium">
+                        Waiting for the inspector{room.cleanSeconds > 0 && <span className="block text-xs font-normal">Cleaned in {minutesLabel(room.cleanSeconds)}</span>}
+                      </p>
                     )}
                     {room.status === 'Ready' && (
                       <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 text-center font-medium">Approved. Ready for guests</p>

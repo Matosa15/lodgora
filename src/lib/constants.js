@@ -31,3 +31,28 @@ export function timeAgo(iso) {
 }
 export const timeOfDay = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 export const initials = (name) => name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+
+/* ---------- Tipos de quarto ---------- */
+export const ROOM_TYPE_GROUPS = [
+  { label: 'Standard', types: ['Standard Single', 'Standard Double', 'Standard Twin', 'Standard Triple', 'Standard Quadruple'] },
+  { label: 'Superior and Deluxe', types: ['Superior Single', 'Superior Double', 'Superior Twin', 'Deluxe Double', 'Deluxe Twin', 'Deluxe Queen', 'Deluxe King'] },
+  { label: 'Family and groups', types: ['Family Room', 'Family Room (2 bedrooms)', 'Connecting Rooms', 'Dormitory Bed', 'Private Room (hostel)'] },
+  { label: 'Suites', types: ['Junior Suite', 'Suite', 'Executive Suite', 'Family Suite', 'Honeymoon Suite', 'Presidential Suite', 'Penthouse'] },
+  { label: 'Apartments and villas', types: ['Studio', 'Apartment (1 bedroom)', 'Apartment (2 bedrooms)', 'Bungalow', 'Villa', 'Cabin or Chalet'] },
+  { label: 'Accessibility and other', types: ['Accessible Room', 'Accessible Suite', 'Smoking Room', 'Pet-friendly Room', 'Sea View Room', 'Garden View Room'] }
+];
+export const ROOM_TYPES = ROOM_TYPE_GROUPS.flatMap((g) => g.types);
+
+/* ---------- Relógio de limpeza ---------- */
+// Segundos de limpeza até agora: o que já estava guardado + o troço em que o relógio está a correr
+export const cleanElapsed = (room, now = Date.now()) =>
+  (room.cleanSeconds || 0) +
+  (room.cleanRunningSince ? Math.max(0, Math.floor((now - Date.parse(room.cleanRunningSince)) / 1000)) : 0);
+
+export function clock(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const two = (n) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${two(m)}:${two(sec)}` : `${m}:${two(sec)}`;
+}
+export const minutesLabel = (s) => (s < 60 ? 'under 1 min' : `${Math.round(s / 60)} min`);
