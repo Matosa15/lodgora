@@ -5,8 +5,8 @@ export const SITE = {
   contactEmail: import.meta.env.VITE_CONTACT_EMAIL || '',
   pilotDays: 30,
   plans: [
-    { name: 'Small', rooms: 'Up to 20 rooms', price: 39 },
-    { name: 'Medium', rooms: '21 to 50 rooms', price: 69 },
-    { name: 'Large', rooms: '51 to 100 rooms', price: 119 }
+    { name: 'Small', rooms: 'Up to 20 rooms', max: 20, price: 39 },
+    { name: 'Medium', rooms: '21 to 50 rooms', max: 50, price: 69 },
+    { name: 'Large', rooms: '51 to 100 rooms', max: 100, price: 119 }
   ]
 };

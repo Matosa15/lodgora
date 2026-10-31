@@ -1,8 +1,9 @@
 // Página pública do Lodgora (endereço "/"). A aplicação fica em "/app".
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon, LogoMark } from '../components/ui';
 import { STATUS_STYLE, statusLabel } from '../lib/constants';
 import { SITE } from '../lib/site';
+import { Reveal, TryIt, StatsMock, PlanPicker } from './SiteDemo';
 
 const INK = '#172B4D';
 const BRASS = '#D9B26F';
@@ -76,59 +77,96 @@ const WHO = {
   Dirty: (n) => `A guest checked out of room ${n}. It needs cleaning.`
 };
 
+const AUTO_ORDER = ['202', '205', '208', '203', '207', '204', '202', '205'];
+const prefersReduced = () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 function Hero() {
   const [rooms, setRooms] = useState(START);
-  const [event, setEvent] = useState('');
+  const [feed, setFeed] = useState([]);
+  const [playing, setPlaying] = useState(() => !prefersReduced());
+  const roomsRef = useRef(START);
+  const idRef = useRef(0);
+  const stepRef = useRef(0);
   const ready = rooms.filter(([, s]) => s === 'Ready').length;
 
   const advance = (n) => {
-    const current = rooms.find(([num]) => num === n)[1];
+    const current = roomsRef.current.find(([num]) => num === n)[1];
     const next = NEXT[current];
-    setRooms(rooms.map(([num, s]) => (num === n ? [num, next] : [num, s])));
-    setEvent(WHO[next](n));
+    const updated = roomsRef.current.map(([num, s]) => (num === n ? [num, next] : [num, s]));
+    roomsRef.current = updated;
+    setRooms(updated);
+    setFeed((f) => [{ id: ++idRef.current, text: WHO[next](n) }, ...f].slice(0, 3));
   };
 
-  return (
-    <section className="mx-auto max-w-6xl px-5 pt-12 pb-16 sm:pt-16 sm:pb-20 grid lg:grid-cols-[1.02fr_1fr] gap-12 lg:gap-16 items-center" aria-labelledby="hero-title">
-      <div>
-        <h1 id="hero-title" className="font-display font-semibold text-[2.5rem] sm:text-5xl lg:text-[3.4rem] leading-[1.06] tracking-tight" style={{ color: INK }}>
-          Know which rooms are ready without picking up the phone.
-        </h1>
-        <p className="mt-6 text-lg leading-relaxed max-w-[34rem]">
-          Lodgora is a simple tool for hotel housekeeping and maintenance. Your team updates rooms from their phones, and you see
-          every room, every cleaning time and every problem as it happens.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a href={demoHref} className={btnPrimary}>Try the live demo</a>
-          {SITE.contactEmail && <a href={mailto('Lodgora demo request')} className={btnLight}>Request a demo</a>}
-        </div>
-        <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed.</p>
-      </div>
+  // Uma manhã de exemplo vai-se desenrolando sozinha, até alguém tocar numa placa ou carregar em Pause
+  useEffect(() => {
+    if (!playing) return undefined;
+    const t = setInterval(() => advance(AUTO_ORDER[stepRef.current++ % AUTO_ORDER.length]), 2400);
+    return () => clearInterval(t);
+  }, [playing]);
 
-      <div>
-        <div className="rounded-2xl p-5 sm:p-7" style={{ background: '#E3EAEF' }}>
-          <ul className="grid grid-cols-3 gap-3 sm:gap-4">
-            {rooms.map(([n, s]) => (
-              <li key={n}>
-                <button type="button" onClick={() => advance(n)}
-                  aria-label={`Room ${n}, ${statusLabel(s)}. Press to move it to the next step.`}
-                  className="relative w-full min-h-[7.25rem] rounded-[10px] px-3.5 pt-4 pb-3 text-left active:translate-y-px transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
-                  style={{ background: INK, boxShadow: 'inset 0 1px 0 rgba(255,255,255,.1), 0 8px 14px -8px rgba(23,43,77,.55)' }}>
-                  {['top-1.5 left-1.5', 'top-1.5 right-1.5', 'bottom-1.5 left-1.5', 'bottom-1.5 right-1.5'].map((pos) => (
-                    <span key={pos} aria-hidden="true" className={`absolute ${pos} w-1 h-1 rounded-full bg-white/20`} />
-                  ))}
-                  <span className="plate-num block text-[2rem] sm:text-[2.5rem] leading-none" style={{ color: BRASS }}>{n}</span>
-                  <span className="mt-3 flex items-start gap-2 text-[13px] leading-tight text-white/90">
-                    <span className={`mt-[3px] w-2 h-2 rounded-full flex-none ${STATUS_STYLE[s].dot}`} aria-hidden="true" />{statusLabel(s)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+  const tap = (n) => { setPlaying(false); advance(n); };
+
+  return (
+    <section className="relative overflow-hidden" aria-labelledby="hero-title">
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(60rem 28rem at 85% -5%, #DFF1F0 0%, rgba(223,241,240,0) 60%), radial-gradient(40rem 22rem at -5% 100%, #F3EBDD 0%, rgba(243,235,221,0) 60%)' }} />
+      <div className="relative mx-auto max-w-6xl px-5 pt-12 pb-16 sm:pt-16 sm:pb-20 grid lg:grid-cols-[1.02fr_1fr] gap-12 lg:gap-16 items-center">
+        <div>
+          <p className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
+            <span className="relative flex w-2 h-2"><span className="absolute inset-0 rounded-full bg-emerald-500 pulse-ring" /><span className="relative w-2 h-2 rounded-full bg-emerald-500" /></span>
+            Live view of every room
+          </p>
+          <h1 id="hero-title" className="mt-5 font-display font-semibold text-[2.5rem] sm:text-5xl lg:text-[3.4rem] leading-[1.06] tracking-tight" style={{ color: INK }}>
+            Know which rooms are ready without picking up the phone.
+          </h1>
+          <p className="mt-6 text-lg leading-relaxed max-w-[34rem]">
+            Lodgora is a simple tool for hotel housekeeping and maintenance. Your team updates rooms from their phones, and you see
+            every room, every cleaning time and every problem as it happens.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href={demoHref} className={btnPrimary}>Try the live demo</a>
+            <a href="#try" className={btnLight}>Play with it below</a>
+            {SITE.contactEmail && <a href={mailto('Lodgora demo request')} className={btnLight}>Request a demo</a>}
+          </div>
+          <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed.</p>
         </div>
-        <div className="mt-4 min-h-[3.5rem]" aria-live="polite">
-          <p className="font-display text-2xl font-semibold" style={{ color: INK }}>{ready} of {rooms.length} rooms are ready</p>
-          <p className="text-sm text-slate-500 mt-1">{event || 'Tap a room to move it to the next step, like your team would.'}</p>
+
+        <div>
+          <div className="rounded-2xl p-5 sm:p-7" style={{ background: '#E3EAEF', boxShadow: '0 30px 50px -34px rgba(23,43,77,.55)' }}>
+            <ul className="grid grid-cols-3 gap-3 sm:gap-4">
+              {rooms.map(([n, s]) => (
+                <li key={n}>
+                  <button type="button" onClick={() => tap(n)}
+                    aria-label={`Room ${n}, ${statusLabel(s)}. Press to move it to the next step.`}
+                    className="relative w-full min-h-[7.25rem] rounded-[10px] px-3.5 pt-4 pb-3 text-left active:translate-y-px hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
+                    style={{ background: INK, boxShadow: 'inset 0 1px 0 rgba(255,255,255,.1), 0 8px 14px -8px rgba(23,43,77,.55)' }}>
+                    {['top-1.5 left-1.5', 'top-1.5 right-1.5', 'bottom-1.5 left-1.5', 'bottom-1.5 right-1.5'].map((pos) => (
+                      <span key={pos} aria-hidden="true" className={`absolute ${pos} w-1 h-1 rounded-full bg-white/20`} />
+                    ))}
+                    <span className="plate-num block text-[2rem] sm:text-[2.5rem] leading-none" style={{ color: BRASS }}>{n}</span>
+                    <span className="mt-3 flex items-start gap-2 text-[13px] leading-tight text-white/90">
+                      <span key={s} className={`mt-[3px] w-2 h-2 rounded-full flex-none dot-pop ${STATUS_STYLE[s].dot}`} aria-hidden="true" />{statusLabel(s)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="mt-5">
+            <div className="flex items-end justify-between gap-4">
+              <p className="font-display text-2xl font-semibold" style={{ color: INK }} aria-live="polite">{ready} of {rooms.length} rooms are ready</p>
+              <button type="button" onClick={() => setPlaying((p) => !p)} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5 flex-none">
+                <Icon name={playing ? 'pause' : 'play'} className="w-4 h-4" />{playing ? 'Pause the example' : 'Play a sample morning'}
+              </button>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true"><div className="h-full rounded-r-[4px] bg-[#0D7C77] transition-[width] duration-500" style={{ width: `${(ready / rooms.length) * 100}%` }} /></div>
+            <ul className="mt-3 min-h-[4.75rem] space-y-1.5" aria-label="What just happened">
+              {feed.length === 0 && <li className="text-sm text-slate-500">Tap a room to move it to the next step, like your team would.</li>}
+              {feed.map((f) => (
+                <li key={f.id} className="feed-in flex gap-2 text-sm text-slate-600"><span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#19A7A1] flex-none" />{f.text}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>
@@ -149,7 +187,7 @@ function Day() {
         <h2 id="how-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight max-w-xl" style={{ color: INK }}>How a day works with Lodgora</h2>
         <ol className="mt-10 grid md:grid-cols-3 gap-x-10 gap-y-8">
           {steps.map(([title, text], i) => (
-            <li key={title} className="flex gap-4">
+            <li key={title} className="flex gap-4 group/step">
               <span className="plate-num text-5xl leading-none flex-none w-9" style={{ color: '#0D7C77' }} aria-hidden="true">{i + 1}</span>
               <div>
                 <h3 className="font-display font-semibold text-xl leading-snug" style={{ color: INK }}>{title}</h3>
@@ -167,54 +205,29 @@ function Day() {
 
 function ForHousekeepers() {
   return (
-    <section className="mx-auto max-w-6xl px-5 py-16 sm:py-24 grid md:grid-cols-2 gap-12 md:gap-20 items-center" aria-labelledby="hk-title">
-      <div className="order-2 md:order-1 flex justify-center">
-        <div className="w-[17.5rem] rounded-[2.2rem] p-2.5" style={{ background: INK }} role="img"
-          aria-label="Example of the housekeeper screen on a phone: room 214 is being cleaned, the timer shows 12 minutes 34 seconds, with Pause and Finish buttons.">
-          <div className="rounded-[1.7rem] bg-[#F5F7FA] overflow-hidden">
-            <div className="bg-white px-4 py-3 flex items-center gap-2.5 border-b border-slate-200">
-              <LogoMark className="w-7 h-7" />
-              <div className="leading-tight"><p className="text-xs font-bold" style={{ color: INK }}>Ana Silva</p><p className="text-[11px] text-slate-500">Your hotel</p></div>
-            </div>
-            <div className="p-3 space-y-3">
-              <div className="rounded-xl bg-white border border-slate-200 border-t-[3px] border-t-blue-500 p-3.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div><p className="font-display text-2xl font-bold leading-none" style={{ color: INK }}>Room 214</p><p className="text-xs text-slate-500 mt-1">Double · Floor 2</p></div>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-full border bg-blue-50 text-blue-700 border-blue-200"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" />Cleaning</span>
-                </div>
-                <div className="mt-3 rounded-lg bg-blue-50 border border-blue-100 py-3 text-center">
-                  <p className="text-[11px] font-semibold text-slate-500">Cleaning time</p>
-                  <p className="font-display text-4xl font-bold tabular-nums" style={{ color: INK }}>12:34</p>
-                </div>
-                <div className="mt-2.5 grid grid-cols-2 gap-2 text-sm font-semibold">
-                  <span className="rounded-lg border border-slate-200 bg-white py-2.5 text-center text-slate-700">Pause</span>
-                  <span className="rounded-lg bg-[#0D7C77] py-2.5 text-center text-white">Finish</span>
-                </div>
-              </div>
-              <div className="rounded-xl bg-white border border-slate-200 border-t-[3px] border-t-orange-400 p-3.5">
-                <p className="font-display text-xl font-bold leading-none" style={{ color: INK }}>Room 216</p>
-                <p className="text-xs text-slate-500 mt-1">Needs cleaning</p>
-              </div>
-            </div>
+    <section id="try" className="mx-auto max-w-6xl px-5 py-16 sm:py-24 scroll-mt-16" aria-labelledby="hk-title">
+      <Reveal>
+        <div className="grid md:grid-cols-2 gap-8 md:gap-20 items-end">
+          <div>
+            <p className="text-sm font-semibold text-[#0D7C77]">Try it yourself</p>
+            <h2 id="hk-title" className="mt-2 font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>One screen for the housekeeper, one for you</h2>
+            <p className="mt-5 leading-relaxed max-w-md">
+              The housekeeper sees only their rooms and common areas, with one big button for what to do next. A timer starts when they press Start.
+              They can pause it for a break and press Finish when they are done. You see it on your screen straight away.
+            </p>
           </div>
+          <ul className="space-y-3 max-w-md">
+            {[
+              'Works in the phone browser. Nothing to install.',
+              'Sign in with a 4-digit PIN. You can see and change every PIN.',
+              'Report a broken lamp or a leaking tap from the same screen.'
+            ].map((t) => (
+              <li key={t} className="flex gap-3"><Icon name="check" className="w-5 h-5 flex-none mt-0.5 text-[#0D7C77]" /><span>{t}</span></li>
+            ))}
+          </ul>
         </div>
-      </div>
-      <div className="order-1 md:order-2">
-        <h2 id="hk-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>One screen for each housekeeper</h2>
-        <p className="mt-5 leading-relaxed max-w-md">
-          Each person sees only their rooms and common areas, with one big button for what to do next. A timer starts when they press Start cleaning.
-          They can pause it for a break and press Finish when they are done.
-        </p>
-        <ul className="mt-6 space-y-3 max-w-md">
-          {[
-            'Works in the phone browser. Nothing to install.',
-            'Sign in with a 4-digit PIN. You can see and change every PIN.',
-            'Report a broken lamp or a leaking tap from the same screen.'
-          ].map((t) => (
-            <li key={t} className="flex gap-3"><Icon name="check" className="w-5 h-5 flex-none mt-0.5 text-[#0D7C77]" /><span>{t}</span></li>
-          ))}
-        </ul>
-      </div>
+      </Reveal>
+      <Reveal className="mt-12" delay={100}><TryIt /></Reveal>
     </section>
   );
 }
@@ -222,12 +235,10 @@ function ForHousekeepers() {
 /* ---------------- Para gerentes: estatísticas ---------------- */
 
 function ForManagers() {
-  const days = [9, 12, 8, 11, 10, 7, 12];
-  const names = [['Ana', 94], ['Maria', 88], ['Sofia', 90]];
   return (
     <section className="bg-[#F3F6F8] border-y border-slate-200" aria-labelledby="mg-title">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:py-24 grid md:grid-cols-2 gap-12 md:gap-20 items-center">
-        <div>
+        <Reveal>
           <h2 id="mg-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>See how long cleaning really takes</h2>
           <p className="mt-5 leading-relaxed max-w-md">
             Lodgora keeps a record of every finished cleaning. You see the average time for each room type and for each person, how many rooms you
@@ -242,27 +253,8 @@ function ForManagers() {
               <li key={t} className="flex gap-3"><Icon name="check" className="w-5 h-5 flex-none mt-0.5 text-[#0D7C77]" /><span>{t}</span></li>
             ))}
           </ul>
-        </div>
-
-        <figure>
-          <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6" role="img"
-            aria-label="Example of the statistics page: cleanings finished per day as bars, and the share of rooms approved first time for three housekeepers.">
-            <p className="text-sm font-semibold" style={{ color: INK }}>Cleanings finished per day</p>
-            <div className="mt-4 flex items-end gap-2 h-32 border-b border-slate-200">
-              {days.map((n, i) => <div key={i} className="flex-1 flex justify-center items-end h-full"><div className="w-full max-w-[24px] rounded-t-[4px] bg-[#0D7C77]" style={{ height: `${(n / 12) * 100}%` }} /></div>)}
-            </div>
-            <p className="mt-6 text-sm font-semibold" style={{ color: INK }}>Approved first time</p>
-            <ul className="mt-3 space-y-3">
-              {names.map(([name, pct]) => (
-                <li key={name}>
-                  <div className="flex justify-between text-sm"><span>{name}</span><span className="font-semibold tabular-nums" style={{ color: INK }}>{pct}%</span></div>
-                  <div className="h-2.5 bg-slate-100 rounded-full mt-1 overflow-hidden"><div className="h-full rounded-r-[4px] bg-[#0D7C77]" style={{ width: `${pct}%` }} /></div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <figcaption className="mt-2 text-xs text-slate-500">Example data, not from a real hotel.</figcaption>
-        </figure>
+        </Reveal>
+        <Reveal delay={120}><StatsMock /></Reveal>
       </div>
     </section>
   );
@@ -282,12 +274,16 @@ function Everything() {
   return (
     <section id="features" className="mx-auto max-w-6xl px-5 py-16 sm:py-24" aria-labelledby="ft-title">
       <h2 id="ft-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight max-w-xl" style={{ color: INK }}>Everything your housekeeping team needs, and nothing else</h2>
-      <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-9">
-        {items.map(([icon, title, text]) => (
+      <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {items.map(([icon, title, text], i) => (
           <li key={title}>
-            <Icon name={icon} className="w-6 h-6 text-[#0D7C77]" />
-            <h3 className="mt-3 font-display font-semibold text-lg" style={{ color: INK }}>{title}</h3>
-            <p className="mt-1.5 leading-relaxed">{text}</p>
+            <Reveal delay={(i % 3) * 90} className="h-full">
+              <div className="h-full rounded-xl border border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-[#19A7A1] hover:shadow-[0_18px_30px_-22px_rgba(23,43,77,.5)]">
+                <span className="w-10 h-10 rounded-lg bg-[#E4F3F2] flex items-center justify-center"><Icon name={icon} className="w-5 h-5 text-[#0D7C77]" /></span>
+                <h3 className="mt-4 font-display font-semibold text-lg" style={{ color: INK }}>{title}</h3>
+                <p className="mt-1.5 leading-relaxed">{text}</p>
+              </div>
+            </Reveal>
           </li>
         ))}
       </ul>
@@ -309,17 +305,7 @@ function Pricing() {
           </p>
           <p className="mt-4 text-sm text-slate-500">Prices are per month and exclude VAT. Have more than 100 rooms? Get in touch.</p>
         </div>
-        <ul className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-200">
-          {SITE.plans.map((p) => (
-            <li key={p.name} className="flex items-center justify-between gap-4 px-6 py-6">
-              <div>
-                <p className="font-display font-semibold text-xl" style={{ color: INK }}>{p.name}</p>
-                <p className="text-sm text-slate-500 mt-0.5">{p.rooms}</p>
-              </div>
-              <p className="text-right"><span className="font-display font-bold text-4xl tabular-nums" style={{ color: INK }}>{p.price} €</span><span className="text-sm text-slate-500"> per month</span></p>
-            </li>
-          ))}
-        </ul>
+        <PlanPicker />
       </div>
     </section>
   );

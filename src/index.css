@@ -11,3 +11,15 @@ body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
 /* Números das placas de porta e títulos da página pública */
 .font-display { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; }
 .plate-num { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; font-weight: 700; font-stretch: 75%; letter-spacing: 0.02em; }
+
+/* Animações da página pública (desligadas por prefers-reduced-motion acima) */
+@keyframes feed-in { from { opacity: 0; transform: translateY(-6px); } }
+.feed-in { animation: feed-in .35s ease-out; }
+@keyframes dot-pop { 0% { transform: scale(.4); } 60% { transform: scale(1.6); } 100% { transform: scale(1); } }
+.dot-pop { animation: dot-pop .45s ease-out; }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59,130,246,.45); } 100% { box-shadow: 0 0 0 10px rgba(59,130,246,0); } }
+.pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+
+/* Botão que chama a atenção na demonstração da página pública */
+@keyframes pulse-teal { 0% { box-shadow: 0 0 0 0 rgba(13,124,119,.55); } 100% { box-shadow: 0 0 0 11px rgba(13,124,119,0); } }
+.pulse-teal { animation: pulse-teal 1.5s ease-out infinite; }
