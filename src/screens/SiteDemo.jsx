@@ -144,6 +144,7 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
   );
 }
 
+const ACCENT = { todo: '#F97316', cleaning: '#3B82F6', review: '#F59E0B', ready: '#10B981' };
 const DOT = { todo: 'bg-orange-500', cleaning: 'bg-blue-500', review: 'bg-amber-500', ready: 'bg-emerald-500' };
 const WORD = { todo: 'Dirty', cleaning: 'Cleaning', review: 'Awaiting inspection', ready: 'Ready' };
 
@@ -161,9 +162,9 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
       <div className="px-5 pt-4">
         <ul className="grid grid-cols-4 gap-2" aria-label="Room status">
           {rooms.map((r) => (
-            <li key={r.n} className="rounded-lg px-2.5 py-2" style={{ background: INK }}>
-              <p className="plate-num text-xl leading-none text-[#D9B26F]">{r.n}</p>
-              <p className="mt-1.5 flex items-center gap-1.5 text-[10px] leading-tight text-white/85">
+            <li key={r.n} className="rounded-lg px-2.5 pt-2 pb-2.5 bg-white border border-slate-200 transition-shadow" style={{ boxShadow: `inset 0 -3px 0 ${ACCENT[r.state]}` }}>
+              <p className="plate-num text-xl leading-none" style={{ color: INK }}>{r.n}</p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[10px] leading-tight text-slate-600">
                 <span className={`w-1.5 h-1.5 rounded-full flex-none transition-colors ${DOT[r.state]}`} />{WORD[r.state]}
               </p>
             </li>

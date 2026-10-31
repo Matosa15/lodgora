@@ -343,7 +343,7 @@ function Faq() {
 function Closing() {
   return (
     <section className="relative overflow-hidden bg-[#E4F3F2] border-y border-[#CBE6E4]" aria-labelledby="cl-title">
-      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:py-24 grid lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
+      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:py-24">
         <div>
           <h2 id="cl-title" className="font-display font-semibold text-3xl sm:text-5xl tracking-tight max-w-xl leading-[1.08]" style={{ color: INK }}>Imagine opening one screen and seeing every room ready.</h2>
           <p className="mt-5 max-w-lg leading-relaxed">Open the demo and try it as a manager and as a housekeeper. It takes two minutes, with no account.</p>
@@ -357,20 +357,6 @@ function Closing() {
             ))}
           </ul>
         </div>
-        <Reveal delay={120}>
-          <div className="rounded-2xl bg-white border border-[#CBE6E4] p-5 sm:p-6 shadow-[0_24px_44px_-30px_rgba(23,43,77,.45)]" aria-hidden="true">
-            <ul className="grid grid-cols-5 gap-2.5">
-              {Array.from({ length: 10 }, (_, i) => 301 + i).map((n) => (
-                <li key={n} className="rounded-lg px-1 py-2.5 text-center bg-[#F3F9F8]" style={{ boxShadow: 'inset 0 -3px 0 #10B981' }}>
-                  <span className="plate-num block text-xl leading-none" style={{ color: INK }}>{n}</span>
-                  <span className="mt-1.5 block text-[10px] text-slate-500">Ready</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 font-display text-2xl font-semibold" style={{ color: INK }}>10 of 10 rooms are ready</p>
-            <p className="text-sm text-slate-500 mt-1">Check-in is at 3 pm. Nobody called the front desk.</p>
-          </div>
-        </Reveal>
       </div>
     </section>
   );
