@@ -2,6 +2,10 @@
 
 Housekeeping and maintenance for hotels. React + Vite + Tailwind + Supabase.
 
+## Website and app
+`/` is the public website. The app is at `/app`. `/app?demo` (or `/?demo`) opens the demo.
+Optional variable `VITE_CONTACT_EMAIL` shows a "Request a demo" button on the website. Prices and plans are in `src/lib/site.js`.
+
 ## Demo mode
 If the two environment variables below are missing, the app runs with fake data stored in the browser.
 Add `?demo` to the URL to force demo mode.

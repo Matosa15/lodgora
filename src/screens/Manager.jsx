@@ -536,9 +536,10 @@ function Team({ staff, rooms, hotel, setModal, actions }) {
         <div className="flex-1 basis-64">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Hotel code</p>
           <p className="text-3xl font-bold font-mono tracking-widest text-[#172B4D] mt-1">{hotel.code}</p>
-          <p className="text-sm text-slate-500 mt-1">Your team opens this website on their phone and signs in with this code, their username and PIN.</p>
+          <p className="text-sm text-slate-500 mt-1">Your team opens <span className="font-semibold text-slate-700">{location.origin}/app</span> on their phone and signs in with this code, their username and PIN.</p>
         </div>
         <CopyButton text={hotel.code} label="Copy code" />
+        <CopyButton text={`${location.origin}/app`} label="Copy website address" />
       </section>
 
       <Panel title="Housekeepers" subtitle={`${staff.length} ${staff.length === 1 ? 'person' : 'people'}`}
@@ -557,7 +558,7 @@ function Team({ staff, rooms, hotel, setModal, actions }) {
 
 function StaffRow({ s, hotel, assigned, setModal, actions }) {
   const [show, setShow] = useState(false);
-  const details = `Lodgora sign in\nHotel code: ${hotel.code}\nUsername: ${s.username}\nPIN: ${s.pin}`;
+  const details = `Lodgora sign in\nWebsite: ${location.origin}/app\nHotel code: ${hotel.code}\nUsername: ${s.username}\nPIN: ${s.pin}`;
   return (
     <li className={`py-3 flex flex-wrap items-center gap-3 ${s.active ? '' : 'opacity-60'}`}>
       <span className="w-10 h-10 rounded-full bg-[#172B4D] text-white text-sm font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
@@ -831,7 +832,7 @@ function StaffModal({ hotelCode, onClose, onCreate }) {
   };
 
   if (created) {
-    const text = `Lodgora sign in\nHotel code: ${hotelCode}\nUsername: ${created.username}\nPIN: ${created.pin}`;
+    const text = `Lodgora sign in\nWebsite: ${location.origin}/app\nHotel code: ${hotelCode}\nUsername: ${created.username}\nPIN: ${created.pin}`;
     return (
       <Modal title={`${created.fullName} was added`} subtitle="Give these details to your colleague. You can see the PIN again any time in Team." onClose={onClose}>
         <div className="p-5 space-y-4">

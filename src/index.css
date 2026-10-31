@@ -7,3 +7,7 @@ body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
 .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Números das placas de porta e títulos da página pública */
+.font-display { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; }
+.plate-num { font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif; font-weight: 700; font-stretch: 75%; letter-spacing: 0.02em; }

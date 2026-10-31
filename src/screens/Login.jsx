@@ -4,7 +4,7 @@ import { Field, Icon, LogoMark, btnPrimary, btnGhost, inputCls } from '../compon
 
 export default function Login({ onSession }) {
   const isDemo = backend.mode === 'demo';
-  const [tab, setTab] = useState('staff');
+  const [tab, setTab] = useState(isDemo ? 'manager' : 'staff'); // quem abre a demo é, quase sempre, um gerente
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
@@ -59,6 +59,7 @@ export default function Login({ onSession }) {
           <div className="mt-6">
             {tab === 'staff' ? <StaffForm onSession={onSession} isDemo={isDemo} /> : <ManagerForm onSession={onSession} isDemo={isDemo} />}
           </div>
+          <p className="mt-8 text-sm text-slate-500">New to Lodgora? <a href="/" className="font-semibold text-[#0D7C77] hover:underline">See what it does</a></p>
         </div>
       </main>
     </div>
