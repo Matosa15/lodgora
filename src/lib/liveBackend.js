@@ -41,6 +41,12 @@ const toStaff = (s) => ({
 
 export function createLiveBackend(url, key) {
   const supabase = createClient(url, key);
+  // O link do email de recuperação abre /app com "type=recovery". Nesse caso pedimos uma nova password antes de entrar.
+  let recovering = typeof location !== 'undefined' && /(^|[#&?])type=recovery/.test(location.hash + location.search);
+  const recoveryListeners = new Set();
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') { recovering = true; recoveryListeners.forEach((fn) => fn()); }
+  });
   let hotelId = null;
   let managerName = '';
 
@@ -111,6 +117,20 @@ export function createLiveBackend(url, key) {
         return { kind: 'staff', name: data.full_name, hotel: { name: data.hotel_name }, staffId: data.staff_id };
       },
 
+      async sendPasswordReset(email) {
+        check(await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/app` }));
+      },
+      recovering() { return recovering; },
+      onRecovery(fn) { recoveryListeners.add(fn); return () => recoveryListeners.delete(fn); },
+      async updatePassword(password) {
+        check(await supabase.auth.updateUser({ password }));
+        recovering = false;
+        try { history.replaceState(null, '', location.pathname); } catch { /* ignora */ }
+        const session = await loadManager();
+        if (!session) throw new Error('Your password was changed, but this account has no hotel yet. Sign in and create one.');
+        return session;
+      },
+
       async signOut() {
         store.del(STAFF_KEY);
         hotelId = null;
@@ -132,7 +152,12 @@ export function createLiveBackend(url, key) {
           if ('note' in patch) dbPatch.note = patch.note;
           if ('type' in patch) dbPatch.type = patch.type;
           if ('floor' in patch) dbPatch.floor = patch.floor;
-          check(await supabase.from('rooms').update(dbPatch).eq('id', id));
+          if ('number' in patch) dbPatch.number = patch.number;
+          const { error } = await supabase.from('rooms').update(dbPatch).eq('id', id);
+          if (error) throw new Error(error.code === '23505' ? 'Another room or area already has that name.' : error.message);
+        },
+        async remove(id) {
+          check(await supabase.from('rooms').delete().eq('id', id));
         },
         async create(list) {
           const rows = list.map((r) => ({ hotel_id: hotelId, number: r.number, floor: r.floor, type: r.type, kind: r.kind || 'room', status: r.status || 'Ready' }));

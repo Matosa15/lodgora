@@ -68,7 +68,7 @@ export default function Login({ onSession }) {
 
 function StaffForm({ onSession, isDemo }) {
   const [hotelCode, setHotelCode] = useState(isDemo ? 'DEMO01' : '');
-  const [username, setUsername] = useState(isDemo ? 'ana' : '');
+  const [username, setUsername] = useState(isDemo ? 'emma' : '');
   const [pin, setPin] = useState(isDemo ? '1234' : '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -94,7 +94,7 @@ function StaffForm({ onSession, isDemo }) {
       </Field>
       <Field id="l-user" label="Username">
         <input id="l-user" className={inputCls} value={username} autoCapitalize="none" autoCorrect="off" autoComplete="username"
-          onChange={(e) => setUsername(e.target.value)} placeholder="e.g. ana" />
+          onChange={(e) => setUsername(e.target.value)} placeholder="e.g. emma" />
       </Field>
       <Field id="l-pin" label="PIN">
         <input id="l-pin" className={`${inputCls} text-center text-2xl tracking-[0.6em] font-semibold`} value={pin} type="password"
@@ -105,13 +105,13 @@ function StaffForm({ onSession, isDemo }) {
       <button type="submit" className={`${btnPrimary} w-full py-3`} disabled={busy}>
         <Icon name="lock" className="w-4 h-4" />{busy ? 'Signing in…' : 'Sign in'}
       </button>
-      {isDemo && <p className="text-xs text-slate-500 text-center">Demo login is pre-filled. Other demo users: maria, sofia, rui (PIN 1234).</p>}
+      {isDemo && <p className="text-xs text-slate-500 text-center">Demo login is pre-filled. Other demo users: olivia, grace, jack (PIN 1234).</p>}
     </form>
   );
 }
 
 function ManagerForm({ onSession, isDemo }) {
-  const [mode, setMode] = useState('signin'); // signin | signup
+  const [mode, setMode] = useState('signin'); // signin | signup | forgot
   const [f, setF] = useState({ email: '', password: '', fullName: '', hotelName: '' });
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -121,6 +121,14 @@ function ManagerForm({ onSession, isDemo }) {
   const submit = async (e) => {
     e.preventDefault();
     const er = {};
+    if (mode === 'forgot') {
+      if (!/^\S+@\S+\.\S+$/.test(f.email)) { setErrors({ email: 'Enter the email you used to sign up.' }); return; }
+      setBusy(true);
+      try { await backend.auth.sendPasswordReset(f.email.trim()); setNotice(`If ${f.email.trim()} has an account, we just sent it a link to choose a new password. It can take a minute. Check your spam folder too.`); }
+      catch (err) { setErrors({ form: err.message }); }
+      finally { setBusy(false); }
+      return;
+    }
     if (!isDemo) {
       if (!/^\S+@\S+\.\S+$/.test(f.email)) er.email = 'Enter a valid email.';
       if (f.password.length < 6) er.password = 'Use at least 6 characters.';
@@ -175,16 +183,20 @@ function ManagerForm({ onSession, isDemo }) {
           <Field id="m-email" label="Email" error={errors.email}>
             <input id="m-email" type="email" className={inputCls} value={f.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />
           </Field>
-          <Field id="m-pass" label="Password" error={errors.password}>
+          {mode !== 'forgot' && <Field id="m-pass" label="Password" error={errors.password}>
             <input id="m-pass" type="password" className={inputCls} value={f.password} onChange={(e) => set('password', e.target.value)}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
-          </Field>
+          </Field>}
+          {mode === 'signin' && (
+            <button type="button" className="block text-sm font-semibold text-[#0D7C77] hover:underline -mt-1" onClick={() => { setMode('forgot'); setErrors({}); }}>Forgot your password?</button>
+          )}
+          {mode === 'forgot' && <p className="text-sm text-slate-500">We will email you a link to choose a new password.</p>}
           {errors.form && <p className="text-sm text-rose-600" role="alert">{errors.form}</p>}
           <button type="submit" className={`${btnPrimary} w-full py-3`} disabled={busy}>
-            {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create hotel account'}
+            {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : mode === 'forgot' ? 'Send reset link' : 'Create hotel account'}
           </button>
           <button type="button" className={`${btnGhost} w-full`} onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setErrors({}); }}>
-            {mode === 'signin' ? 'Create hotel account' : 'I already have an account'}
+            {mode === 'signin' ? 'Create hotel account' : mode === 'forgot' ? 'Back to sign in' : 'I already have an account'}
           </button>
         </>
       )}

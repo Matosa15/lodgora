@@ -6,7 +6,6 @@ import { SITE } from '../lib/site';
 import { Reveal, TryIt, StatsMock, PlanPicker } from './SiteDemo';
 
 const INK = '#172B4D';
-const BRASS = '#D9B26F';
 
 const demoHref = '/app?demo';
 const ACCENT = { Ready: '#10B981', Dirty: '#F97316', Cleaning: '#3B82F6', 'Awaiting inspection': '#F59E0B' };
@@ -113,11 +112,7 @@ function Hero() {
       <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(60rem 28rem at 85% -5%, #DFF1F0 0%, rgba(223,241,240,0) 60%), radial-gradient(40rem 22rem at -5% 100%, #F3EBDD 0%, rgba(243,235,221,0) 60%)' }} />
       <div className="relative mx-auto max-w-6xl px-5 pt-12 pb-16 sm:pt-16 sm:pb-20 grid lg:grid-cols-[1.02fr_1fr] gap-12 lg:gap-16 items-center">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">
-            <span className="relative flex w-2 h-2"><span className="absolute inset-0 rounded-full bg-emerald-500 pulse-ring" /><span className="relative w-2 h-2 rounded-full bg-emerald-500" /></span>
-            Live view of every room
-          </p>
-          <h1 id="hero-title" className="mt-5 font-display font-semibold text-[2.5rem] sm:text-5xl lg:text-[3.4rem] leading-[1.06] tracking-tight" style={{ color: INK }}>
+          <h1 id="hero-title" className="font-display font-semibold text-[2.5rem] sm:text-5xl lg:text-[3.4rem] leading-[1.06] tracking-tight" style={{ color: INK }}>
             Know which rooms are{' '}
             <span className="relative inline-block whitespace-nowrap"><span className="relative">ready</span><span aria-hidden="true" className="absolute left-0 right-0 bottom-[0.06em] h-[0.2em] rounded-full bg-[#19A7A1]/35 -z-0" /></span>{' '}
             without picking up the phone.
@@ -135,25 +130,19 @@ function Hero() {
         </div>
 
         <div>
-          <div className="relative rounded-2xl p-5 sm:p-7" style={{ background: '#E3EAEF', boxShadow: '0 30px 50px -34px rgba(23,43,77,.55)' }}>
-            {feed[0] && (
-              <div key={feed[0].id} aria-hidden="true" className="feed-in absolute z-10 -top-6 right-3 sm:right-6 max-w-[16rem] rounded-xl bg-white border border-slate-200 px-3.5 py-2.5 text-xs font-medium text-slate-700 shadow-[0_14px_26px_-14px_rgba(23,43,77,.5)] flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#E4F3F2] flex items-center justify-center flex-none"><Icon name="check" className="w-3.5 h-3.5 text-[#0D7C77]" /></span>
-                <span className="leading-snug">{feed[0].text.replace(/^A housekeeper pressed /, '').replace(/^You approved /, 'Approved ').replace(/^A guest checked out of /, 'Check-out: ')}</span>
-              </div>
-            )}
+          <div className="rounded-2xl p-5 sm:p-7 border border-[#D5E8E6]" style={{ background: '#EAF4F3', boxShadow: '0 30px 50px -36px rgba(23,43,77,.4)' }}>
             <ul className="grid grid-cols-3 gap-3 sm:gap-4">
               {rooms.map(([n, s]) => (
                 <li key={n}>
                   <button type="button" onClick={() => tap(n)}
                     aria-label={`Room ${n}, ${statusLabel(s)}. Press to move it to the next step.`}
-                    className="relative w-full min-h-[7.25rem] rounded-[10px] px-3.5 pt-4 pb-3 text-left active:translate-y-px hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
-                    style={{ background: `linear-gradient(180deg, ${INK} 55%, #1F3560 100%)`, boxShadow: `inset 0 1px 0 rgba(255,255,255,.1), inset 0 -3px 0 ${ACCENT[s]}, 0 8px 14px -8px rgba(23,43,77,.55)`, transition: 'box-shadow .3s' }}>
+                    className="relative w-full min-h-[7.25rem] rounded-xl px-3.5 pt-4 pb-4 text-left active:translate-y-px hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
+                    style={{ background: '#fff', border: '1px solid #DCE5EA', boxShadow: `inset 0 -4px 0 ${ACCENT[s]}, 0 10px 18px -12px rgba(23,43,77,.35)`, transition: 'box-shadow .3s' }}>
                     {['top-1.5 left-1.5', 'top-1.5 right-1.5', 'bottom-1.5 left-1.5', 'bottom-1.5 right-1.5'].map((pos) => (
-                      <span key={pos} aria-hidden="true" className={`absolute ${pos} w-1 h-1 rounded-full bg-white/20`} />
+                      <span key={pos} aria-hidden="true" className={`absolute ${pos} w-1 h-1 rounded-full bg-slate-200`} />
                     ))}
-                    <span className="plate-num block text-[2rem] sm:text-[2.5rem] leading-none" style={{ color: BRASS }}>{n}</span>
-                    <span className="mt-3 flex items-start gap-2 text-[13px] leading-tight text-white/90">
+                    <span className="plate-num block text-[2rem] sm:text-[2.5rem] leading-none" style={{ color: INK }}>{n}</span>
+                    <span className="mt-3 flex items-start gap-2 text-[13px] leading-tight text-slate-600">
                       <span key={s} className={`mt-[3px] w-2 h-2 rounded-full flex-none dot-pop ${STATUS_STYLE[s].dot}`} aria-hidden="true" />{statusLabel(s)}
                     </span>
                   </button>
@@ -353,33 +342,33 @@ function Faq() {
 
 function Closing() {
   return (
-    <section className="relative overflow-hidden" style={{ background: `radial-gradient(40rem 22rem at 90% 20%, #1F4A6B 0%, rgba(31,74,107,0) 70%), ${INK}` }} aria-labelledby="cl-title">
+    <section className="relative overflow-hidden bg-[#E4F3F2] border-y border-[#CBE6E4]" aria-labelledby="cl-title">
       <div className="relative mx-auto max-w-6xl px-5 py-16 sm:py-24 grid lg:grid-cols-[1.1fr_1fr] gap-12 items-center">
         <div>
-          <h2 id="cl-title" className="font-display font-semibold text-3xl sm:text-5xl tracking-tight text-white max-w-xl leading-[1.08]">Imagine opening one screen and seeing every room ready.</h2>
-          <p className="mt-5 text-white/80 max-w-lg leading-relaxed">Open the demo and try it as a manager and as a housekeeper. It takes two minutes, with no account.</p>
+          <h2 id="cl-title" className="font-display font-semibold text-3xl sm:text-5xl tracking-tight max-w-xl leading-[1.08]" style={{ color: INK }}>Imagine opening one screen and seeing every room ready.</h2>
+          <p className="mt-5 max-w-lg leading-relaxed">Open the demo and try it as a manager and as a housekeeper. It takes two minutes, with no account.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href={demoHref} className={`${btn} bg-white text-[#172B4D] hover:bg-slate-100`}>Try the live demo</a>
-            {SITE.contactEmail && <a href={mailto('Lodgora pilot')} className={`${btn} border border-white/40 text-white hover:bg-white/10`}>Ask for a free pilot</a>}
+            <a href={demoHref} className={btnPrimary}>Try the live demo</a>
+            {SITE.contactEmail && <a href={mailto('Lodgora pilot')} className={btnLight}>Ask for a free pilot</a>}
           </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/80">
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
             {['Free ' + SITE.pilotDays + '-day pilot', 'No app to install', 'Set up in minutes'].map((t) => (
-              <li key={t} className="flex items-center gap-2"><Icon name="check" className="w-4 h-4 text-[#19A7A1]" />{t}</li>
+              <li key={t} className="flex items-center gap-2"><Icon name="check" className="w-4 h-4 text-[#0D7C77]" />{t}</li>
             ))}
           </ul>
         </div>
         <Reveal delay={120}>
-          <div className="rounded-2xl bg-white/[.06] border border-white/15 p-5 sm:p-6" aria-hidden="true">
+          <div className="rounded-2xl bg-white border border-[#CBE6E4] p-5 sm:p-6 shadow-[0_24px_44px_-30px_rgba(23,43,77,.45)]" aria-hidden="true">
             <ul className="grid grid-cols-5 gap-2.5">
-              {Array.from({ length: 10 }, (_, i) => 301 + i).map((n, i) => (
-                <li key={n} className="rounded-lg px-2 py-2.5 text-center" style={{ background: 'rgba(255,255,255,.08)', boxShadow: 'inset 0 -3px 0 #10B981', transitionDelay: `${i * 40}ms` }}>
-                  <span className="plate-num block text-xl leading-none text-[#D9B26F]">{n}</span>
-                  <span className="mt-1.5 block text-[10px] text-white/70">Ready</span>
+              {Array.from({ length: 10 }, (_, i) => 301 + i).map((n) => (
+                <li key={n} className="rounded-lg px-1 py-2.5 text-center bg-[#F3F9F8]" style={{ boxShadow: 'inset 0 -3px 0 #10B981' }}>
+                  <span className="plate-num block text-xl leading-none" style={{ color: INK }}>{n}</span>
+                  <span className="mt-1.5 block text-[10px] text-slate-500">Ready</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-5 font-display text-2xl font-semibold text-white">10 of 10 rooms are ready</p>
-            <p className="text-sm text-white/60 mt-1">Check-in is at 3 pm. Nobody called the front desk.</p>
+            <p className="mt-5 font-display text-2xl font-semibold" style={{ color: INK }}>10 of 10 rooms are ready</p>
+            <p className="text-sm text-slate-500 mt-1">Check-in is at 3 pm. Nobody called the front desk.</p>
           </div>
         </Reveal>
       </div>

@@ -29,3 +29,13 @@ npm run dev
 
 ## Updating an existing database
 If you already ran `schema.sql` before, run `supabase/update-3.sql` once instead of running schema.sql again. It includes everything from update-2 and is safe to run more than once.
+
+## Password recovery (managers)
+
+The "Forgot your password?" link on the Manager sign in sends an email through Supabase. For the link in that email to work:
+
+1. In Supabase open **Authentication → URL Configuration**.
+2. Set **Site URL** to your website address (for example `https://lodgora.pages.dev`).
+3. Under **Redirect URLs** add `https://lodgora.pages.dev/app` (and the same with your own domain later).
+
+Supabase's built-in email service only sends a few emails per hour. Before you have many clients, set up your own email sender under **Authentication → SMTP Settings**.

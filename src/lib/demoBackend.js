@@ -4,7 +4,7 @@
 
 import { spaceInline } from './constants';
 
-const KEY = 'lodgora-demo-v3';
+const KEY = 'lodgora-demo-v4';
 const SESSION_KEY = 'lodgora-demo-session';
 const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2));
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
@@ -45,10 +45,10 @@ function sampleHistory(rooms, staff) {
 
 function seed() {
   const staff = [
-    { id: 's1', fullName: 'Ana Silva', username: 'ana', role: 'housekeeper', active: true, pin: '1234' },
-    { id: 's2', fullName: 'Maria Rodrigues', username: 'maria', role: 'housekeeper', active: true, pin: '1234' },
-    { id: 's3', fullName: 'Sofia Lopes', username: 'sofia', role: 'housekeeper', active: true, pin: '1234' },
-    { id: 's4', fullName: 'Rui Almeida', username: 'rui', role: 'housekeeper', active: true, pin: '1234' }
+    { id: 's1', fullName: 'Emma Clarke', username: 'emma', role: 'housekeeper', active: true, pin: '1234' },
+    { id: 's2', fullName: 'Olivia Hughes', username: 'olivia', role: 'housekeeper', active: true, pin: '1234' },
+    { id: 's3', fullName: 'Grace Turner', username: 'grace', role: 'housekeeper', active: true, pin: '1234' },
+    { id: 's4', fullName: 'Jack Wilson', username: 'jack', role: 'housekeeper', active: true, pin: '1234' }
   ];
   const room = (number, floor, type, status, assignedTo = null, note = '', kind = 'room') =>
     ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanSeconds: 0, cleanRunningSince: null });
@@ -79,18 +79,18 @@ function seed() {
   const issues = [
     { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34) },
     { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120) },
-    { id: newId(), roomId: byNumber('105').id, roomNumber: '105', title: 'Bedside lamp is not working', priority: 'low', status: 'open', reportedBy: 'Ana Silva', createdAt: ago(300) },
+    { id: newId(), roomId: byNumber('105').id, roomNumber: '105', title: 'Bedside lamp is not working', priority: 'low', status: 'open', reportedBy: 'Emma Clarke', createdAt: ago(300) },
     ...[['201', 'Leaking tap', 'high', 26, 21], ['202', 'TV remote missing', 'low', 20, 19], ['203', 'Door lock jammed', 'urgent', 14, 13], ['104', 'Broken curtain rail', 'normal', 9, 6], ['108', 'Hair dryer not working', 'normal', 5, 4]]
-      .map(([num, title, priority, dc, dr]) => ({ id: newId(), roomId: byNumber(num).id, roomNumber: num, title, priority, status: 'resolved', reportedBy: 'Maria Rodrigues', createdAt: ago(dc * 1440), resolvedAt: ago(dr * 1440 + 180) }))
+      .map(([num, title, priority, dc, dr]) => ({ id: newId(), roomId: byNumber(num).id, roomNumber: num, title, priority, status: 'resolved', reportedBy: 'Olivia Hughes', createdAt: ago(dc * 1440), resolvedAt: ago(dr * 1440 + 180) }))
   ];
   const activity = [
-    { id: newId(), text: 'Cleaning started in room 102', actor: 'Maria Rodrigues', createdAt: ago(10) },
-    { id: newId(), text: 'Room 204 cleaned, waiting for inspection', actor: 'Sofia Lopes', createdAt: ago(25) },
+    { id: newId(), text: 'Cleaning started in room 102', actor: 'Olivia Hughes', createdAt: ago(10) },
+    { id: newId(), text: 'Room 204 cleaned, waiting for inspection', actor: 'Grace Turner', createdAt: ago(25) },
     { id: newId(), text: 'Issue reported in room 106: Bathroom leak', actor: 'Front desk', createdAt: ago(34) },
-    { id: newId(), text: 'Room 101 marked ready', actor: 'Ana Silva', createdAt: ago(60) },
+    { id: newId(), text: 'Room 101 marked ready', actor: 'Emma Clarke', createdAt: ago(60) },
     { id: newId(), text: 'Daily task list generated', actor: 'Lodgora', createdAt: ago(100) }
   ];
-  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sofia Ferreira', staff, rooms, issues, activity, cleanings: sampleHistory(rooms, staff) };
+  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sarah Mitchell', staff, rooms, issues, activity, cleanings: sampleHistory(rooms, staff) };
 }
 
 export function createDemoBackend() {
@@ -166,6 +166,10 @@ export function createDemoBackend() {
         session.set({ kind: 'staff', staffId: st.id });
         return { kind: 'staff', name: st.fullName, hotel: { name: state.hotel.name }, staffId: st.id };
       },
+      async sendPasswordReset() { /* na demonstração não há emails */ },
+      recovering() { return typeof location !== 'undefined' && new URLSearchParams(location.search).has('recover'); },
+      onRecovery() { return () => {}; },
+      async updatePassword() { session.set({ kind: 'manager' }); return managerSession(); },
       async signOut() { session.del(); }
     },
 
@@ -176,9 +180,16 @@ export function createDemoBackend() {
           const r = state.rooms.find((x) => x.id === id);
           if (r) {
             const { status, ...rest } = patch;
+            if ('number' in rest && state.rooms.some((x) => x.id !== id && x.number === rest.number)) throw new Error('Another room or area already has that name.');
+            if ('number' in rest) state.issues.forEach((i) => { if (i.roomId === id) i.roomNumber = rest.number; });
             Object.assign(r, rest);
             if (status && status !== r.status) applyStatus(r, status);
           }
+          save();
+        },
+        async remove(id) {
+          state.rooms = state.rooms.filter((r) => r.id !== id);
+          state.issues.forEach((i) => { if (i.roomId === id) i.roomId = null; });
           save();
         },
         async create(list) {

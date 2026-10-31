@@ -71,6 +71,28 @@ export default function Manager({ session, signOut }) {
     }, `${spaceName(room)}: ${statusLabel(status)}`),
     approve: (room) => actions.setStatus(room, 'Ready', `${spaceName(room)} approved`),
     sendBack: (room) => actions.setStatus(room, 'Dirty', `${spaceName(room)} sent back for cleaning`),
+    rename: async (room, name) => {
+      const number = name.trim().replace(/\s+/g, ' ');
+      if (!number) return 'Enter a name.';
+      if (number.length > 40) return 'Use 40 characters or fewer.';
+      if (number === room.number) return null;
+      if (rooms.some((r) => r.id !== room.id && r.number.toLowerCase() === number.toLowerCase())) return 'Another room or area already has that name.';
+      const before = spaceName(room);
+      try {
+        await m.rooms.update(room.id, { number });
+        await m.activity.add(`${before} renamed to ${isArea(room) ? number : 'Room ' + number}`);
+        await d.reload();
+        toast('Name changed');
+        return null;
+      } catch (e) { return e.message; }
+    },
+    remove: async (room) => {
+      const ok = await act(async () => {
+        await m.rooms.remove(room.id);
+        await m.activity.add(`${spaceName(room)} deleted`);
+      }, `${spaceName(room)} deleted`);
+      if (ok) setModal(null);
+    },
     setDetails: (room, patch) => act(() => m.rooms.update(room.id, patch), `${spaceName(room)} updated`),
     assign: (room, staffId) => act(async () => {
       await m.rooms.update(room.id, { assignedTo: staffId || null });
@@ -626,6 +648,7 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
             ))}
           </div>
         </div>
+        <RoomName room={room} onSave={(name) => actions.rename(room, name)} />
         {!isArea(room) && <RoomDetails room={room} onSave={(patch) => actions.setDetails(room, patch)} />}
         <Field id="rm-staff" label="Assigned to">
           <select id="rm-staff" className={inputCls} value={room.assignedTo || ''} onChange={(e) => actions.assign(room, e.target.value)}>
@@ -639,12 +662,50 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
             <ul className="space-y-1.5">{issues.map((i) => <li key={i.id} className="text-sm flex items-center gap-2"><span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>{i.title}</li>)}</ul>
           </div>
         )}
+        <DeleteSpace room={room} onDelete={() => actions.remove(room)} />
         <div className="flex gap-3 pt-1">
           <button className={`${btnGhost} flex-1`} onClick={onReport}><Icon name="wrench" className="w-4 h-4" />Report issue</button>
           <button className={`${btnPrimary} flex-1`} onClick={onClose}>Done</button>
         </div>
       </div>
     </Modal>
+  );
+}
+
+function RoomName({ room, onSave }) {
+  const [name, setName] = useState(room.number);
+  const [error, setError] = useState('');
+  const changed = name.trim() !== room.number;
+  const label = isArea(room) ? 'Area name' : 'Room number';
+  const save = async () => { const err = await onSave(name); setError(err || ''); };
+  return (
+    <div>
+      <Field id="rm-name" label={label} error={error}>
+        <div className="flex gap-2">
+          <input id="rm-name" className={inputCls} value={name} maxLength={40} onChange={(e) => { setName(e.target.value); setError(''); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && changed) save(); }} />
+          {changed && <button type="button" className={`${btnPrimary} flex-none`} onClick={save}>Save</button>}
+        </div>
+      </Field>
+    </div>
+  );
+}
+
+function DeleteSpace({ room, onDelete }) {
+  const [sure, setSure] = useState(false);
+  const noun = isArea(room) ? 'area' : 'room';
+  if (!sure) {
+    return <button type="button" className="text-xs font-semibold text-rose-600 hover:underline" onClick={() => setSure(true)}>Delete this {noun}…</button>;
+  }
+  return (
+    <div className="rounded-lg border border-rose-200 bg-rose-50 p-3.5" role="alertdialog" aria-label={`Delete ${spaceName(room)}`}>
+      <p className="text-sm font-semibold text-rose-800">Delete {spaceName(room)}?</p>
+      <p className="text-xs text-rose-700 mt-1">It disappears from your lists and from your housekeepers' phones. Past cleaning times stay in your statistics. This cannot be undone.{room.status === 'Cleaning' ? ' A cleaning is in progress right now.' : ''}</p>
+      <div className="mt-3 flex gap-2">
+        <button type="button" className={`${btnGhost} flex-1 !py-2`} onClick={() => setSure(false)}>Keep it</button>
+        <button type="button" className="flex-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2" onClick={onDelete}>Yes, delete</button>
+      </div>
+    </div>
   );
 }
 
