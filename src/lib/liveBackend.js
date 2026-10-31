@@ -18,13 +18,21 @@ function check({ data, error }) {
 }
 
 const toRoom = (r) => ({
-  id: r.id, number: r.number, floor: r.floor, type: r.type, status: r.status,
+  id: r.id, kind: r.kind || 'room', number: r.number, floor: r.floor, type: r.type, status: r.status,
   assignedTo: r.assigned_to || null, note: r.note || '',
   cleanSeconds: r.clean_seconds || 0, cleanRunningSince: r.clean_running_since || null
 });
 const toIssue = (i) => ({
-  id: i.id, roomId: i.room_id, roomNumber: i.room?.number || '', title: i.title,
-  priority: i.priority, status: i.status, reportedBy: i.reported_by, createdAt: i.created_at
+  id: i.id, roomId: i.room_id, roomNumber: i.room?.number || '',
+  roomLabel: i.room ? (i.room.kind === 'area' ? i.room.number : `Room ${i.room.number}`) : '',
+  roomInline: i.room ? (i.room.kind === 'area' ? i.room.number : `room ${i.room.number}`) : '',
+  title: i.title, priority: i.priority, status: i.status, reportedBy: i.reported_by,
+  createdAt: i.created_at, resolvedAt: i.resolved_at || null
+});
+const toCleaning = (c) => ({
+  id: c.id, roomId: c.room_id, label: c.label, kind: c.kind, type: c.type, staffId: c.staff_id,
+  staffName: c.staff_name || '', startedAt: c.started_at, finishedAt: c.finished_at, seconds: c.seconds,
+  approvedAt: c.approved_at, sentBack: !!c.sent_back
 });
 const toStaff = (s) => ({
   id: s.id, fullName: s.full_name, username: s.username, role: s.role, active: s.active,
@@ -114,7 +122,7 @@ export function createLiveBackend(url, key) {
       rooms: {
         async list() {
           const rows = check(await supabase.from('rooms')
-            .select('id, number, floor, type, status, assigned_to, note, clean_seconds, clean_running_since').order('number'));
+            .select('id, kind, number, floor, type, status, assigned_to, note, clean_seconds, clean_running_since').order('number'));
           return rows.map(toRoom);
         },
         async update(id, patch) {
@@ -127,7 +135,7 @@ export function createLiveBackend(url, key) {
           check(await supabase.from('rooms').update(dbPatch).eq('id', id));
         },
         async create(list) {
-          const rows = list.map((r) => ({ hotel_id: hotelId, number: r.number, floor: r.floor, type: r.type, status: r.status || 'Ready' }));
+          const rows = list.map((r) => ({ hotel_id: hotelId, number: r.number, floor: r.floor, type: r.type, kind: r.kind || 'room', status: r.status || 'Ready' }));
           // Salta números que já existem
           check(await supabase.from('rooms').upsert(rows, { onConflict: 'hotel_id,number', ignoreDuplicates: true }));
         }
@@ -136,7 +144,7 @@ export function createLiveBackend(url, key) {
       issues: {
         async list() {
           const rows = check(await supabase.from('issues')
-            .select('id, room_id, title, priority, status, reported_by, created_at, room:rooms(number)')
+            .select('id, room_id, title, priority, status, reported_by, created_at, resolved_at, room:rooms(number, kind)')
             .order('created_at', { ascending: false }).limit(200));
           return rows.map(toIssue);
         },
@@ -147,6 +155,16 @@ export function createLiveBackend(url, key) {
         },
         async setStatus(id, status) {
           check(await supabase.from('issues').update({ status }).eq('id', id));
+        }
+      },
+
+      // Histórico de limpezas terminadas (alimenta as estatísticas)
+      cleanings: {
+        async list(sinceISO) {
+          const rows = check(await supabase.from('cleaning_log')
+            .select('id, room_id, label, kind, type, staff_id, staff_name, started_at, finished_at, seconds, approved_at, sent_back')
+            .gte('finished_at', sinceISO).order('finished_at', { ascending: false }).limit(5000));
+          return rows.map(toCleaning);
         }
       },
 

@@ -2,21 +2,46 @@
 // Serve para mostrar o Lodgora a hotéis sem base de dados e para testar a interface.
 // Tem exatamente a mesma "forma" que o liveBackend, por isso os ecrãs funcionam igual.
 
-const KEY = 'lodgora-demo-v2';
+import { spaceInline } from './constants';
+
+const KEY = 'lodgora-demo-v3';
 const SESSION_KEY = 'lodgora-demo-session';
-// Mesmas regras do relógio que a base de dados real aplica
-function applyStatus(r, status) {
-  const prev = r.status;
-  if (status === 'Cleaning' && prev !== 'Cleaning') { r.cleanSeconds = 0; r.cleanRunningSince = new Date().toISOString(); }
-  else if (prev === 'Cleaning' && status !== 'Cleaning') {
-    if (r.cleanRunningSince) r.cleanSeconds = (r.cleanSeconds || 0) + Math.floor((Date.now() - Date.parse(r.cleanRunningSince)) / 1000);
-    r.cleanRunningSince = null;
-  }
-  if (status === 'Dirty' && prev !== 'Dirty') { r.cleanSeconds = 0; r.cleanRunningSince = null; }
-  r.status = status;
-}
 const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2));
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
+
+// 30 dias de limpezas de exemplo. Gerador pseudo-aleatório com semente fixa, para ser sempre igual.
+function sampleHistory(rooms, staff) {
+  let n = 11;
+  const rnd = () => { n = (n * 16807) % 2147483647; return n / 2147483647; };
+  const speed = { s1: 22, s2: 28, s3: 25, s4: 36 };      // minutos médios por quarto
+  const passRate = { s1: 0.95, s2: 0.88, s3: 0.9, s4: 0.72 };
+  const bigTypes = ['Suite', 'Family', 'Studio / Apartment'];
+  const realRooms = rooms.filter((r) => r.kind !== 'area');
+  const areas = rooms.filter((r) => r.kind === 'area');
+  const out = [];
+  for (let d = 29; d >= 0; d--) {
+    const total = 9 + Math.floor(rnd() * 6);
+    for (let i = 0; i < total; i++) {
+      const st = staff[Math.floor(rnd() * staff.length)];
+      const isArea = areas.length && rnd() < 0.18;
+      const sp = isArea ? areas[Math.floor(rnd() * areas.length)] : realRooms[Math.floor(rnd() * realRooms.length)];
+      let mins = (isArea ? 15 : speed[st.id]) * (0.7 + rnd() * 0.7);
+      if (bigTypes.includes(sp.type)) mins *= 1.35;
+      const finished = new Date();
+      finished.setDate(finished.getDate() - d);
+      finished.setHours(8 + Math.floor(rnd() * 9), Math.floor(rnd() * 60), 0, 0);
+      if (finished.getTime() > Date.now() - 15 * 60000) finished.setTime(Date.now() - (15 + Math.floor(rnd() * 240)) * 60000);
+      const seconds = Math.round(mins * 60);
+      const ok = rnd() < passRate[st.id];
+      out.push({
+        id: newId(), roomId: sp.id, label: sp.number, kind: sp.kind || 'room', type: sp.type, staffId: st.id, staffName: st.fullName,
+        startedAt: new Date(finished.getTime() - seconds * 1000).toISOString(), finishedAt: finished.toISOString(), seconds,
+        approvedAt: ok ? new Date(finished.getTime() + 20 * 60000).toISOString() : null, sentBack: !ok
+      });
+    }
+  }
+  return out;
+}
 
 function seed() {
   const staff = [
@@ -25,22 +50,27 @@ function seed() {
     { id: 's3', fullName: 'Sofia Lopes', username: 'sofia', role: 'housekeeper', active: true, pin: '1234' },
     { id: 's4', fullName: 'Rui Almeida', username: 'rui', role: 'housekeeper', active: true, pin: '1234' }
   ];
-  const room = (number, floor, type, status, assignedTo = null, note = '') =>
-    ({ id: newId(), number, floor, type, status, assignedTo, note, cleanSeconds: 0, cleanRunningSince: null });
+  const room = (number, floor, type, status, assignedTo = null, note = '', kind = 'room') =>
+    ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanSeconds: 0, cleanRunningSince: null });
+  const area = (name, status, assignedTo = null) => room(name, 0, 'Common area', status, assignedTo, '', 'area');
   const rooms = [
-    room('101', 1, 'Deluxe Queen', 'Ready'),
-    room('102', 1, 'Standard Twin', 'Cleaning', 's2'),
-    room('103', 1, 'Executive Suite', 'Occupied'),
-    room('104', 1, 'Deluxe King', 'Awaiting inspection', 's1'),
-    room('105', 1, 'Standard Single', 'Ready'),
-    room('106', 1, 'Accessible Suite', 'Out of service'),
-    room('108', 1, 'Standard Twin', 'Dirty', 's2'),
-    room('118', 1, 'Deluxe Queen', 'Occupied'),
-    room('201', 2, 'Executive Suite', 'Dirty', 's1'),
-    room('202', 2, 'Deluxe King', 'Ready'),
-    room('203', 2, 'Standard Twin', 'Occupied'),
-    room('204', 2, 'Deluxe Queen', 'Awaiting inspection', 's3'),
-    room('205', 2, 'Standard Double', 'Dirty')
+    room('101', 1, 'Double', 'Ready'),
+    room('102', 1, 'Twin', 'Cleaning', 's2'),
+    room('103', 1, 'Suite', 'Occupied'),
+    room('104', 1, 'Double', 'Awaiting inspection', 's1'),
+    room('105', 1, 'Single', 'Ready'),
+    room('106', 1, 'Accessible', 'Out of service'),
+    room('108', 1, 'Twin', 'Dirty', 's2'),
+    room('118', 1, 'Double', 'Occupied'),
+    room('201', 2, 'Suite', 'Dirty', 's1'),
+    room('202', 2, 'Double', 'Ready'),
+    room('203', 2, 'Twin', 'Occupied'),
+    room('204', 2, 'Double', 'Awaiting inspection', 's3'),
+    room('205', 2, 'Double', 'Dirty'),
+    area('Lobby', 'Ready'),
+    area('Breakfast room', 'Dirty'),
+    area('Gym', 'Ready'),
+    area('Public toilets', 'Cleaning', 's3')
   ];
   const byNumber = (n) => rooms.find((r) => r.number === n);
   const running = byNumber('102'); running.cleanRunningSince = ago(8);
@@ -49,7 +79,9 @@ function seed() {
   const issues = [
     { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34) },
     { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120) },
-    { id: newId(), roomId: byNumber('105').id, roomNumber: '105', title: 'Bedside lamp is not working', priority: 'low', status: 'open', reportedBy: 'Ana Silva', createdAt: ago(300) }
+    { id: newId(), roomId: byNumber('105').id, roomNumber: '105', title: 'Bedside lamp is not working', priority: 'low', status: 'open', reportedBy: 'Ana Silva', createdAt: ago(300) },
+    ...[['201', 'Leaking tap', 'high', 26, 21], ['202', 'TV remote missing', 'low', 20, 19], ['203', 'Door lock jammed', 'urgent', 14, 13], ['104', 'Broken curtain rail', 'normal', 9, 6], ['108', 'Hair dryer not working', 'normal', 5, 4]]
+      .map(([num, title, priority, dc, dr]) => ({ id: newId(), roomId: byNumber(num).id, roomNumber: num, title, priority, status: 'resolved', reportedBy: 'Maria Rodrigues', createdAt: ago(dc * 1440), resolvedAt: ago(dr * 1440 + 180) }))
   ];
   const activity = [
     { id: newId(), text: 'Cleaning started in room 102', actor: 'Maria Rodrigues', createdAt: ago(10) },
@@ -58,13 +90,14 @@ function seed() {
     { id: newId(), text: 'Room 101 marked ready', actor: 'Ana Silva', createdAt: ago(60) },
     { id: newId(), text: 'Daily task list generated', actor: 'Lodgora', createdAt: ago(100) }
   ];
-  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sofia Ferreira', staff, rooms, issues, activity };
+  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sofia Ferreira', staff, rooms, issues, activity, cleanings: sampleHistory(rooms, staff) };
 }
 
 export function createDemoBackend() {
   let state;
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch { state = null; }
   if (!state || !state.rooms) state = seed();
+  if (!state.cleanings) state.cleanings = [];
 
   const listeners = new Set();
   const emit = () => listeners.forEach((fn) => fn());
@@ -73,6 +106,26 @@ export function createDemoBackend() {
   window.addEventListener('storage', (e) => {
     if (e.key === KEY && e.newValue) { try { state = JSON.parse(e.newValue); emit(); } catch { /* ignora */ } }
   });
+
+  // Mesmas regras que a base de dados real aplica ao mudar o estado de um quarto
+  function applyStatus(r, status) {
+    const prev = r.status;
+    const nowISO = new Date().toISOString();
+    if (status === 'Cleaning' && prev !== 'Cleaning') { r.cleanSeconds = 0; r.cleanRunningSince = nowISO; r.cleanStartedAt = nowISO; }
+    else if (prev === 'Cleaning' && status !== 'Cleaning') {
+      if (r.cleanRunningSince) r.cleanSeconds = (r.cleanSeconds || 0) + Math.floor((Date.now() - Date.parse(r.cleanRunningSince)) / 1000);
+      r.cleanRunningSince = null;
+    }
+    if (status === 'Dirty' && prev !== 'Dirty') { r.cleanSeconds = 0; r.cleanRunningSince = null; r.cleanStartedAt = null; }
+    const open = () => state.cleanings.find((c) => c.roomId === r.id && !c.approvedAt && !c.sentBack);
+    if (prev === 'Cleaning' && status === 'Awaiting inspection') {
+      const st = state.staff.find((x) => x.id === r.assignedTo);
+      state.cleanings.unshift({ id: newId(), roomId: r.id, label: r.number, kind: r.kind || 'room', type: r.type, staffId: r.assignedTo, staffName: st?.fullName || '',
+        startedAt: r.cleanStartedAt || nowISO, finishedAt: nowISO, seconds: r.cleanSeconds, approvedAt: null, sentBack: false });
+    } else if (prev === 'Awaiting inspection' && status === 'Ready') { const c = open(); if (c) c.approvedAt = nowISO; }
+    else if (prev === 'Awaiting inspection' && status === 'Dirty') { const c = open(); if (c) c.sentBack = true; }
+    r.status = status;
+  }
 
   const attempts = {};   // bloqueio por 5 PINs errados
   const session = {
@@ -131,7 +184,7 @@ export function createDemoBackend() {
         async create(list) {
           list.forEach((n) => {
             if (!state.rooms.some((r) => r.number === n.number)) {
-              state.rooms.push({ id: newId(), number: n.number, floor: n.floor, type: n.type, status: n.status || 'Ready', assignedTo: null, note: '', cleanSeconds: 0, cleanRunningSince: null });
+              state.rooms.push({ id: newId(), kind: n.kind || 'room', number: n.number, floor: n.floor, type: n.type, status: n.status || 'Ready', assignedTo: null, note: '', cleanSeconds: 0, cleanRunningSince: null });
             }
           });
           state.rooms.sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
@@ -139,7 +192,12 @@ export function createDemoBackend() {
         }
       },
       issues: {
-        async list() { return state.issues.map((i) => ({ ...i })); },
+        async list() {
+          return state.issues.map((i) => {
+            const room = state.rooms.find((r) => r.id === i.roomId);
+            return { ...i, resolvedAt: i.resolvedAt || null, roomLabel: room ? (room.kind === 'area' ? room.number : `Room ${room.number}`) : '', roomInline: room ? spaceInline(room) : '' };
+          });
+        },
         async create({ roomId, title, priority }) {
           const room = state.rooms.find((r) => r.id === roomId);
           state.issues.unshift({ id: newId(), roomId: roomId || null, roomNumber: room?.number || '', title, priority, status: 'open', reportedBy: state.managerName, createdAt: new Date().toISOString() });
@@ -147,7 +205,7 @@ export function createDemoBackend() {
         },
         async setStatus(id, status) {
           const i = state.issues.find((x) => x.id === id);
-          if (i) i.status = status;
+          if (i) { i.status = status; i.resolvedAt = status === 'resolved' ? new Date().toISOString() : null; }
           save();
         }
       },
@@ -182,13 +240,16 @@ export function createDemoBackend() {
         async list() { return state.activity.slice(0, 30).map((a) => ({ ...a })); },
         async add(text) { log(text, state.managerName); save(); }
       },
+      cleanings: {
+        async list(sinceISO) { return state.cleanings.filter((c) => c.finishedAt >= sinceISO).map((c) => ({ ...c })); }
+      },
       subscribe(cb) { listeners.add(cb); return () => listeners.delete(cb); }
     },
 
     staff: {
       async rooms() {
         const s = needMe();
-        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, number, floor, type, status, note, cleanSeconds, cleanRunningSince }) => ({ id, number, floor, type, status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
+        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
       },
       async setStatus(roomId, status) {
         const s = needMe();
@@ -198,9 +259,11 @@ export function createDemoBackend() {
         if (!allowed) throw new Error('That change is not allowed');
         applyStatus(r, status);
         const took = r.cleanSeconds < 60 ? 'under 1 min' : `${Math.round(r.cleanSeconds / 60)} min`;
-        log(status === 'Cleaning' ? `Cleaning started in room ${r.number}`
-          : status === 'Awaiting inspection' ? `Room ${r.number} cleaned in ${took}, waiting for inspection`
-          : `Room ${r.number} put back on the cleaning list`, s.fullName);
+        const name = spaceInline(r);
+        const cap = name.charAt(0).toUpperCase() + name.slice(1);
+        log(status === 'Cleaning' ? `Cleaning started in ${name}`
+          : status === 'Awaiting inspection' ? `${cap} cleaned in ${took}, waiting for inspection`
+          : `${cap} put back on the cleaning list`, s.fullName);
         save();
       },
       async timer(roomId, action) {
@@ -221,7 +284,7 @@ export function createDemoBackend() {
         if (title.trim().length < 3) throw new Error('Describe the problem');
         const r = state.rooms.find((x) => x.id === roomId);
         state.issues.unshift({ id: newId(), roomId: r?.id || null, roomNumber: r?.number || '', title: title.trim(), priority, status: 'open', reportedBy: s.fullName, createdAt: new Date().toISOString() });
-        log(`Issue reported${r ? ' in room ' + r.number : ''}: ${title.trim()}`, s.fullName);
+        log(`Issue reported${r ? ' in ' + spaceInline(r) : ''}: ${title.trim()}`, s.fullName);
         save();
       }
     }

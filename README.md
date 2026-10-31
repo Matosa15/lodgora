@@ -24,4 +24,4 @@ npm run dev
 ```
 
 ## Updating an existing database
-If you already ran `schema.sql` before, run `supabase/update-2.sql` once instead of running schema.sql again.
+If you already ran `schema.sql` before, run `supabase/update-3.sql` once instead of running schema.sql again. It includes everything from update-2 and is safe to run more than once.

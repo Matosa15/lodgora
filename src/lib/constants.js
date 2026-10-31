@@ -32,16 +32,18 @@ export function timeAgo(iso) {
 export const timeOfDay = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 export const initials = (name) => name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
-/* ---------- Tipos de quarto ---------- */
-export const ROOM_TYPE_GROUPS = [
-  { label: 'Standard', types: ['Standard Single', 'Standard Double', 'Standard Twin', 'Standard Triple', 'Standard Quadruple'] },
-  { label: 'Superior and Deluxe', types: ['Superior Single', 'Superior Double', 'Superior Twin', 'Deluxe Double', 'Deluxe Twin', 'Deluxe Queen', 'Deluxe King'] },
-  { label: 'Family and groups', types: ['Family Room', 'Family Room (2 bedrooms)', 'Connecting Rooms', 'Dormitory Bed', 'Private Room (hostel)'] },
-  { label: 'Suites', types: ['Junior Suite', 'Suite', 'Executive Suite', 'Family Suite', 'Honeymoon Suite', 'Presidential Suite', 'Penthouse'] },
-  { label: 'Apartments and villas', types: ['Studio', 'Apartment (1 bedroom)', 'Apartment (2 bedrooms)', 'Bungalow', 'Villa', 'Cabin or Chalet'] },
-  { label: 'Accessibility and other', types: ['Accessible Room', 'Accessible Suite', 'Smoking Room', 'Pet-friendly Room', 'Sea View Room', 'Garden View Room'] }
+/* ---------- Tipos de quarto e partes comuns ---------- */
+export const ROOM_TYPES = ['Single', 'Double', 'Twin', 'Triple', 'Family', 'Suite', 'Studio / Apartment', 'Accessible'];
+export const AREA_PRESETS = [
+  'Lobby', 'Reception', 'Corridors', 'Stairs', 'Elevators', 'Breakfast room', 'Restaurant', 'Bar',
+  'Gym', 'Spa', 'Pool area', 'Public toilets', 'Laundry', 'Meeting room', 'Terrace', 'Garden'
 ];
-export const ROOM_TYPES = ROOM_TYPE_GROUPS.flatMap((g) => g.types);
+export const AREA_TYPE = 'Common area';
+
+export const isArea = (r) => r?.kind === 'area';
+// "Room 101" ou "Lobby" (para títulos) e "room 101" ou "Lobby" (dentro de frases)
+export const spaceName = (r) => (isArea(r) ? r.number : `Room ${r.number}`);
+export const spaceInline = (r) => (isArea(r) ? r.number : `room ${r.number}`);
 
 /* ---------- Relógio de limpeza ---------- */
 // Segundos de limpeza até agora: o que já estava guardado + o troço em que o relógio está a correr

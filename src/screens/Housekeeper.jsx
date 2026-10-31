@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
 import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
-import { STATUS_STYLE, minutesLabel } from '../lib/constants';
+import { STATUS_STYLE, isArea, minutesLabel, spaceInline, spaceName } from '../lib/constants';
 
 const ORDER = { Cleaning: 0, Dirty: 1, 'Awaiting inspection': 2, Ready: 3, Occupied: 4, 'Out of service': 5 };
 
@@ -89,7 +89,7 @@ export default function Housekeeper({ session, signOut }) {
           <>
             <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
               <div className="flex items-baseline justify-between">
-                <p className="text-sm text-slate-500">Your rooms today</p>
+                <p className="text-sm text-slate-500">Your cleaning today</p>
                 <p className="text-2xl font-bold text-[#172B4D] tabular-nums">{done}<span className="text-base text-slate-400 font-semibold"> / {sorted.length}</span></p>
               </div>
               <div className="h-2 bg-slate-100 rounded-full mt-3 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
@@ -100,16 +100,16 @@ export default function Housekeeper({ session, signOut }) {
             {sorted.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
                 <Icon name="bed" className="w-7 h-7 mx-auto mb-2" />
-                <p className="font-semibold text-slate-800">No rooms assigned yet</p>
-                <p className="text-sm mt-1">Your manager will assign rooms to you. This page updates by itself.</p>
+                <p className="font-semibold text-slate-800">Nothing assigned yet</p>
+                <p className="text-sm mt-1">Your manager will assign rooms and areas to you. This page updates by itself.</p>
               </div>
             ) : (
               sorted.map((room) => (
                 <article key={room.id} className={`bg-white rounded-xl border border-slate-200 border-t-[3px] ${STATUS_STYLE[room.status]?.bar || ''} p-4 shadow-sm`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="text-2xl font-bold text-[#172B4D] leading-none">Room {room.number}</h2>
-                      <p className="text-sm text-slate-500 mt-1">{room.type} · Floor {room.floor}</p>
+                      <h2 className="text-2xl font-bold text-[#172B4D] leading-none">{spaceName(room)}</h2>
+                      <p className="text-sm text-slate-500 mt-1">{isArea(room) ? room.type : `${room.type} · Floor ${room.floor}`}</p>
                     </div>
                     <StatusBadge status={room.status} />
                   </div>
@@ -118,7 +118,7 @@ export default function Housekeeper({ session, signOut }) {
                   <div className="mt-4 space-y-2">
                     {room.status === 'Dirty' && (
                       <button className={`${btnPrimary} w-full py-4 text-base`} disabled={busyId === room.id}
-                        onClick={() => change(room, 'Cleaning', `Started room ${room.number}`)}>
+                        onClick={() => change(room, 'Cleaning', `Started ${spaceInline(room)}`)}>
                         Start cleaning
                       </button>
                     )}
@@ -141,12 +141,12 @@ export default function Housekeeper({ session, signOut }) {
                             </button>
                           )}
                           <button className={`${btnPrimary} py-3.5`} disabled={busyId === room.id}
-                            onClick={() => change(room, 'Awaiting inspection', `Room ${room.number} finished and sent for inspection`)}>
+                            onClick={() => change(room, 'Awaiting inspection', `Finished ${spaceInline(room)}, sent for inspection`)}>
                             <Icon name="check" className="w-5 h-5" />Finish
                           </button>
                         </div>
                         <button className="w-full text-sm text-slate-500 py-1 hover:text-slate-800" disabled={busyId === room.id}
-                          onClick={() => change(room, 'Dirty', `Room ${room.number} back on your list`)}>
+                          onClick={() => change(room, 'Dirty', `${spaceName(room)} back on your list`)}>
                           I did not start this room
                         </button>
                       </>
@@ -160,7 +160,7 @@ export default function Housekeeper({ session, signOut }) {
                       <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 text-center font-medium">Approved. Ready for guests</p>
                     )}
                     <button className={`${btnGhost} w-full`} onClick={() => setReport({ roomId: room.id })}>
-                      <Icon name="wrench" className="w-4 h-4" />Report a problem in this room
+                      <Icon name="wrench" className="w-4 h-4" />Report a problem here
                     </button>
                   </div>
                 </article>
@@ -197,10 +197,10 @@ function ReportModal({ rooms, initialRoomId, onClose, onDone }) {
   return (
     <Modal title="Report a problem" subtitle="Maintenance and your manager will see this right away." onClose={onClose} sheet>
       <form onSubmit={submit} noValidate className="p-5 space-y-4">
-        <Field id="r-room" label="Room">
+        <Field id="r-room" label="Where">
           <select id="r-room" className={inputCls} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-            <option value="">Not about one room</option>
-            {rooms.map((r) => <option key={r.id} value={r.id}>Room {r.number}</option>)}
+            <option value="">Not about one place</option>
+            {rooms.map((r) => <option key={r.id} value={r.id}>{spaceName(r)}</option>)}
           </select>
         </Field>
         <Field id="r-title" label="What is wrong?" error={error}>
