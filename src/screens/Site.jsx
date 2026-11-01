@@ -41,8 +41,8 @@ export default function Site() {
 
 /* ---------------- Cabeçalho ---------------- */
 
-function Header() {
-  const links = [['How it works', '#how'], ['Features', '#features'], ['Pricing', '#pricing'], ['Questions', '#faq']];
+export function Header() {
+  const links = [['How it works', '/#how'], ['Features', '/#features'], ['Pricing', '/#pricing'], ['Questions', '/#faq']];
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 pt-safe">
       <div className="mx-auto max-w-6xl h-16 px-5 flex items-center gap-6">
@@ -362,7 +362,7 @@ function Closing() {
   );
 }
 
-function Footer() {
+export function Footer() {
   return (
     <footer className="bg-white border-t border-slate-200">
       <div className="mx-auto max-w-6xl px-5 py-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500">
@@ -372,6 +372,8 @@ function Footer() {
         <span className="sm:ml-auto flex gap-5">
           <a href="/app" className="hover:text-[#172B4D] underline-offset-2 hover:underline">Sign in</a>
           <a href={demoHref} className="hover:text-[#172B4D] underline-offset-2 hover:underline">Demo</a>
+          <a href="/privacy" className="hover:text-[#172B4D] underline-offset-2 hover:underline">Privacy</a>
+          <a href="/terms" className="hover:text-[#172B4D] underline-offset-2 hover:underline">Terms</a>
           {SITE.contactEmail && <a href={mailto('Lodgora')} className="hover:text-[#172B4D] underline-offset-2 hover:underline">Contact</a>}
         </span>
       </div>
