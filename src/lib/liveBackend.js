@@ -61,6 +61,7 @@ export function createLiveBackend(url, key) {
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) return null;
+    if (!row.hotel) throw new Error('This hotel account is paused. Please contact Lodgora.');
     hotelId = row.hotel.id;
     managerName = row.full_name;
     return { kind: 'manager', name: row.full_name, hotel: row.hotel };
@@ -70,7 +71,9 @@ export function createLiveBackend(url, key) {
   async function completePending() {
     const pending = store.get(PENDING_KEY);
     if (!pending) return null;
-    check(await supabase.rpc('create_hotel', { p_hotel_name: pending.hotelName, p_full_name: pending.fullName }));
+    try {
+      check(await supabase.rpc('create_hotel', { p_hotel_name: pending.hotelName, p_full_name: pending.fullName, p_invite_code: pending.inviteCode || '' }));
+    } catch (e) { store.del(PENDING_KEY); throw e; }
     store.del(PENDING_KEY);
     return loadManager();
   }
@@ -102,10 +105,13 @@ export function createLiveBackend(url, key) {
         return session;
       },
 
-      async signUpManager({ email, password, hotelName, fullName }) {
+      async signUpManager({ email, password, hotelName, fullName, inviteCode }) {
+        // Confirma o código antes de criar a conta, para não ficarem contas sem hotel
+        const valid = check(await supabase.rpc('check_invite', { p_code: inviteCode || '' }));
+        if (!valid) throw new Error('That invitation code is not valid or was already used.');
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw new Error(error.message);
-        store.set(PENDING_KEY, { hotelName, fullName });
+        store.set(PENDING_KEY, { hotelName, fullName, inviteCode });
         if (!data.session) return { needsConfirmation: true };
         return completePending();
       },

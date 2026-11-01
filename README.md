@@ -39,3 +39,13 @@ The "Forgot your password?" link on the Manager sign in sends an email through S
 3. Under **Redirect URLs** add `https://lodgora.pages.dev/app` (and the same with your own domain later).
 
 Supabase's built-in email service only sends a few emails per hour. Before you have many clients, set up your own email sender under **Authentication → SMTP Settings**.
+
+## Who can create a hotel (invitation codes)
+
+Nobody can create a hotel account without an invitation code that you give them.
+
+1. In Supabase open the **SQL Editor** and run `select public.new_invite('Hotel Aurora');` (change the name).
+2. Send the code it returns (like `A1B2C-D3E4F`) to the hotel. They use it once, in **Manager → Create hotel account**.
+3. To see your hotels, or to pause one that does not pay, use the commands in `supabase/admin.sql`.
+
+A paused hotel (`active = false`) cannot sign in, neither the manager nor the housekeepers. The data stays safe and everything comes back when you set `active = true` again.

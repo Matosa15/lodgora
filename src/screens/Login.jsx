@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { backend } from '../lib/backend';
 import { Icon, LogoMark } from '../components/ui';
+import { SITE } from '../lib/site';
 
 const INK = '#172B4D';
 const input = 'w-full h-12 px-4 rounded-xl border border-slate-300 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0D7C77] focus:ring-2 focus:ring-[#0D7C77]/20 transition-shadow';
@@ -188,7 +189,7 @@ function StaffForm({ onSession, isDemo }) {
 
 function ManagerForm({ onSession, isDemo }) {
   const [mode, setMode] = useState('signin'); // signin | signup | forgot
-  const [f, setF] = useState({ email: '', password: '', fullName: '', hotelName: '' });
+  const [f, setF] = useState({ email: '', password: '', fullName: '', hotelName: '', inviteCode: '' });
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -212,6 +213,7 @@ function ManagerForm({ onSession, isDemo }) {
     if (mode === 'signup') {
       if (f.fullName.trim().length < 2) er.fullName = 'Enter your name.';
       if (f.hotelName.trim().length < 2) er.hotelName = 'Enter the hotel name.';
+      if (f.inviteCode.replace(/[^A-Za-z0-9]/g, '').length < 6) er.inviteCode = 'Enter the invitation code you received.';
     }
     setErrors(er);
     if (Object.keys(er).length) return;
@@ -250,6 +252,11 @@ function ManagerForm({ onSession, isDemo }) {
             <>
               <Field id="m-name" label="Your name" error={errors.fullName}>
                 <input id="m-name" className={input} value={f.fullName} onChange={(e) => set('fullName', e.target.value)} autoComplete="name" />
+              </Field>
+              <Field id="m-invite" label="Invitation code" error={errors.inviteCode}
+                hint={SITE.contactEmail ? <>No code yet? <a className="font-semibold text-[#0D7C77] hover:underline" href={`mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Lodgora invitation')}`}>Ask for one</a>.</> : 'Lodgora gives you this code when your hotel joins.'}>
+                <input id="m-invite" className={`${input} uppercase tracking-wider`} value={f.inviteCode} autoComplete="off" autoCapitalize="characters" placeholder="A1B2C-D3E4F"
+                  onChange={(e) => set('inviteCode', e.target.value)} />
               </Field>
               <Field id="m-hotel" label="Hotel name" error={errors.hotelName}>
                 <input id="m-hotel" className={input} value={f.hotelName} onChange={(e) => set('hotelName', e.target.value)} />
