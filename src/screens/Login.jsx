@@ -56,7 +56,7 @@ function Showcase() {
   );
 }
 
-export default function Login({ onSession }) {
+export default function Login({ onSession, notice }) {
   const isDemo = backend.mode === 'demo';
   const [tab, setTab] = useState(isDemo ? 'manager' : 'staff'); // quem abre a demo é, quase sempre, um gerente
 
@@ -95,6 +95,10 @@ export default function Login({ onSession }) {
 
           <h2 className="font-display font-semibold text-3xl tracking-tight" style={{ color: INK }}>Sign in</h2>
           <p className="text-slate-500 mt-1.5">Choose how you use Lodgora.</p>
+
+          {notice && (
+            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm px-4 py-3" role="alert">{notice}</div>
+          )}
 
           {isDemo && (
             <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm px-4 py-3 flex gap-2.5">

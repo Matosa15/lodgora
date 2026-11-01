@@ -18,6 +18,10 @@ export default function App() {
 
   useEffect(() => backend.auth.onRecovery(() => setRecovery(true)), []);
 
+  // Link do email expirado ou já usado: o Supabase devolve o erro no endereço
+  const linkError = /error_code=otp_expired|error=access_denied/.test(location.hash)
+    ? 'That link has expired or was already used. Choose Manager and press "Forgot your password?" to get a new one.' : '';
+
   const signOut = async () => {
     await backend.auth.signOut();
     setSession(null);
@@ -26,7 +30,7 @@ export default function App() {
   let screen;
   if (recovery) screen = <ResetPassword onDone={(sess) => { setRecovery(false); setSession(sess); }} onCancel={() => { setRecovery(false); setSession(null); backend.auth.signOut(); }} />;
   else if (session === undefined) screen = <Spinner label="Loading" />;
-  else if (!session) screen = <Login onSession={setSession} />;
+  else if (!session) screen = <Login onSession={setSession} notice={linkError} />;
   else if (session.kind === 'manager') screen = <Manager session={session} signOut={signOut} />;
   else screen = <Housekeeper session={session} signOut={signOut} />;
 

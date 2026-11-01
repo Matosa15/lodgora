@@ -125,7 +125,7 @@ export function createLiveBackend(url, key) {
       async updatePassword(password) {
         check(await supabase.auth.updateUser({ password }));
         recovering = false;
-        try { history.replaceState(null, '', location.pathname); } catch { /* ignora */ }
+        try { history.replaceState(null, '', '/app'); } catch { /* ignora */ }
         const session = await loadManager();
         if (!session) throw new Error('Your password was changed, but this account has no hotel yet. Sign in and create one.');
         return session;
