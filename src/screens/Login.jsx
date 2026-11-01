@@ -1,65 +1,128 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { backend } from '../lib/backend';
-import { Field, Icon, LogoMark, btnPrimary, btnGhost, inputCls } from '../components/ui';
+import { Icon, LogoMark } from '../components/ui';
+
+const INK = '#172B4D';
+const input = 'w-full h-12 px-4 rounded-xl border border-slate-300 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0D7C77] focus:ring-2 focus:ring-[#0D7C77]/20 transition-shadow';
+const primary = 'w-full h-12 rounded-xl bg-[#0D7C77] hover:bg-[#0A6A66] text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-default focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]';
+const secondary = 'w-full h-12 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-[#172B4D] text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-colors';
+
+// Campo com etiqueta, ajuda e erro
+function Field({ id, label, hint, error, children }) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-semibold mb-1.5" style={{ color: INK }}>{label}</label>
+      {children}
+      {hint && !error && <p className="text-[13px] text-slate-500 mt-1.5">{hint}</p>}
+      {error && <p className="text-[13px] text-rose-600 mt-1.5" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+const ROLES = [
+  { id: 'staff', label: 'Hotel team', text: 'Housekeepers sign in with a 4-digit PIN', icon: 'sparkles' },
+  { id: 'manager', label: 'Manager', text: 'Sign in with your email and password', icon: 'dashboard' }
+];
+
+const SHOW_ORDER = ['Dirty', 'Cleaning', 'Awaiting inspection', 'Ready'];
+const SHOW_COLOR = { Ready: '#10B981', Dirty: '#F97316', Cleaning: '#3B82F6', 'Awaiting inspection': '#F59E0B' };
+const SHOW_START = [['214', 'Ready'], ['216', 'Ready'], ['218', 'Cleaning'], ['220', 'Dirty']];
+
+// Pequena amostra animada: os quartos vão passando de sujo a pronto
+function Showcase() {
+  const [rooms, setRooms] = useState(SHOW_START);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    let i = 0;
+    const t = setInterval(() => {
+      const idx = [2, 3, 0, 1][i++ % 4];
+      setRooms((rs) => rs.map(([n, st], k) => (k === idx ? [n, SHOW_ORDER[(SHOW_ORDER.indexOf(st) + 1) % 4]] : [n, st])));
+    }, 2000);
+    return () => clearInterval(t);
+  }, []);
+  const ready = rooms.filter(([, st]) => st === 'Ready').length;
+  return (
+    <div className="mt-10 max-w-sm rounded-2xl bg-white border border-[#CBE6E4] p-4 shadow-[0_24px_44px_-30px_rgba(23,43,77,.5)]" aria-hidden="true">
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-500"><span>Today</span><span className="tabular-nums">{ready} of 4 ready</span></div>
+      <ul className="mt-3 grid grid-cols-4 gap-2">
+        {rooms.map(([n, st]) => (
+          <li key={n} className="rounded-lg bg-[#F3F9F8] px-2 pt-2 pb-2.5 text-center transition-shadow duration-500" style={{ boxShadow: `inset 0 -3px 0 ${SHOW_COLOR[st]}` }}>
+            <span className="plate-num block text-lg leading-none" style={{ color: INK }}>{n}</span>
+            <span className="block mt-1 text-[10px] text-slate-500 truncate">{st === 'Awaiting inspection' ? 'Inspect' : st === 'Dirty' ? 'Dirty' : st}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function Login({ onSession }) {
   const isDemo = backend.mode === 'demo';
   const [tab, setTab] = useState(isDemo ? 'manager' : 'staff'); // quem abre a demo é, quase sempre, um gerente
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] bg-white">
       {/* Painel de marca (só em ecrãs grandes) */}
-      <aside className="hidden lg:flex flex-col justify-between bg-[#172B4D] text-white p-12">
-        <div className="flex items-center gap-3">
-          <span className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-6 h-6" aria-hidden="true">
-              <rect x="4" y="13" width="4" height="7" rx="1.5" fill="#fff" />
-              <rect x="10" y="9" width="4" height="11" rx="1.5" fill="#19A7A1" />
-              <rect x="16" y="4" width="4" height="16" rx="1.5" fill="#fff" />
-            </svg>
-          </span>
-          <span className="text-2xl font-bold tracking-tight">Lodgora</span>
-        </div>
+      <aside className="hidden lg:flex flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-[#CBE6E4]"
+        style={{ background: 'radial-gradient(34rem 24rem at 90% 0%, #CDEBE8 0%, rgba(205,235,232,0) 70%), radial-gradient(30rem 20rem at 0% 100%, #F3EBDD 0%, rgba(243,235,221,0) 70%), #E4F3F2' }}>
+        <a href="/" className="flex items-center gap-3 w-fit" aria-label="Lodgora website">
+          <LogoMark className="w-10 h-10" />
+          <span className="font-display text-2xl font-bold tracking-tight" style={{ color: INK }}>Lodgora</span>
+        </a>
+
         <div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">Hotel operations,<br />made <span className="text-[#19A7A1]">simpler.</span></h1>
-          <ul className="mt-8 space-y-3 text-slate-300 text-sm">
-            <li className="flex gap-3"><Icon name="check" className="w-5 h-5 text-[#19A7A1] flex-none" />See which rooms are ready, in real time.</li>
-            <li className="flex gap-3"><Icon name="check" className="w-5 h-5 text-[#19A7A1] flex-none" />Housekeepers use a simple screen on their phone.</li>
-            <li className="flex gap-3"><Icon name="check" className="w-5 h-5 text-[#19A7A1] flex-none" />Maintenance issues reported once, never lost.</li>
+          <h1 className="font-display font-semibold text-4xl xl:text-[2.8rem] leading-[1.08] tracking-tight" style={{ color: INK }}>
+            Every room ready,<br />without the phone calls.
+          </h1>
+          <ul className="mt-8 space-y-3.5 text-slate-700">
+            {['See which rooms are ready, in real time.', 'Housekeepers use a simple screen on their phone.', 'Maintenance issues reported once, never lost.'].map((t) => (
+              <li key={t} className="flex gap-3"><span className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-none shadow-sm"><Icon name="check" className="w-3.5 h-3.5 text-[#0D7C77]" /></span>{t}</li>
+            ))}
           </ul>
+
+          <Showcase />
         </div>
-        <p className="text-xs text-slate-400">Built for independent and mid-sized hotels.</p>
+
+        <p className="text-sm text-slate-500">Built for independent and mid-sized hotels.</p>
       </aside>
 
-      <main className="flex items-center justify-center p-4 sm:p-8 min-h-screen lg:min-h-0">
-        <div className="w-full max-w-sm">
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
+      <main className="flex items-center justify-center px-5 py-10 sm:p-10 min-h-screen lg:min-h-0 bg-[#F7F9FB] lg:bg-white">
+        <div className="w-full max-w-[26rem]">
+          <a href="/" className="flex items-center gap-2.5 mb-8 lg:hidden w-fit" aria-label="Lodgora website">
             <LogoMark />
-            <span className="font-bold text-xl tracking-tight text-[#172B4D]">Lodgora</span>
-          </div>
+            <span className="font-display font-bold text-xl tracking-tight" style={{ color: INK }}>Lodgora</span>
+          </a>
 
-          <h2 className="text-2xl font-bold text-[#172B4D]">Sign in</h2>
-          <p className="text-sm text-slate-500 mt-1">Choose how you use Lodgora.</p>
+          <h2 className="font-display font-semibold text-3xl tracking-tight" style={{ color: INK }}>Sign in</h2>
+          <p className="text-slate-500 mt-1.5">Choose how you use Lodgora.</p>
 
           {isDemo && (
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs px-3 py-2.5">
-              <b>Demo mode.</b> Data stays in this browser. Nothing is sent anywhere.
+            <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm px-4 py-3 flex gap-2.5">
+              <Icon name="alert" className="w-4 h-4 mt-0.5 flex-none text-amber-600" />
+              <span><b>Demo mode.</b> Data stays in this browser. Nothing is sent anywhere.</span>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-lg mt-6" role="tablist">
-            {[['staff', 'Hotel team'], ['manager', 'Manager']].map(([id, label]) => (
-              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={`py-2 rounded-md text-sm font-semibold transition-colors ${tab === id ? 'bg-white text-[#172B4D] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
-                {label}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-3 mt-6" role="tablist" aria-label="Who is signing in">
+            {ROLES.map((r) => {
+              const on = tab === r.id;
+              return (
+                <button key={r.id} role="tab" aria-selected={on} onClick={() => setTab(r.id)}
+                  className={`text-left rounded-xl border-2 p-3.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77] ${on ? 'border-[#0D7C77] bg-[#EEF8F7]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                  <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${on ? 'bg-[#0D7C77] text-white' : 'bg-slate-100 text-slate-500'}`}><Icon name={r.icon} className="w-[18px] h-[18px]" /></span>
+                  <span className="block mt-2.5 font-semibold text-[15px]" style={{ color: INK }}>{r.label}</span>
+                  <span className="block mt-0.5 text-xs leading-snug text-slate-500">{r.text}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-7">
             {tab === 'staff' ? <StaffForm onSession={onSession} isDemo={isDemo} /> : <ManagerForm onSession={onSession} isDemo={isDemo} />}
           </div>
-          <p className="mt-8 text-sm text-slate-500">New to Lodgora? <a href="/" className="font-semibold text-[#0D7C77] hover:underline">See what it does</a></p>
+          <p className="mt-8 text-sm text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+            <span>New to Lodgora? <a href="/" className="font-semibold text-[#0D7C77] hover:underline">See what it does</a></span>
+          </p>
         </div>
       </main>
     </div>
@@ -70,6 +133,7 @@ function StaffForm({ onSession, isDemo }) {
   const [hotelCode, setHotelCode] = useState(isDemo ? 'DEMO01' : '');
   const [username, setUsername] = useState(isDemo ? 'emma' : '');
   const [pin, setPin] = useState(isDemo ? '1234' : '');
+  const [focus, setFocus] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -87,22 +151,30 @@ function StaffForm({ onSession, isDemo }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4" noValidate>
+    <form onSubmit={submit} className="space-y-5" noValidate>
       <Field id="l-code" label="Hotel code" hint="Your manager gives you this code.">
-        <input id="l-code" className={`${inputCls} uppercase tracking-wider`} value={hotelCode} autoCapitalize="characters" autoComplete="off"
+        <input id="l-code" className={`${input} tracking-wider ${hotelCode ? 'uppercase' : ''}`} value={hotelCode} autoCapitalize="characters" autoComplete="off"
           onChange={(e) => setHotelCode(e.target.value.toUpperCase())} placeholder="e.g. 4F9A2C" />
       </Field>
       <Field id="l-user" label="Username">
-        <input id="l-user" className={inputCls} value={username} autoCapitalize="none" autoCorrect="off" autoComplete="username"
+        <input id="l-user" className={input} value={username} autoCapitalize="none" autoCorrect="off" autoComplete="username"
           onChange={(e) => setUsername(e.target.value)} placeholder="e.g. emma" />
       </Field>
       <Field id="l-pin" label="PIN">
-        <input id="l-pin" className={`${inputCls} text-center text-2xl tracking-[0.6em] font-semibold`} value={pin} type="password"
-          inputMode="numeric" pattern="[0-9]*" maxLength={4} autoComplete="current-password"
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" />
+        <div className="relative">
+          <div className="grid grid-cols-4 gap-3" aria-hidden="true">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className={`h-14 rounded-xl border-2 bg-white flex items-center justify-center text-2xl text-[#172B4D] transition-colors ${focus && pin.length === i ? 'border-[#0D7C77] ring-2 ring-[#0D7C77]/20' : pin.length > i ? 'border-slate-400' : 'border-slate-300'}`}>{pin[i] ? '●' : ''}</div>
+            ))}
+          </div>
+          <input id="l-pin" className="absolute inset-0 w-full h-full opacity-0 cursor-text" value={pin} type="password"
+            inputMode="numeric" pattern="[0-9]*" maxLength={4} autoComplete="current-password" aria-label="PIN, 4 digits"
+            onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} />
+        </div>
       </Field>
-      {error && <p className="text-sm text-rose-600" role="alert">{error}</p>}
-      <button type="submit" className={`${btnPrimary} w-full py-3`} disabled={busy}>
+      {error && <p className="text-sm text-rose-600 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2" role="alert">{error}</p>}
+      <button type="submit" className={primary} disabled={busy}>
         <Icon name="lock" className="w-4 h-4" />{busy ? 'Signing in…' : 'Sign in'}
       </button>
       {isDemo && <p className="text-xs text-slate-500 text-center">Demo login is pre-filled. Other demo users: olivia, grace, jack (PIN 1234).</p>}
@@ -153,18 +225,18 @@ function ManagerForm({ onSession, isDemo }) {
 
   if (notice) {
     return (
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm p-4" role="status">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-sm leading-relaxed p-5" role="status">
         {notice}
-        <button className="block mt-3 font-semibold underline" onClick={() => { setNotice(''); setMode('signin'); }}>Back to sign in</button>
+        <button className="block mt-4 font-semibold text-[#0D7C77] hover:underline" onClick={() => { setNotice(''); setMode('signin'); }}>Back to sign in</button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4" noValidate>
+    <form onSubmit={submit} className="space-y-5" noValidate>
       {isDemo && (
-        <button type="button" className={`${btnPrimary} w-full py-3`} onClick={() => backend.auth.signInManager().then(onSession)}>
-          Open the manager demo
+        <button type="button" className={primary} onClick={() => backend.auth.signInManager().then(onSession)}>
+          Open the manager demo<Icon name="arrow" className="w-4 h-4" />
         </button>
       )}
       {isDemo && <p className="text-xs text-slate-500 text-center">In demo mode no account is needed.</p>}
@@ -173,29 +245,29 @@ function ManagerForm({ onSession, isDemo }) {
           {mode === 'signup' && (
             <>
               <Field id="m-name" label="Your name" error={errors.fullName}>
-                <input id="m-name" className={inputCls} value={f.fullName} onChange={(e) => set('fullName', e.target.value)} autoComplete="name" />
+                <input id="m-name" className={input} value={f.fullName} onChange={(e) => set('fullName', e.target.value)} autoComplete="name" />
               </Field>
               <Field id="m-hotel" label="Hotel name" error={errors.hotelName}>
-                <input id="m-hotel" className={inputCls} value={f.hotelName} onChange={(e) => set('hotelName', e.target.value)} />
+                <input id="m-hotel" className={input} value={f.hotelName} onChange={(e) => set('hotelName', e.target.value)} />
               </Field>
             </>
           )}
           <Field id="m-email" label="Email" error={errors.email}>
-            <input id="m-email" type="email" className={inputCls} value={f.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />
+            <input id="m-email" type="email" className={input} value={f.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />
           </Field>
           {mode !== 'forgot' && <Field id="m-pass" label="Password" error={errors.password}>
-            <input id="m-pass" type="password" className={inputCls} value={f.password} onChange={(e) => set('password', e.target.value)}
+            <input id="m-pass" type="password" className={input} value={f.password} onChange={(e) => set('password', e.target.value)}
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
           </Field>}
           {mode === 'signin' && (
             <button type="button" className="block text-sm font-semibold text-[#0D7C77] hover:underline -mt-1" onClick={() => { setMode('forgot'); setErrors({}); }}>Forgot your password?</button>
           )}
           {mode === 'forgot' && <p className="text-sm text-slate-500">We will email you a link to choose a new password.</p>}
-          {errors.form && <p className="text-sm text-rose-600" role="alert">{errors.form}</p>}
-          <button type="submit" className={`${btnPrimary} w-full py-3`} disabled={busy}>
+          {errors.form && <p className="text-sm text-rose-600 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2" role="alert">{errors.form}</p>}
+          <button type="submit" className={primary} disabled={busy}>
             {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : mode === 'forgot' ? 'Send reset link' : 'Create hotel account'}
           </button>
-          <button type="button" className={`${btnGhost} w-full`} onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setErrors({}); }}>
+          <button type="button" className={secondary} onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setErrors({}); }}>
             {mode === 'signin' ? 'Create hotel account' : mode === 'forgot' ? 'Back to sign in' : 'I already have an account'}
           </button>
         </>
