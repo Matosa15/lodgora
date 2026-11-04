@@ -2,9 +2,9 @@
 // Serve para mostrar o Lodgora a hotéis sem base de dados e para testar a interface.
 // Tem exatamente a mesma "forma" que o liveBackend, por isso os ecrãs funcionam igual.
 
-import { spaceInline } from './constants';
+import { dayKey, spaceInline } from './constants';
 
-const KEY = 'lodgora-demo-v4';
+const KEY = 'lodgora-demo-v5';
 const SESSION_KEY = 'lodgora-demo-session';
 const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2));
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
@@ -90,7 +90,12 @@ function seed() {
     { id: newId(), text: 'Room 101 marked ready', actor: 'Emma Clarke', createdAt: ago(60) },
     { id: newId(), text: 'Daily task list generated', actor: 'Lodgora', createdAt: ago(100) }
   ];
-  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sarah Mitchell', staff, rooms, issues, activity, cleanings: sampleHistory(rooms, staff) };
+  // Plano de exemplo: amanhã e depois de amanhã
+  const plan = [];
+  const put = (n, day, staffId) => plan.push({ id: newId(), roomId: byNumber(n).id, day: dayKey(day), staffId });
+  [['101', 's1'], ['103', 's1'], ['105', 's2'], ['202', 's2'], ['203', 's3'], ['Lobby', 's4'], ['Breakfast room', 's4']].forEach(([n, st]) => put(n, 1, st));
+  [['101', 's3'], ['118', 's1'], ['204', null], ['Gym', null]].forEach(([n, st]) => put(n, 2, st));
+  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sarah Mitchell', staff, rooms, issues, activity, plan, cleanings: sampleHistory(rooms, staff) };
 }
 
 export function createDemoBackend() {
@@ -98,6 +103,7 @@ export function createDemoBackend() {
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch { state = null; }
   if (!state || !state.rooms) state = seed();
   if (!state.cleanings) state.cleanings = [];
+  if (!state.plan) state.plan = [];
 
   const listeners = new Set();
   const emit = () => listeners.forEach((fn) => fn());
@@ -127,6 +133,24 @@ export function createDemoBackend() {
     r.status = status;
   }
 
+  // Mesmas regras da base de dados: o plano até hoje passa para a lista de limpeza
+  function applyPlan(today) {
+    const due = state.plan.filter((p) => p.day <= today).sort((a, b) => (a.day < b.day ? 1 : -1));
+    if (!due.length) return 0;
+    let n = 0;
+    state.rooms.forEach((r) => {
+      const mine = due.filter((p) => p.roomId === r.id);
+      if (!mine.length || !['Ready', 'Occupied', 'Dirty'].includes(r.status)) return;
+      const who = mine.map((p) => state.staff.find((s) => s.id === p.staffId && s.active)).find(Boolean);
+      applyStatus(r, 'Dirty');
+      if (who) r.assignedTo = who.id;
+      n += 1;
+    });
+    state.plan = state.plan.filter((p) => p.day > today);
+    if (n) log(`${n} planned cleaning${n > 1 ? 's' : ''} added to today's list`, 'Lodgora');
+    save();
+    return n;
+  }
   const attempts = {};   // bloqueio por 5 PINs errados
   const session = {
     get() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; } },
@@ -189,6 +213,7 @@ export function createDemoBackend() {
         },
         async remove(id) {
           state.rooms = state.rooms.filter((r) => r.id !== id);
+          state.plan = state.plan.filter((p) => p.roomId !== id);
           state.issues.forEach((i) => { if (i.roomId === id) i.roomId = null; });
           save();
         },
@@ -247,6 +272,22 @@ export function createDemoBackend() {
           save();
         }
       },
+      plan: {
+        async list(fromDay) { return state.plan.filter((p) => p.day >= fromDay).map((p) => ({ ...p })); },
+        async set(list) {
+          list.forEach((n) => {
+            const old = state.plan.find((p) => p.roomId === n.roomId && p.day === n.day);
+            if (old) old.staffId = n.staffId || null;
+            else state.plan.push({ id: newId(), roomId: n.roomId, day: n.day, staffId: n.staffId || null });
+          });
+          save();
+        },
+        async clear(list) {
+          state.plan = state.plan.filter((p) => !list.some((n) => n.roomId === p.roomId && n.day === p.day));
+          save();
+        },
+        async apply(today) { return applyPlan(today); }
+      },
       activity: {
         async list() { return state.activity.slice(0, 30).map((a) => ({ ...a })); },
         async add(text) { log(text, state.managerName); save(); }
@@ -290,6 +331,7 @@ export function createDemoBackend() {
         }
         save();
       },
+      async applyPlan(today) { needMe(); return applyPlan(today); },
       async reportIssue(roomId, title, priority) {
         const s = needMe();
         if (title.trim().length < 3) throw new Error('Describe the problem');

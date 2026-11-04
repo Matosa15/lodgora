@@ -19,6 +19,7 @@ create table public.hotels (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   code        text not null unique,
+  active      boolean not null default true,   -- false = hotel pausado (por falta de pagamento, por exemplo)
   created_at  timestamptz not null default now()
 );
 
@@ -117,9 +118,11 @@ create index staff_hotel_idx    on public.staff (hotel_id);
 
 -- ---------- Funções auxiliares ----------
 
-create function public.current_hotel() returns uuid
+create or replace function public.current_hotel() returns uuid
 language sql stable security definer set search_path = public as $$
-  select hotel_id from public.managers where user_id = auth.uid()
+  select m.hotel_id
+    from public.managers m join public.hotels h on h.id = m.hotel_id
+   where m.user_id = auth.uid() and h.active
 $$;
 
 create function public.touch_updated_at() returns trigger
@@ -228,19 +231,59 @@ grant select (id, hotel_id, full_name, username, role, active, created_at, pin_d
 
 revoke all on public.hotels, public.managers, public.rooms, public.issues, public.activity from anon;
 
+-- ---------- Códigos de convite ----------
+--: sem código não se cria hotel
+create table if not exists public.invites (
+  code        text primary key,
+  note        text not null default '',
+  created_at  timestamptz not null default now(),
+  used_at     timestamptz,
+  used_by     uuid
+);
+alter table public.invites enable row level security;
+revoke all on public.invites from anon, authenticated;
+
+-- Cria um código novo (só tu, no SQL Editor). Exemplo: select public.new_invite('Hotel Aurora');
+create or replace function public.new_invite(p_note text default '') returns text
+language plpgsql security definer set search_path = public as $$
+declare
+  v_code text;
+begin
+  loop
+    v_code := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
+    exit when not exists (select 1 from public.invites where code = v_code);
+  end loop;
+  insert into public.invites (code, note) values (v_code, coalesce(p_note, ''));
+  return substr(v_code, 1, 5) || '-' || substr(v_code, 6, 5);
+end $$;
+revoke execute on function public.new_invite(text) from public, anon, authenticated;
+
+-- A página pergunta se o código existe e está por usar, antes de criar a conta
+create or replace function public.check_invite(p_code text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.invites
+                  where code = upper(regexp_replace(coalesce(p_code, ''), '[^A-Za-z0-9]', '', 'g')) and used_at is null)
+$$;
+revoke execute on function public.check_invite(text) from public;
+grant  execute on function public.check_invite(text) to anon, authenticated;
+
+
 -- ---------- Funções do gerente ----------
 
-create function public.create_hotel(p_hotel_name text, p_full_name text) returns json
+create function public.create_hotel(p_hotel_name text, p_full_name text, p_invite_code text) returns json
 language plpgsql security definer set search_path = public, extensions as $$
 declare
   v_hotel public.hotels;
   v_code  text;
+  v_inv   text := upper(regexp_replace(coalesce(p_invite_code, ''), '[^A-Za-z0-9]', '', 'g'));
 begin
   if auth.uid() is null then raise exception 'You must be signed in'; end if;
   if exists (select 1 from public.managers where user_id = auth.uid()) then
     raise exception 'This account already has a hotel';
   end if;
   if length(trim(coalesce(p_hotel_name, ''))) < 2 then raise exception 'Enter the hotel name'; end if;
+  perform 1 from public.invites where code = v_inv and used_at is null for update;
+  if not found then raise exception 'That invitation code is not valid or was already used'; end if;
 
   loop
     v_code := upper(substr(md5(gen_random_uuid()::text), 1, 6));
@@ -250,6 +293,7 @@ begin
   insert into public.hotels (name, code) values (trim(p_hotel_name), v_code) returning * into v_hotel;
   insert into public.managers (user_id, hotel_id, full_name)
     values (auth.uid(), v_hotel.id, coalesce(nullif(trim(p_full_name), ''), 'Manager'));
+  update public.invites set used_at = now(), used_by = auth.uid() where code = v_inv;
 
   return json_build_object('id', v_hotel.id, 'name', v_hotel.name, 'code', v_hotel.code);
 end $$;
@@ -307,11 +351,11 @@ begin
   end if;
 end $$;
 
-revoke execute on function public.create_hotel(text, text)                      from public, anon;
+revoke execute on function public.create_hotel(text, text, text)                from public, anon;
 revoke execute on function public.manager_create_staff(text, text, text, text)  from public, anon;
 revoke execute on function public.manager_set_staff_pin(uuid, text)             from public, anon;
 revoke execute on function public.manager_set_staff_active(uuid, boolean)       from public, anon;
-grant  execute on function public.create_hotel(text, text)                      to authenticated;
+grant  execute on function public.create_hotel(text, text, text)                to authenticated;
 grant  execute on function public.manager_create_staff(text, text, text, text)  to authenticated;
 grant  execute on function public.manager_set_staff_pin(uuid, text)             to authenticated;
 grant  execute on function public.manager_set_staff_active(uuid, boolean)       to authenticated;
@@ -319,21 +363,23 @@ grant  execute on function public.manager_set_staff_active(uuid, boolean)       
 -- ---------- Funções da equipa (entram sem conta, só com PIN) ----------
 
 -- Interna: descobre quem é a pessoa a partir do token. Ninguém de fora a pode chamar.
-create function public.staff_from_token(p_token uuid) returns public.staff
+create or replace function public.staff_from_token(p_token uuid) returns public.staff
 language plpgsql security definer set search_path = public as $$
 declare
   v_staff public.staff;
 begin
   select s.* into v_staff
-    from public.staff s join public.staff_sessions t on t.staff_id = s.id
-   where t.token = p_token and t.expires_at > now() and s.active;
+    from public.staff s
+    join public.staff_sessions t on t.staff_id = s.id
+    join public.hotels h on h.id = s.hotel_id
+   where t.token = p_token and t.expires_at > now() and s.active and h.active;
   if not found then raise exception 'Session expired. Please sign in again.'; end if;
   return v_staff;
 end $$;
 revoke all on function public.staff_from_token(uuid) from public, anon, authenticated;
 
 -- Devolve {error: "..."} em vez de lançar erro, para que as tentativas falhadas fiquem guardadas.
-create function public.staff_login(p_hotel_code text, p_username text, p_pin text) returns json
+create or replace function public.staff_login(p_hotel_code text, p_username text, p_pin text) returns json
 language plpgsql security definer set search_path = public, extensions as $$
 declare
   v_key    text := upper(trim(coalesce(p_hotel_code, ''))) || ':' || lower(trim(coalesce(p_username, '')));
@@ -348,11 +394,15 @@ begin
     return json_build_object('error', 'Too many attempts. Try again in 15 minutes.');
   end if;
 
+  if exists (select 1 from public.hotels h where h.code = upper(trim(coalesce(p_hotel_code, ''))) and not h.active) then
+    return json_build_object('error', 'This hotel account is paused. Please ask your manager.');
+  end if;
+
   select s.* into v_staff
     from public.staff s join public.hotels h on h.id = s.hotel_id
    where h.code = upper(trim(coalesce(p_hotel_code, '')))
      and s.username = lower(trim(coalesce(p_username, '')))
-     and s.active;
+     and s.active and h.active;
 
   if not found or v_staff.pin_hash <> crypt(coalesce(p_pin, ''), v_staff.pin_hash) then
     v_fail := case when v_att.locked_until is not null and v_att.locked_until <= now() then 0
@@ -478,10 +528,86 @@ begin
             v_staff.full_name);
 end $$;
 
+-- ---------- Planeamento: limpezas marcadas para os próximos dias ----------
+-- Cada linha diz "este quarto deve ser limpo neste dia" e, se quiseres, por quem.
+-- Quando o dia chega, o plano passa para a lista de limpeza (ver apply_plan).
+create table if not exists public.plan (
+  id         uuid primary key default gen_random_uuid(),
+  hotel_id   uuid not null references public.hotels (id) on delete cascade,
+  room_id    uuid not null references public.rooms (id) on delete cascade,
+  day        date not null,
+  staff_id   uuid references public.staff (id) on delete set null,
+  created_at timestamptz not null default now(),
+  unique (room_id, day)
+);
+create index if not exists plan_hotel_day on public.plan (hotel_id, day);
+
+alter table public.plan enable row level security;
+drop policy if exists plan_all on public.plan;
+create policy plan_all on public.plan for all to authenticated
+  using (hotel_id = public.current_hotel())
+  with check (
+    hotel_id = public.current_hotel()
+    and exists (select 1 from public.rooms r where r.id = plan.room_id and r.hotel_id = plan.hotel_id)
+    and (plan.staff_id is null or exists (select 1 from public.staff s where s.id = plan.staff_id and s.hotel_id = plan.hotel_id))
+  );
+revoke all on public.plan from anon;
+
+-- Interna: passa para a lista de hoje tudo o que estava planeado até p_day.
+-- Quartos "Ready", "Occupied" ou "Dirty" ficam "Needs cleaning" e, se o plano tem alguém, ficam atribuídos a essa pessoa.
+-- Quartos em limpeza, à espera de inspeção ou fora de serviço não são mexidos. Depois, o plano usado é apagado.
+create or replace function public.apply_plan(p_hotel uuid, p_day date) returns int
+language plpgsql security definer set search_path = public as $$
+declare
+  v_n int;
+begin
+  update public.rooms r
+     set status = 'Dirty',
+         assigned_to = coalesce(
+           (select s.id
+              from public.plan p join public.staff s on s.id = p.staff_id
+             where p.room_id = r.id and p.hotel_id = p_hotel and p.day <= p_day
+               and s.hotel_id = p_hotel and s.active
+             order by p.day desc limit 1),
+           r.assigned_to)
+   where r.hotel_id = p_hotel
+     and r.status in ('Ready', 'Occupied', 'Dirty')
+     and exists (select 1 from public.plan p where p.room_id = r.id and p.hotel_id = p_hotel and p.day <= p_day);
+  get diagnostics v_n = row_count;
+  delete from public.plan where hotel_id = p_hotel and day <= p_day;
+  if v_n > 0 then
+    insert into public.activity (hotel_id, text, actor)
+      values (p_hotel, v_n || ' planned cleaning' || case when v_n > 1 then 's' else '' end || ' added to today''s list', 'Lodgora');
+  end if;
+  return v_n;
+end $$;
+revoke all on function public.apply_plan(uuid, date) from public, anon, authenticated;
+
+create or replace function public.manager_apply_plan(p_day date) returns int
+language plpgsql security definer set search_path = public as $$
+declare
+  v_hotel uuid := public.current_hotel();
+begin
+  if v_hotel is null then raise exception 'Not allowed'; end if;
+  if p_day is null or abs(p_day - current_date) > 1 then raise exception 'Invalid day'; end if;
+  return public.apply_plan(v_hotel, p_day);
+end $$;
+revoke execute on function public.manager_apply_plan(date) from public, anon;
+grant  execute on function public.manager_apply_plan(date) to authenticated;
+
+create or replace function public.staff_apply_plan(p_token uuid, p_day date) returns int
+language plpgsql security definer set search_path = public as $$
+declare
+  v_staff public.staff := public.staff_from_token(p_token);
+begin
+  if p_day is null or abs(p_day - current_date) > 1 then raise exception 'Invalid day'; end if;
+  return public.apply_plan(v_staff.hotel_id, p_day);
+end $$;
+
 -- ---------- Atualizações em tempo real para o painel do gerente ----------
 do $$
 begin
-  alter publication supabase_realtime add table public.rooms, public.issues, public.activity;
+  alter publication supabase_realtime add table public.rooms, public.issues, public.activity, public.plan;
 exception when others then
   null; -- já estava ativo
 end $$;

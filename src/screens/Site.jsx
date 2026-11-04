@@ -9,10 +9,7 @@ const INK = '#172B4D';
 
 const demoHref = '/app?demo';
 const ACCENT = { Ready: '#10B981', Dirty: '#F97316', Cleaning: '#3B82F6', 'Awaiting inspection': '#F59E0B' };
-
-// Formulário de pedido de piloto (Tally). Abre num separador novo.
-const PILOT_FORM = 'https://tally.so/r/6DLkxO';
-const formProps = { href: PILOT_FORM, target: '_blank', rel: 'noopener noreferrer' };
+const mailto = (subject) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent(subject)}`;
 
 const btn = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-[15px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]';
 const btnPrimary = `${btn} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`;
@@ -58,9 +55,6 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <a href="/app" className="px-3 py-2 text-sm font-semibold text-[#172B4D] hover:underline">Sign in</a>
-          <span className="hidden sm:block">
-            <a {...formProps} className={`${btnLight} !py-2 !px-4 !text-sm`}>Request a pilot</a>
-          </span>
           <a href={demoHref} className={`${btnPrimary} !py-2 !px-4 !text-sm`}>Try the demo</a>
         </div>
       </div>
@@ -128,9 +122,9 @@ function Hero() {
             every room, every cleaning time and every problem as it happens.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a {...formProps} className={btnPrimary}>Request a free pilot</a>
-            <a href={demoHref} className={btnLight}>Try the live demo</a>
+            <a href={demoHref} className={btnPrimary}>Try the live demo</a>
             <a href="#try" className={btnLight}>Play with it below</a>
+            {SITE.contactEmail && <a href={mailto('Lodgora demo request')} className={btnLight}>Request a demo</a>}
           </div>
           <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed.</p>
         </div>
@@ -308,7 +302,6 @@ function Pricing() {
             with your own rooms and your own team.
           </p>
           <p className="mt-4 text-sm text-slate-500">Prices are per month and exclude VAT. Have more than 100 rooms? Get in touch.</p>
-          <a {...formProps} className={`${btnPrimary} mt-6`}>Request a free pilot</a>
         </div>
         <PlanPicker />
       </div>
@@ -355,8 +348,8 @@ function Closing() {
           <h2 id="cl-title" className="font-display font-semibold text-3xl sm:text-5xl tracking-tight max-w-xl leading-[1.08]" style={{ color: INK }}>Imagine opening one screen and seeing every room ready.</h2>
           <p className="mt-5 max-w-lg leading-relaxed">Open the demo and try it as a manager and as a housekeeper. It takes two minutes, with no account.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a {...formProps} className={btnPrimary}>Request a free pilot</a>
-            <a href={demoHref} className={btnLight}>Try the live demo</a>
+            <a href={demoHref} className={btnPrimary}>Try the live demo</a>
+            {SITE.contactEmail && <a href={mailto('Lodgora pilot')} className={btnLight}>Ask for a free pilot</a>}
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
             {['Free ' + SITE.pilotDays + '-day pilot', 'No app to install', 'Set up in minutes'].map((t) => (
@@ -381,7 +374,7 @@ export function Footer() {
           <a href={demoHref} className="hover:text-[#172B4D] underline-offset-2 hover:underline">Demo</a>
           <a href="/privacy" className="hover:text-[#172B4D] underline-offset-2 hover:underline">Privacy</a>
           <a href="/terms" className="hover:text-[#172B4D] underline-offset-2 hover:underline">Terms</a>
-          <a {...formProps} className="hover:text-[#172B4D] underline-offset-2 hover:underline">Contact</a>
+          {SITE.contactEmail && <a href={mailto('Lodgora')} className="hover:text-[#172B4D] underline-offset-2 hover:underline">Contact</a>}
         </span>
       </div>
     </footer>

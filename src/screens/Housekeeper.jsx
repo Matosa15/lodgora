@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
 import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
-import { STATUS_STYLE, isArea, minutesLabel, spaceInline, spaceName } from '../lib/constants';
+import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName } from '../lib/constants';
 
 const ORDER = { Cleaning: 0, Dirty: 1, 'Awaiting inspection': 2, Ready: 3, Occupied: 4, 'Out of service': 5 };
 
@@ -13,9 +13,15 @@ export default function Housekeeper({ session, signOut }) {
   const [busyId, setBusyId] = useState(null);
   const [report, setReport] = useState(null); // null | { roomId }
   const alive = useRef(true);
+  const planAppliedOn = useRef('');
 
   const load = useCallback(async () => {
     try {
+      // Uma vez por dia, o plano de hoje entra na lista de limpeza
+      const today = dayKey(0);
+      if (planAppliedOn.current !== today) {
+        try { await backend.staff.applyPlan(today); planAppliedOn.current = today; } catch (e) { if (/expired/i.test(e.message)) throw e; }
+      }
       const list = await backend.staff.rooms();
       if (!alive.current) return;
       setRooms(list);

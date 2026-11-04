@@ -10,11 +10,13 @@ import {
   btnGhost, btnPrimary, btnSmall, inputCls, useToast
 } from '../components/ui';
 import Statistics from './Statistics';
+import Planner from './Planner';
 
 const NAV = [
   { group: 'Main', items: [
     { name: 'Dashboard', icon: 'dashboard' },
     { name: 'Rooms', label: 'Rooms & areas', icon: 'bed', badge: 'rooms' },
+    { name: 'Planner', icon: 'calendar' },
     { name: 'Inspections', icon: 'inspect', badge: 'inspection' },
     { name: 'Maintenance', icon: 'wrench', badge: 'issues', alert: true }
   ] },
@@ -122,6 +124,9 @@ export default function Manager({ session, signOut }) {
         await m.activity.add(`${todo.length} cleaning task${todo.length > 1 ? 's' : ''} assigned automatically`);
       }, `${todo.length} task${todo.length > 1 ? 's' : ''} assigned`);
     },
+    // Planeamento (não enche a atividade com ruído: só se regista quando o plano entra na lista)
+    planSet: (list, msg) => act(() => m.plan.set(list), msg),
+    planClear: (list, msg) => act(() => m.plan.clear(list), msg),
     addRooms: (list) => {
       const noun = isArea(list[0]) ? 'common area' : 'room';
       const text = `${list.length} ${noun}${list.length > 1 ? 's' : ''} added`;
@@ -168,6 +173,8 @@ export default function Manager({ session, signOut }) {
         statusFilter={statusFilter} setStatusFilter={setStatusFilter} openRoom={(id) => setModal({ type: 'room', id })}
         onAdd={() => setModal({ type: 'addRooms' })} onDistribute={actions.distribute} showAddWhenEmpty />
     );
+  } else if (page === 'Planner') {
+    body = <Planner rooms={rooms} plan={d.plan} staff={d.staff} search={search} onSet={actions.planSet} onClear={actions.planClear} onAddRooms={() => setModal({ type: 'addRooms' })} />;
   } else if (page === 'Inspections') {
     body = <Inspections rooms={fRooms.filter((r) => r.status === 'Awaiting inspection')} actions={actions} />;
   } else if (page === 'Maintenance') {
@@ -183,6 +190,7 @@ export default function Manager({ session, signOut }) {
   const subtitle = {
     Dashboard: "Here is your hotel's operational overview for today.",
     Rooms: 'Every room and common area, and who is cleaning it.',
+    Planner: 'Plan the next 7 days of cleaning.',
     Statistics: 'How your team is doing: cleaning times, quality and maintenance.',
     Inspections: 'Rooms and areas that were cleaned and need your approval.',
     Maintenance: 'Problems reported by your team.',

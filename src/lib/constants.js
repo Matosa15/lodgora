@@ -58,3 +58,13 @@ export function clock(totalSeconds) {
   return h > 0 ? `${h}:${two(m)}:${two(sec)}` : `${m}:${two(sec)}`;
 }
 export const minutesLabel = (s) => (s < 60 ? 'under 1 min' : `${Math.round(s / 60)} min`);
+
+/* ---------- Dias (planeamento) ---------- */
+// Dia como 'AAAA-MM-DD' no fuso do navegador, daqui a n dias
+export function dayKey(n = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// "Wed 4 Nov" para um dia 'AAAA-MM-DD'
+export const dayLabel = (key) => new Date(key + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });

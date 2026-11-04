@@ -49,3 +49,6 @@ Nobody can create a hotel account without an invitation code that you give them.
 3. To see your hotels, or to pause one that does not pay, use the commands in `supabase/admin.sql`.
 
 A paused hotel (`active = false`) cannot sign in, neither the manager nor the housekeepers. The data stays safe and everything comes back when you set `active = true` again.
+
+## Planner (planning cleaning ahead)
+Managers open **Planner** to choose, for each of the next 7 days, which rooms and areas get cleaned and by whom. Each day the plan goes onto the team's lists by itself the first time the manager or a housekeeper opens the app. Run `supabase/update-5.sql` once (after update-4) to add it.

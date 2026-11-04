@@ -214,6 +214,29 @@ export function createLiveBackend(url, key) {
         async setActive(id, active) { check(await supabase.rpc('manager_set_staff_active', { p_staff_id: id, p_active: active })); }
       },
 
+      // Planeamento: limpezas marcadas para dias futuros ('AAAA-MM-DD')
+      plan: {
+        async list(fromDay) {
+          const rows = check(await supabase.from('plan').select('id, room_id, day, staff_id').gte('day', fromDay).order('day').limit(5000));
+          return rows.map((p) => ({ id: p.id, roomId: p.room_id, day: p.day, staffId: p.staff_id || null }));
+        },
+        // Cria ou muda vários de uma vez: [{ roomId, day, staffId }]
+        async set(list) {
+          if (!list.length) return;
+          const rows = list.map((p) => ({ hotel_id: hotelId, room_id: p.roomId, day: p.day, staff_id: p.staffId || null }));
+          check(await supabase.from('plan').upsert(rows, { onConflict: 'room_id,day' }));
+        },
+        // Tira vários do plano: [{ roomId, day }]
+        async clear(list) {
+          for (const day of [...new Set(list.map((p) => p.day))]) {
+            const ids = list.filter((p) => p.day === day).map((p) => p.roomId);
+            check(await supabase.from('plan').delete().eq('day', day).in('room_id', ids));
+          }
+        },
+        // Passa para a lista de hoje o que estava planeado até hoje
+        async apply(today) { return check(await supabase.rpc('manager_apply_plan', { p_day: today })); }
+      },
+
       activity: {
         async list() {
           const rows = check(await supabase.from('activity')
@@ -228,7 +251,7 @@ export function createLiveBackend(url, key) {
       // Avisa quando algo muda (tempo real). Devolve uma função para parar de ouvir.
       subscribe(callback) {
         const channel = supabase.channel('hotel-' + Math.random().toString(36).slice(2));
-        ['rooms', 'issues', 'activity'].forEach((table) =>
+        ['rooms', 'issues', 'activity', 'plan'].forEach((table) =>
           channel.on('postgres_changes', { event: '*', schema: 'public', table }, callback));
         channel.subscribe();
         return () => { supabase.removeChannel(channel); };
@@ -245,6 +268,7 @@ export function createLiveBackend(url, key) {
       async timer(roomId, action) {
         check(await supabase.rpc('staff_clean_timer', { p_token: token(), p_room_id: roomId, p_action: action }));
       },
+      async applyPlan(today) { return check(await supabase.rpc('staff_apply_plan', { p_token: token(), p_day: today })); },
       async reportIssue(roomId, title, priority) {
         check(await supabase.rpc('staff_report_issue', { p_token: token(), p_room_id: roomId || null, p_title: title, p_priority: priority }));
       }
