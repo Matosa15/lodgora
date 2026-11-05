@@ -6,7 +6,7 @@ import {
   AREA_PRESETS, AREA_TYPE, ISSUE_STATUS_LABEL, PRIORITY_STYLE, ROOM_TYPES, STATUSES, STATUS_STYLE, initials, isArea, minutesLabel, spaceInline, spaceName, statusLabel, timeAgo, timeOfDay
 } from '../lib/constants';
 import {
-  CleanTimer, CopyButton, EmptyState, Field, Icon, LogoMark, Modal, Panel, Spinner, StatusBadge,
+  CleanTimer, CopyButton, EmptyState, Field, Icon, LogoMark, Modal, Panel, Spinner, StatusBadge, WherePicker, IssueNotes, NoteBox,
   btnGhost, btnPrimary, btnSmall, inputCls, useToast
 } from '../components/ui';
 import Statistics from './Statistics';
@@ -146,6 +146,7 @@ export default function Manager({ session, signOut }) {
       await m.issues.assign(issue.id, staffId || null);
       await m.activity.add(staffId ? `"${issue.title}" assigned to ${staffById[staffId].fullName}` : `"${issue.title}" unassigned`);
     }, staffId ? `Assigned to ${staffById[staffId].fullName}` : 'Unassigned'),
+    addIssueNote: async (issue, text) => { await m.issues.addNote(issue.id, text); await d.reload(); toast('Note sent'); },
     createStaff: async (s) => { try { await m.staff.create(s); await d.reload(); return null; } catch (e) { return e.message; } },
     setPin: async (id, pin) => { try { await m.staff.setPin(id, pin); toast('PIN changed'); return null; } catch (e) { return e.message; } },
     setActive: (s, active) => act(() => m.staff.setActive(s.id, active), active ? `${s.fullName} can sign in again` : `${s.fullName} can no longer sign in`)
@@ -302,8 +303,9 @@ const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'morni
 
 function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter, staff, issues, activity, search, statusFilter, setStatusFilter, go, hotel, openRoom, actions, setModal }) {
   const attention = [
-    ...issues.filter((i) => i.priority === 'urgent').map((i) => ({ key: 'u' + i.id, kind: 'issue', issue: i, priority: 'urgent' })),
-    ...issues.filter((i) => i.priority === 'high').map((i) => ({ key: 'h' + i.id, kind: 'issue', issue: i, priority: 'high' })),
+    ...issues.filter((i) => i.needsHelp).map((i) => ({ key: 'n' + i.id, kind: 'issue', issue: i, priority: i.priority })),
+    ...issues.filter((i) => i.priority === 'urgent' && !i.needsHelp).map((i) => ({ key: 'u' + i.id, kind: 'issue', issue: i, priority: 'urgent' })),
+    ...issues.filter((i) => i.priority === 'high' && !i.needsHelp).map((i) => ({ key: 'h' + i.id, kind: 'issue', issue: i, priority: 'high' })),
     ...allRooms.filter((r) => r.status === 'Awaiting inspection').map((r) => ({ key: 'r' + r.id, kind: 'inspection', room: r, priority: 'high' }))
   ];
   const setupDone = [allRooms.length > 0, staff.length > 0];
@@ -372,6 +374,7 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold">{it.kind === 'issue' ? it.issue.title : `${spaceName(it.room)} needs inspection`}</p>
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[it.priority]}`}>{it.priority}</span>
+                      {it.kind === 'issue' && it.issue.needsHelp && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-600 text-white">Needs help</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {it.kind === 'issue'
@@ -557,6 +560,7 @@ function Maintenance({ issues, technicians, staffById, onReport, onAddTech, acti
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-sm">{i.title}</p>
                     <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>
+                    {i.needsHelp && i.status !== 'resolved' && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-600 text-white">Needs help</span>}
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">{i.roomLabel ? `${i.roomLabel} · ` : ''}{i.reportedBy} · {timeAgo(i.createdAt)} · {ISSUE_STATUS_LABEL[i.status]}</p>
                   {i.status !== 'resolved' && technicians.length > 0 && (
@@ -571,6 +575,8 @@ function Maintenance({ issues, technicians, staffById, onReport, onAddTech, acti
                   )}
                   {i.status !== 'resolved' && technicians.length === 0 && who && <p className="text-xs text-slate-500 mt-1">Assigned to {who.fullName}</p>}
                   {i.status === 'resolved' && who && <p className="text-xs text-slate-500 mt-1">Fixed by {who.fullName}</p>}
+                  <IssueNotes notes={i.notes} />
+                  {i.status !== 'resolved' && <NoteBox collapsible label={i.notes?.length ? 'Reply' : 'Add a note'} placeholder="Write a note for your team…" onSend={(t) => actions.addIssueNote(i, t)} />}
                 </div>
                 <div className="flex gap-2">
                   {i.status === 'open' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'in_progress')}>Start work</button>}
@@ -904,8 +910,7 @@ function IssueModal({ rooms, initialRoomId, onClose, onSubmit }) {
   return (
     <Modal title="Report an issue" onClose={onClose}>
       <form onSubmit={submit} noValidate className="p-5 space-y-4">
-        <Field id="is-room" label="Where"><select id="is-room" className={inputCls} value={f.roomId} onChange={(e) => setF({ ...f, roomId: e.target.value })}>
-          <option value="">Not about one place</option>{rooms.map((r) => <option key={r.id} value={r.id}>{spaceName(r)}</option>)}</select></Field>
+        <Field id="is-room" label="Where"><WherePicker id="is-room" rooms={rooms} value={f.roomId} onChange={(v) => setF({ ...f, roomId: v })} /></Field>
         <Field id="is-title" label="What is wrong?" error={error}><input id="is-title" className={inputCls} value={f.title} onChange={(e) => { setF({ ...f, title: e.target.value }); setError(''); }} placeholder="e.g. Shower is leaking" /></Field>
         <Field id="is-prio" label="Priority"><select id="is-prio" className={inputCls} value={f.priority} onChange={(e) => setF({ ...f, priority: e.target.value })}>
           <option value="urgent">Urgent</option><option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option></select></Field>

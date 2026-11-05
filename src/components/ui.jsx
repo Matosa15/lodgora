@@ -1,6 +1,6 @@
 // Peças reutilizáveis: ícones, janelas, painéis, avisos, campos de formulário.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { STATUS_STYLE, statusLabel, cleanElapsed, clock } from '../lib/constants';
+import { STATUS_STYLE, statusLabel, cleanElapsed, clock, isArea, spaceName, timeAgo } from '../lib/constants';
 
 const ICONS = {
   dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
@@ -103,6 +103,80 @@ export function Modal({ title, subtitle, onClose, children, sheet = false }) {
           </button>
         </div>
         {children}
+      </div>
+    </div>
+  );
+}
+
+// Onde é o problema? "Um quarto", "Uma zona comum" ou "Outro sítio". Só mostra as zonas que existem.
+// value = id do quarto ou área ('' = nenhum); onChange recebe o novo id.
+export function WherePicker({ id, rooms, value, onChange }) {
+  const sorted = rooms.slice().sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+  const hasRooms = sorted.some((r) => !isArea(r));
+  const hasAreas = sorted.some(isArea);
+  const current = sorted.find((r) => r.id === value);
+  const [mode, setMode] = useState(current ? (isArea(current) ? 'area' : 'room') : (hasRooms ? 'room' : hasAreas ? 'area' : 'none'));
+  const tabs = [hasRooms && ['room', 'A room'], hasAreas && ['area', 'A common area'], ['none', 'Somewhere else']].filter(Boolean);
+  const pick = (m) => { setMode(m); onChange(''); };
+  const list = sorted.filter((r) => (mode === 'area') === isArea(r));
+  return (
+    <div>
+      <div className="flex gap-1.5 flex-wrap" role="group" aria-label="What is it about?">
+        {tabs.map(([k, label]) => (
+          <button key={k} type="button" onClick={() => pick(k)} aria-pressed={mode === k}
+            className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${mode === k ? 'bg-[#0D7C77] border-[#0D7C77] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+        ))}
+      </div>
+      {mode !== 'none' && (
+        <select id={id} aria-label={mode === 'area' ? 'Which common area' : 'Which room'} className={`${inputCls} mt-2`} value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">{mode === 'area' ? 'Choose a common area…' : 'Choose a room…'}</option>
+          {list.map((r) => <option key={r.id} value={r.id}>{spaceName(r)}</option>)}
+        </select>
+      )}
+    </div>
+  );
+}
+
+// Notas de uma avaria, da mais antiga para a mais recente. A cor mostra se escreveu a manutenção ou o gerente.
+export function IssueNotes({ notes }) {
+  if (!notes || notes.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1.5" aria-label="Notes">
+      {notes.map((n) => (
+        <li key={n.id} className={`rounded-lg px-3 py-2 text-sm ${n.byStaff ? 'bg-slate-50 border border-slate-200' : 'bg-[#E4F3F2] border border-[#BFE3E0]'}`}>
+          <p className="text-slate-800 break-words">{n.body}</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">{n.author} · {timeAgo(n.createdAt)}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Caixa para escrever uma nota. Com cannotFix, aparece também o botão "I can't fix this".
+// onSend(texto, cannotFix) deve lançar um erro se falhar.
+export function NoteBox({ onSend, cannotFix = false, collapsible = false, label = 'Add a note', placeholder = 'Write a short note…' }) {
+  const [open, setOpen] = useState(!collapsible);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  if (!open) return <button type="button" className="mt-2 text-xs font-semibold text-[#0D7C77] hover:underline" onClick={() => setOpen(true)}>{label}</button>;
+  const send = async (blocked) => {
+    if (!text.trim()) { setError(blocked ? 'Say what is wrong, so your manager can help.' : 'Write a short note first.'); return; }
+    setBusy(true);
+    try { await onSend(text.trim(), blocked); setText(''); setError(''); if (collapsible) setOpen(false); }
+    catch (e) { setError(e.message || 'Could not send the note'); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="mt-2">
+      <label className="sr-only" htmlFor={`note-${label}`}>{label}</label>
+      <textarea id={`note-${label}`} rows={2} maxLength={500} value={text} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder}
+        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[#19A7A1] focus:ring-1 focus:ring-[#19A7A1] resize-none" />
+      {error && <p className="text-xs text-rose-600 mt-1" role="alert">{error}</p>}
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={() => send(false)} className="px-3 py-2 rounded-lg text-sm font-semibold bg-[#0D7C77] hover:bg-[#0A6A66] text-white disabled:opacity-60">Send note</button>
+        {cannotFix && <button type="button" disabled={busy} onClick={() => send(true)} className="px-3 py-2 rounded-lg text-sm font-semibold border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-60">I can't fix this</button>}
+        {collapsible && <button type="button" onClick={() => { setOpen(false); setError(''); }} className="px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-800">Cancel</button>}
       </div>
     </div>
   );

@@ -27,7 +27,9 @@ const toIssue = (i) => ({
   roomLabel: i.room ? (i.room.kind === 'area' ? i.room.number : `Room ${i.room.number}`) : '',
   roomInline: i.room ? (i.room.kind === 'area' ? i.room.number : `room ${i.room.number}`) : '',
   title: i.title, priority: i.priority, status: i.status, reportedBy: i.reported_by,
-  createdAt: i.created_at, resolvedAt: i.resolved_at || null, assignedTo: i.assigned_to || null
+  createdAt: i.created_at, resolvedAt: i.resolved_at || null, assignedTo: i.assigned_to || null, needsHelp: !!i.needs_help,
+  notes: (i.notes || []).map((n) => ({ id: n.id, author: n.author, byStaff: n.by_staff, body: n.body, createdAt: n.created_at }))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 });
 const toCleaning = (c) => ({
   id: c.id, roomId: c.room_id, label: c.label, kind: c.kind, type: c.type, staffId: c.staff_id,
@@ -175,7 +177,7 @@ export function createLiveBackend(url, key) {
       issues: {
         async list() {
           const rows = check(await supabase.from('issues')
-            .select('id, room_id, title, priority, status, reported_by, created_at, resolved_at, assigned_to, room:rooms(number, kind)')
+            .select('id, room_id, title, priority, status, reported_by, created_at, resolved_at, assigned_to, needs_help, room:rooms(number, kind), notes:issue_notes(id, author, by_staff, body, created_at)')
             .order('created_at', { ascending: false }).limit(200));
           return rows.map(toIssue);
         },
@@ -189,7 +191,12 @@ export function createLiveBackend(url, key) {
         },
         // Atribui a uma pessoa da manutenção (ou tira a atribuição com null)
         async assign(id, staffId) {
-          check(await supabase.from('issues').update({ assigned_to: staffId || null }).eq('id', id));
+          check(await supabase.from('issues').update({ assigned_to: staffId || null, needs_help: false }).eq('id', id));
+        },
+        // O gerente responde com uma nota; isso tira a marca "precisa de ajuda"
+        async addNote(id, text) {
+          check(await supabase.from('issue_notes').insert({ hotel_id: hotelId, issue_id: id, author: managerName, by_staff: false, body: text }));
+          check(await supabase.from('issues').update({ needs_help: false }).eq('id', id));
         }
       },
 
@@ -255,7 +262,7 @@ export function createLiveBackend(url, key) {
       // Avisa quando algo muda (tempo real). Devolve uma função para parar de ouvir.
       subscribe(callback) {
         const channel = supabase.channel('hotel-' + Math.random().toString(36).slice(2));
-        ['rooms', 'issues', 'activity', 'plan'].forEach((table) =>
+        ['rooms', 'issues', 'activity', 'plan', 'issue_notes'].forEach((table) =>
           channel.on('postgres_changes', { event: '*', schema: 'public', table }, callback));
         channel.subscribe();
         return () => { supabase.removeChannel(channel); };
@@ -274,6 +281,7 @@ export function createLiveBackend(url, key) {
       },
       async issues() { return check(await supabase.rpc('staff_issues', { p_token: token() })); },
       async setIssueStatus(issueId, status) { check(await supabase.rpc('staff_set_issue_status', { p_token: token(), p_issue_id: issueId, p_status: status })); },
+      async addIssueNote(issueId, text, cannotFix = false) { check(await supabase.rpc('staff_add_issue_note', { p_token: token(), p_issue_id: issueId, p_text: text, p_cannot_fix: cannotFix })); },
       async roomList() { return check(await supabase.rpc('staff_room_list', { p_token: token() })); },
       async applyPlan(today) { return check(await supabase.rpc('staff_apply_plan', { p_token: token(), p_day: today })); },
       async reportIssue(roomId, title, priority) {

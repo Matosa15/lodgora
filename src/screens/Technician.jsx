@@ -1,7 +1,7 @@
 // Ecrã da manutenção: pensado para o telemóvel. Lista das avarias que o gerente lhe atribuiu.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
-import { Icon, LogoMark, Spinner, btnGhost, btnPrimary, useToast } from '../components/ui';
+import { Icon, IssueNotes, LogoMark, NoteBox, Spinner, btnGhost, btnPrimary, useToast } from '../components/ui';
 import { ISSUE_STATUS_LABEL, PRIORITY_STYLE, timeAgo } from '../lib/constants';
 import { ReportModal } from './Housekeeper';
 
@@ -41,6 +41,12 @@ export default function Technician({ session, signOut }) {
     try { await backend.staff.setIssueStatus(issue.id, status); toast(message); await load(); }
     catch (e) { toast(e.message, 'error'); }
     finally { setBusyId(null); }
+  };
+
+  const addNote = async (issue, text, cannotFix) => {
+    await backend.staff.addIssueNote(issue.id, text, cannotFix);
+    toast(cannotFix ? 'Your manager has been told you need help' : 'Note sent to your manager');
+    await load();
   };
 
   const openReport = async () => {
@@ -93,12 +99,12 @@ export default function Technician({ session, signOut }) {
                 <p className="font-semibold text-slate-800">Nothing to fix right now</p>
                 <p className="text-sm mt-1">Your manager will give you issues here. This page updates by itself.</p>
               </div>
-            ) : open.map((i) => <IssueCard key={i.id} issue={i} busy={busyId === i.id} change={change} />)}
+            ) : open.map((i) => <IssueCard key={i.id} issue={i} busy={busyId === i.id} change={change} addNote={addNote} />)}
 
             {done.length > 0 && (
               <>
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 pt-2">Done recently</h2>
-                {done.map((i) => <IssueCard key={i.id} issue={i} busy={busyId === i.id} change={change} />)}
+                {done.map((i) => <IssueCard key={i.id} issue={i} busy={busyId === i.id} change={change} addNote={addNote} />)}
               </>
             )}
 
@@ -114,7 +120,7 @@ export default function Technician({ session, signOut }) {
   );
 }
 
-function IssueCard({ issue, busy, change }) {
+function IssueCard({ issue, busy, change, addNote }) {
   const resolved = issue.status === 'resolved';
   return (
     <article className={`bg-white rounded-xl border border-slate-200 border-t-[3px] ${resolved ? 'border-t-emerald-400 opacity-75' : BAR[issue.priority]} p-4 shadow-sm`}>
@@ -125,6 +131,9 @@ function IssueCard({ issue, busy, change }) {
         </div>
         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize flex-none ${PRIORITY_STYLE[issue.priority]}`}>{issue.priority}</span>
       </div>
+      {issue.needsHelp && !resolved && <p className="mt-3 text-sm text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 font-medium">Your manager knows you need help with this.</p>}
+      <IssueNotes notes={issue.notes} />
+      {!resolved && <NoteBox cannotFix collapsible label="Write a note to your manager" placeholder="e.g. I need a new part, or: the guest is still in the room" onSend={(t, blocked) => addNote(issue, t, blocked)} />}
       <div className="mt-4 space-y-2">
         {issue.status === 'open' && (
           <button className={`${btnPrimary} w-full py-4 text-base`} disabled={busy} onClick={() => change(issue, 'in_progress', 'Work started')}>Start work</button>

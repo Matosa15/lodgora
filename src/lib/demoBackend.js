@@ -4,7 +4,7 @@
 
 import { dayKey, spaceInline } from './constants';
 
-const KEY = 'lodgora-demo-v6';
+const KEY = 'lodgora-demo-v7';
 const SESSION_KEY = 'lodgora-demo-session';
 const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2));
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
@@ -80,7 +80,8 @@ function seed() {
   byNumber('204').cleanSeconds = 31 * 60;
   const issues = [
     { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34), assignedTo: 's5' },
-    { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120), assignedTo: 's5' },
+    { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120), assignedTo: 's5', needsHelp: true,
+      notes: [{ id: newId(), author: 'Tom Baker', byStaff: true, body: 'The compressor needs a new part. I cannot fix it today.', createdAt: ago(40) }] },
     { id: newId(), roomId: byNumber('105').id, roomNumber: '105', title: 'Bedside lamp is not working', priority: 'low', status: 'open', reportedBy: 'Emma Clarke', createdAt: ago(300) },
     ...[['201', 'Leaking tap', 'high', 26, 21], ['202', 'TV remote missing', 'low', 20, 19], ['203', 'Door lock jammed', 'urgent', 14, 13], ['104', 'Broken curtain rail', 'normal', 9, 6], ['108', 'Hair dryer not working', 'normal', 5, 4]]
       .map(([num, title, priority, dc, dr]) => ({ id: newId(), roomId: byNumber(num).id, roomNumber: num, title, priority, status: 'resolved', reportedBy: 'Olivia Hughes', createdAt: ago(dc * 1440), resolvedAt: ago(dr * 1440 + 180) }))
@@ -233,7 +234,7 @@ export function createDemoBackend() {
         async list() {
           return state.issues.map((i) => {
             const room = state.rooms.find((r) => r.id === i.roomId);
-            return { ...i, resolvedAt: i.resolvedAt || null, roomLabel: room ? (room.kind === 'area' ? room.number : `Room ${room.number}`) : '', roomInline: room ? spaceInline(room) : '' };
+            return { ...i, notes: (i.notes || []).map((n) => ({ ...n })), needsHelp: !!i.needsHelp, resolvedAt: i.resolvedAt || null, roomLabel: room ? (room.kind === 'area' ? room.number : `Room ${room.number}`) : '', roomInline: room ? spaceInline(room) : '' };
           });
         },
         async create({ roomId, title, priority }) {
@@ -243,7 +244,16 @@ export function createDemoBackend() {
         },
         async setStatus(id, status) {
           const i = state.issues.find((x) => x.id === id);
-          if (i) { i.status = status; i.resolvedAt = status === 'resolved' ? new Date().toISOString() : null; }
+          if (i) { i.status = status; i.resolvedAt = status === 'resolved' ? new Date().toISOString() : null; if (status === 'resolved') i.needsHelp = false; }
+          save();
+        },
+        async addNote(id, text) {
+          const i = state.issues.find((x) => x.id === id);
+          if (!i) return;
+          const body = String(text).trim();
+          if (!body) throw new Error('Write a short note');
+          (i.notes = i.notes || []).push({ id: newId(), author: state.managerName, byStaff: false, body: body.slice(0, 500), createdAt: new Date().toISOString() });
+          i.needsHelp = false;
           save();
         },
         async assign(id, staffId) {
@@ -251,6 +261,7 @@ export function createDemoBackend() {
           if (!i) return;
           if (staffId && !state.staff.some((s) => s.id === staffId && s.role === 'maintenance')) throw new Error('Choose someone from the maintenance team.');
           i.assignedTo = staffId || null;
+          i.needsHelp = false;
           save();
         }
       },
@@ -349,7 +360,7 @@ export function createDemoBackend() {
         const order = { urgent: 0, high: 1, normal: 2, low: 3 };
         return state.issues
           .filter((i) => i.assignedTo === s.id && (i.status !== 'resolved' || Date.parse(i.resolvedAt) > limit))
-          .map((i) => { const r = state.rooms.find((x) => x.id === i.roomId); return { id: i.id, title: i.title, priority: i.priority, status: i.status, reportedBy: i.reportedBy, createdAt: i.createdAt, resolvedAt: i.resolvedAt || null, roomId: i.roomId, roomLabel: r ? (r.kind === 'area' ? r.number : `Room ${r.number}`) : '' }; })
+          .map((i) => { const r = state.rooms.find((x) => x.id === i.roomId); return { id: i.id, title: i.title, priority: i.priority, status: i.status, reportedBy: i.reportedBy, createdAt: i.createdAt, resolvedAt: i.resolvedAt || null, roomId: i.roomId, needsHelp: !!i.needsHelp, notes: (i.notes || []).slice(-20).map((n) => ({ ...n })), roomLabel: r ? (r.kind === 'area' ? r.number : `Room ${r.number}`) : '' }; })
           .sort((a, b) => (a.status === 'resolved') - (b.status === 'resolved') || order[a.priority] - order[b.priority] || a.createdAt.localeCompare(b.createdAt));
       },
       async setIssueStatus(issueId, status) {
@@ -359,8 +370,22 @@ export function createDemoBackend() {
         if (!['open', 'in_progress', 'resolved'].includes(status)) throw new Error('That change is not allowed');
         i.status = status;
         i.resolvedAt = status === 'resolved' ? new Date().toISOString() : null;
+        if (status === 'resolved') i.needsHelp = false;
         const r = state.rooms.find((x) => x.id === i.roomId);
         log(`${status === 'resolved' ? 'Issue resolved' : status === 'in_progress' ? 'Work started' : 'Issue reopened'}${r ? ' in ' + spaceInline(r) : ''}: ${i.title}`, s.fullName);
+        save();
+      },
+      async addIssueNote(issueId, text, cannotFix = false) {
+        const s = needMe();
+        const i = state.issues.find((x) => x.id === issueId && x.assignedTo === s.id);
+        if (!i) throw new Error('Issue not found');
+        const body = String(text || '').trim();
+        if (!body) throw new Error('Write a short note');
+        if (body.length > 500) throw new Error('Use 500 characters or fewer');
+        (i.notes = i.notes || []).push({ id: newId(), author: s.fullName, byStaff: true, body, createdAt: new Date().toISOString() });
+        if (cannotFix && i.status !== 'resolved') i.needsHelp = true;
+        const r = state.rooms.find((x) => x.id === i.roomId);
+        log(`${cannotFix ? 'Needs help' : 'Note added'}${r ? ' in ' + spaceInline(r) : ''}: ${i.title}`, s.fullName);
         save();
       },
       async roomList() { needMe(); return state.rooms.map((r) => ({ id: r.id, kind: r.kind || 'room', number: r.number })); },

@@ -55,3 +55,6 @@ Managers open **Planner** to choose, for each of the next 7 days, which rooms an
 
 ## Maintenance team
 In **Team**, add maintenance people next to the housekeepers. In **Maintenance**, each open issue has an "Assigned to" choice. Maintenance people sign in with the hotel code, username and PIN like housekeepers, and only see the issues given to them. Rooms can only be assigned to housekeepers. Run `supabase/update-6.sql` once (after update-5) to add it.
+
+## Notes on issues
+Maintenance people can write a note to the manager on each issue, or press "I can't fix this" (the manager sees a red "Needs help" tag on the Maintenance page and the Dashboard). The manager replies with a note, which clears the tag. Run `supabase/update-7.sql` once (after update-6) to add it.

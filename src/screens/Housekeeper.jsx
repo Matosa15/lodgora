@@ -1,7 +1,7 @@
 // Ecrã da camareira: pensado para o telemóvel. Lista dos seus quartos e um botão grande por quarto.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
-import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
+import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
 import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName } from '../lib/constants';
 
 const ORDER = { Cleaning: 0, Dirty: 1, 'Awaiting inspection': 2, Ready: 3, Occupied: 4, 'Out of service': 5 };
@@ -204,10 +204,7 @@ export function ReportModal({ rooms, initialRoomId, onClose, onDone }) {
     <Modal title="Report a problem" subtitle="Maintenance and your manager will see this right away." onClose={onClose} sheet>
       <form onSubmit={submit} noValidate className="p-5 space-y-4">
         <Field id="r-room" label="Where">
-          <select id="r-room" className={inputCls} value={roomId} onChange={(e) => setRoomId(e.target.value)}>
-            <option value="">Not about one place</option>
-            {rooms.map((r) => <option key={r.id} value={r.id}>{spaceName(r)}</option>)}
-          </select>
+          <WherePicker id="r-room" rooms={rooms} value={roomId} onChange={setRoomId} />
         </Field>
         <Field id="r-title" label="What is wrong?" error={error}>
           <input id="r-title" className={inputCls} value={title} onChange={(e) => { setTitle(e.target.value); setError(''); }} placeholder="e.g. Shower is leaking" />
