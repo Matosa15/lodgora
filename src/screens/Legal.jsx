@@ -80,7 +80,7 @@ function Privacy() {
           'Staff: full name, username and a 4-digit PIN. The PIN is stored as a secure hash. The hotel manager can also see the PIN in the Team page, so they can help staff who forget it.',
           'Hotel operations: room numbers and types, room status, who cleaned which room and when, cleaning times, inspection results, maintenance issues and the activity log.',
           'Security data: failed sign-in attempts (used to lock an account for 15 minutes after five wrong PINs).',
-          'Messages you send us, for example when you ask for a demo.'
+          'Messages and form requests you send us, for example when you ask for a demo or a pilot.'
         ]} />
         <p>We do not ask for guests' names or any guest data. Please do not enter guest information in room notes or issue descriptions.</p>
       </S>
@@ -99,6 +99,7 @@ function Privacy() {
         <List items={[
           'Supabase: database, sign-in and emails such as password reset. Our database is in the European Union (Ireland).',
           'Cloudflare: hosts and delivers the website. It processes technical data such as IP addresses to deliver pages and protect the site.',
+          'Tally: the "Request a pilot" form on the website is hosted by Tally (tally.so). If you use it, the details you type (name, hotel, email, number of rooms, message) are sent to Tally and to us.',
           'Google Fonts: this website loads its typefaces from Google, which means your browser sends your IP address to Google when a page opens.'
         ]} />
         <p>

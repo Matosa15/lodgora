@@ -10,6 +10,8 @@ const INK = '#172B4D';
 const demoHref = '/app?demo';
 const ACCENT = { Ready: '#10B981', Dirty: '#F97316', Cleaning: '#3B82F6', 'Awaiting inspection': '#F59E0B' };
 const mailto = (subject) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent(subject)}`;
+// Pedido de demo/piloto: abre o formulário (noutro separador) ou, sem formulário, um email
+const request = (subject) => (SITE.requestUrl ? { href: SITE.requestUrl, target: '_blank', rel: 'noopener noreferrer' } : { href: mailto(subject) });
 
 const btn = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-[15px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]';
 const btnPrimary = `${btn} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`;
@@ -124,7 +126,7 @@ function Hero() {
           <div className="mt-8 flex flex-wrap gap-3">
             <a href={demoHref} className={btnPrimary}>Try the live demo</a>
             <a href="#try" className={btnLight}>Play with it below</a>
-            {SITE.contactEmail && <a href={mailto('Lodgora demo request')} className={btnLight}>Request a demo</a>}
+            {(SITE.requestUrl || SITE.contactEmail) && <a {...request('Lodgora demo request')} className={btnLight}>Request a demo</a>}
           </div>
           <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed.</p>
         </div>
@@ -349,7 +351,7 @@ function Closing() {
           <p className="mt-5 max-w-lg leading-relaxed">Open the demo and try it as a manager and as a housekeeper. It takes two minutes, with no account.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href={demoHref} className={btnPrimary}>Try the live demo</a>
-            {SITE.contactEmail && <a href={mailto('Lodgora pilot')} className={btnLight}>Ask for a free pilot</a>}
+            {(SITE.requestUrl || SITE.contactEmail) && <a {...request('Lodgora pilot')} className={btnLight}>Ask for a free pilot</a>}
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
             {['Free ' + SITE.pilotDays + '-day pilot', 'No app to install', 'Set up in minutes'].map((t) => (

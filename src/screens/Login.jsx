@@ -254,7 +254,7 @@ function ManagerForm({ onSession, isDemo }) {
                 <input id="m-name" className={input} value={f.fullName} onChange={(e) => set('fullName', e.target.value)} autoComplete="name" />
               </Field>
               <Field id="m-invite" label="Invitation code" error={errors.inviteCode}
-                hint={SITE.contactEmail ? <>No code yet? <a className="font-semibold text-[#0D7C77] hover:underline" href={`mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Lodgora invitation')}`}>Ask for one</a>.</> : 'Lodgora gives you this code when your hotel joins.'}>
+                hint={SITE.contactEmail || SITE.requestUrl ? <>No code yet? <a className="font-semibold text-[#0D7C77] hover:underline" {...(SITE.requestUrl ? { href: SITE.requestUrl, target: '_blank', rel: 'noopener noreferrer' } : { href: `mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Lodgora invitation')}` })}>Ask for one</a>.</> : 'Lodgora gives you this code when your hotel joins.'}>
                 <input id="m-invite" className={`${input} uppercase tracking-wider`} value={f.inviteCode} autoComplete="off" autoCapitalize="characters" placeholder="A1B2C-D3E4F"
                   onChange={(e) => set('inviteCode', e.target.value)} />
               </Field>

@@ -3,6 +3,8 @@ export const SITE = {
   // Email público (botões "Request a demo", rodapé, páginas legais e login).
   // Para usar outro, define a variável VITE_CONTACT_EMAIL no Cloudflare.
   contactEmail: import.meta.env.VITE_CONTACT_EMAIL || 'contact@lodgora.eu',
+  // Formulário 'Request a pilot' (Tally). Os botões da página inicial abrem este formulário; se ficar vazio, abrem um email.
+  requestUrl: import.meta.env.VITE_REQUEST_URL || 'https://tally.so/r/6DLkxO',
   pilotDays: 30,
   // Dados de quem explora o serviço. Aparecem nas páginas de privacidade e termos.
   // Preenche quando tiveres o contabilista/empresa definidos. O que ficar vazio não aparece.
