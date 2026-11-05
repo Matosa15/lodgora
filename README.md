@@ -35,8 +35,8 @@ If you already ran `schema.sql` before, run `supabase/update-3.sql` once instead
 The "Forgot your password?" link on the Manager sign in sends an email through Supabase. For the link in that email to work:
 
 1. In Supabase open **Authentication → URL Configuration**.
-2. Set **Site URL** to your website address (for example `https://lodgora.pages.dev`).
-3. Under **Redirect URLs** add `https://lodgora.pages.dev/app` (and the same with your own domain later).
+2. Set **Site URL** to your website address (for example `https://lodgora.eu`).
+3. Under **Redirect URLs** add `https://lodgora.eu/app` (and `https://lodgora.pages.dev/app` if you still use it).
 
 Supabase's built-in email service only sends a few emails per hour. Before you have many clients, set up your own email sender under **Authentication → SMTP Settings**.
 
