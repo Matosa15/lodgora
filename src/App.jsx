@@ -4,6 +4,7 @@ import { ToastProvider, Spinner } from './components/ui';
 import Login from './screens/Login';
 import Manager from './screens/Manager';
 import Housekeeper from './screens/Housekeeper';
+import Technician from './screens/Technician';
 import ResetPassword from './screens/ResetPassword';
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
   else if (session === undefined) screen = <Spinner label="Loading" />;
   else if (!session) screen = <Login onSession={setSession} notice={linkError} />;
   else if (session.kind === 'manager') screen = <Manager session={session} signOut={signOut} />;
+  else if (session.role === 'maintenance') screen = <Technician session={session} signOut={signOut} />;
   else screen = <Housekeeper session={session} signOut={signOut} />;
 
   return <ToastProvider>{screen}</ToastProvider>;

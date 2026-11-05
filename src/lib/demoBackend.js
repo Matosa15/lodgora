@@ -4,7 +4,7 @@
 
 import { dayKey, spaceInline } from './constants';
 
-const KEY = 'lodgora-demo-v5';
+const KEY = 'lodgora-demo-v6';
 const SESSION_KEY = 'lodgora-demo-session';
 const newId = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2));
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
@@ -48,7 +48,9 @@ function seed() {
     { id: 's1', fullName: 'Emma Clarke', username: 'emma', role: 'housekeeper', active: true, pin: '1234' },
     { id: 's2', fullName: 'Olivia Hughes', username: 'olivia', role: 'housekeeper', active: true, pin: '1234' },
     { id: 's3', fullName: 'Grace Turner', username: 'grace', role: 'housekeeper', active: true, pin: '1234' },
-    { id: 's4', fullName: 'Jack Wilson', username: 'jack', role: 'housekeeper', active: true, pin: '1234' }
+    { id: 's4', fullName: 'Jack Wilson', username: 'jack', role: 'housekeeper', active: true, pin: '1234' },
+    { id: 's5', fullName: 'Tom Baker', username: 'tom', role: 'maintenance', active: true, pin: '1234' },
+    { id: 's6', fullName: 'Noah Davies', username: 'noah', role: 'maintenance', active: true, pin: '1234' }
   ];
   const room = (number, floor, type, status, assignedTo = null, note = '', kind = 'room') =>
     ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanSeconds: 0, cleanRunningSince: null });
@@ -77,8 +79,8 @@ function seed() {
   const done = byNumber('104'); done.cleanSeconds = 26 * 60;
   byNumber('204').cleanSeconds = 31 * 60;
   const issues = [
-    { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34) },
-    { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120) },
+    { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34), assignedTo: 's5' },
+    { id: newId(), roomId: byNumber('118').id, roomNumber: '118', title: 'Air conditioning does not cool', priority: 'high', status: 'in_progress', reportedBy: 'Front desk', createdAt: ago(120), assignedTo: 's5' },
     { id: newId(), roomId: byNumber('105').id, roomNumber: '105', title: 'Bedside lamp is not working', priority: 'low', status: 'open', reportedBy: 'Emma Clarke', createdAt: ago(300) },
     ...[['201', 'Leaking tap', 'high', 26, 21], ['202', 'TV remote missing', 'low', 20, 19], ['203', 'Door lock jammed', 'urgent', 14, 13], ['104', 'Broken curtain rail', 'normal', 9, 6], ['108', 'Hair dryer not working', 'normal', 5, 4]]
       .map(([num, title, priority, dc, dr]) => ({ id: newId(), roomId: byNumber(num).id, roomNumber: num, title, priority, status: 'resolved', reportedBy: 'Olivia Hughes', createdAt: ago(dc * 1440), resolvedAt: ago(dr * 1440 + 180) }))
@@ -95,7 +97,7 @@ function seed() {
   const put = (n, day, staffId) => plan.push({ id: newId(), roomId: byNumber(n).id, day: dayKey(day), staffId });
   [['101', 's1'], ['103', 's1'], ['105', 's2'], ['202', 's2'], ['203', 's3'], ['Lobby', 's4'], ['Breakfast room', 's4']].forEach(([n, st]) => put(n, 1, st));
   [['101', 's3'], ['118', 's1'], ['204', null], ['Gym', null]].forEach(([n, st]) => put(n, 2, st));
-  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sarah Mitchell', staff, rooms, issues, activity, plan, cleanings: sampleHistory(rooms, staff) };
+  return { hotel: { id: 'demo', name: 'Northbridge Hotel', code: 'DEMO01' }, managerName: 'Sarah Mitchell', staff, rooms, issues, activity, plan, cleanings: sampleHistory(rooms, staff.filter((s) => s.role === 'housekeeper')) };
 }
 
 export function createDemoBackend() {
@@ -171,7 +173,7 @@ export function createDemoBackend() {
         if (!s) return null;
         if (s.kind === 'manager') return managerSession();
         const st = me();
-        return st ? { kind: 'staff', name: st.fullName, hotel: { name: state.hotel.name }, staffId: st.id } : null;
+        return st ? { kind: 'staff', name: st.fullName, hotel: { name: state.hotel.name }, staffId: st.id, role: st.role } : null;
       },
       async signInManager() { session.set({ kind: 'manager' }); return managerSession(); },
       async signUpManager() { session.set({ kind: 'manager' }); return managerSession(); },
@@ -188,7 +190,7 @@ export function createDemoBackend() {
         }
         delete attempts[key];
         session.set({ kind: 'staff', staffId: st.id });
-        return { kind: 'staff', name: st.fullName, hotel: { name: state.hotel.name }, staffId: st.id };
+        return { kind: 'staff', name: st.fullName, hotel: { name: state.hotel.name }, staffId: st.id, role: st.role };
       },
       async sendPasswordReset() { /* na demonstração não há emails */ },
       recovering() { return typeof location !== 'undefined' && new URLSearchParams(location.search).has('recover'); },
@@ -243,17 +245,24 @@ export function createDemoBackend() {
           const i = state.issues.find((x) => x.id === id);
           if (i) { i.status = status; i.resolvedAt = status === 'resolved' ? new Date().toISOString() : null; }
           save();
+        },
+        async assign(id, staffId) {
+          const i = state.issues.find((x) => x.id === id);
+          if (!i) return;
+          if (staffId && !state.staff.some((s) => s.id === staffId && s.role === 'maintenance')) throw new Error('Choose someone from the maintenance team.');
+          i.assignedTo = staffId || null;
+          save();
         }
       },
       staff: {
         async list() { return state.staff.map((s) => ({ ...s })); },
-        async create({ fullName, username, pin }) {
+        async create({ fullName, username, pin, role = 'housekeeper' }) {
           const u = String(username).trim().toLowerCase();
           if (fullName.trim().length < 2) throw new Error('Enter the full name');
           if (!/^[a-z0-9._-]{2,20}$/.test(u)) throw new Error('Username must have 2 to 20 letters, numbers, dots or dashes');
           if (!/^[0-9]{4}$/.test(pin)) throw new Error('The PIN must have exactly 4 digits');
           if (state.staff.some((s) => s.username === u)) throw new Error('That username is already used');
-          state.staff.push({ id: newId(), fullName: fullName.trim(), username: u, role: 'housekeeper', active: true, pin });
+          state.staff.push({ id: newId(), fullName: fullName.trim(), username: u, role: role === 'maintenance' ? 'maintenance' : 'housekeeper', active: true, pin });
           save();
         },
         async setPin(id, pin) {
@@ -268,7 +277,10 @@ export function createDemoBackend() {
           const s = state.staff.find((x) => x.id === id);
           if (!s) throw new Error('Staff member not found');
           s.active = active;
-          if (!active) state.rooms.forEach((r) => { if (r.assignedTo === id) r.assignedTo = null; });
+          if (!active) {
+            state.rooms.forEach((r) => { if (r.assignedTo === id) r.assignedTo = null; });
+            state.issues.forEach((i) => { if (i.assignedTo === id && i.status !== 'resolved') i.assignedTo = null; });
+          }
           save();
         }
       },
@@ -331,6 +343,27 @@ export function createDemoBackend() {
         }
         save();
       },
+      async issues() {
+        const s = needMe();
+        const limit = Date.now() - 3 * 86400000;
+        const order = { urgent: 0, high: 1, normal: 2, low: 3 };
+        return state.issues
+          .filter((i) => i.assignedTo === s.id && (i.status !== 'resolved' || Date.parse(i.resolvedAt) > limit))
+          .map((i) => { const r = state.rooms.find((x) => x.id === i.roomId); return { id: i.id, title: i.title, priority: i.priority, status: i.status, reportedBy: i.reportedBy, createdAt: i.createdAt, resolvedAt: i.resolvedAt || null, roomId: i.roomId, roomLabel: r ? (r.kind === 'area' ? r.number : `Room ${r.number}`) : '' }; })
+          .sort((a, b) => (a.status === 'resolved') - (b.status === 'resolved') || order[a.priority] - order[b.priority] || a.createdAt.localeCompare(b.createdAt));
+      },
+      async setIssueStatus(issueId, status) {
+        const s = needMe();
+        const i = state.issues.find((x) => x.id === issueId && x.assignedTo === s.id);
+        if (!i) throw new Error('Issue not found');
+        if (!['open', 'in_progress', 'resolved'].includes(status)) throw new Error('That change is not allowed');
+        i.status = status;
+        i.resolvedAt = status === 'resolved' ? new Date().toISOString() : null;
+        const r = state.rooms.find((x) => x.id === i.roomId);
+        log(`${status === 'resolved' ? 'Issue resolved' : status === 'in_progress' ? 'Work started' : 'Issue reopened'}${r ? ' in ' + spaceInline(r) : ''}: ${i.title}`, s.fullName);
+        save();
+      },
+      async roomList() { needMe(); return state.rooms.map((r) => ({ id: r.id, kind: r.kind || 'room', number: r.number })); },
       async applyPlan(today) { needMe(); return applyPlan(today); },
       async reportIssue(roomId, title, priority) {
         const s = needMe();

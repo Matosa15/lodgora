@@ -185,7 +185,7 @@ export default function Housekeeper({ session, signOut }) {
   );
 }
 
-function ReportModal({ rooms, initialRoomId, onClose, onDone }) {
+export function ReportModal({ rooms, initialRoomId, onClose, onDone }) {
   const [roomId, setRoomId] = useState(initialRoomId);
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState('normal');

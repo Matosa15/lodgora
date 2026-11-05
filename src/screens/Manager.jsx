@@ -39,6 +39,7 @@ export default function Manager({ session, signOut }) {
   const staffById = useMemo(() => Object.fromEntries(d.staff.map((s) => [s.id, s])), [d.staff]);
   const rooms = useMemo(() => d.rooms.map((r) => ({ ...r, assignee: staffById[r.assignedTo]?.fullName || '' })), [d.rooms, staffById]);
   const housekeepers = d.staff.filter((s) => s.active && s.role === 'housekeeper');
+  const technicians = d.staff.filter((s) => s.active && s.role === 'maintenance').sort((a, b) => a.fullName.localeCompare(b.fullName));
   const openIssues = d.issues.filter((i) => i.status !== 'resolved');
   const count = (s) => rooms.filter((r) => r.status === s).length;
   const onlyRooms = rooms.filter((r) => !isArea(r));
@@ -141,6 +142,10 @@ export default function Manager({ session, signOut }) {
       await m.issues.setStatus(issue.id, status);
       if (status === 'resolved') await m.activity.add(`Issue resolved${issue.roomInline ? ' in ' + issue.roomInline : ''}: ${issue.title}`);
     }, status === 'resolved' ? 'Issue resolved' : 'Issue updated'),
+    assignIssue: (issue, staffId) => act(async () => {
+      await m.issues.assign(issue.id, staffId || null);
+      await m.activity.add(staffId ? `"${issue.title}" assigned to ${staffById[staffId].fullName}` : `"${issue.title}" unassigned`);
+    }, staffId ? `Assigned to ${staffById[staffId].fullName}` : 'Unassigned'),
     createStaff: async (s) => { try { await m.staff.create(s); await d.reload(); return null; } catch (e) { return e.message; } },
     setPin: async (id, pin) => { try { await m.staff.setPin(id, pin); toast('PIN changed'); return null; } catch (e) { return e.message; } },
     setActive: (s, active) => act(() => m.staff.setActive(s.id, active), active ? `${s.fullName} can sign in again` : `${s.fullName} can no longer sign in`)
@@ -178,11 +183,11 @@ export default function Manager({ session, signOut }) {
   } else if (page === 'Inspections') {
     body = <Inspections rooms={fRooms.filter((r) => r.status === 'Awaiting inspection')} actions={actions} />;
   } else if (page === 'Maintenance') {
-    body = <Maintenance issues={fIssues} onReport={() => setModal({ type: 'issue' })} actions={actions} />;
+    body = <Maintenance issues={fIssues} technicians={technicians} staffById={staffById} onReport={() => setModal({ type: 'issue' })} onAddTech={() => setModal({ type: 'staff', role: 'maintenance' })} actions={actions} />;
   } else if (page === 'Statistics') {
     body = <Statistics rooms={rooms} issues={d.issues} />;
   } else if (page === 'Team') {
-    body = <Team staff={fStaff} rooms={rooms} hotel={session.hotel} setModal={setModal} actions={actions} />;
+    body = <Team staff={fStaff} rooms={rooms} issues={d.issues} hotel={session.hotel} setModal={setModal} actions={actions} />;
   } else {
     body = <SettingsPage session={session} signOut={signOut} />;
   }
@@ -193,8 +198,8 @@ export default function Manager({ session, signOut }) {
     Planner: 'Plan the next 7 days of cleaning.',
     Statistics: 'How your team is doing: cleaning times, quality and maintenance.',
     Inspections: 'Rooms and areas that were cleaned and need your approval.',
-    Maintenance: 'Problems reported by your team.',
-    Team: 'Your housekeepers and how they sign in.',
+    Maintenance: 'Problems reported by your team, and who is fixing them.',
+    Team: 'Your housekeepers, your maintenance team and how they sign in.',
     Settings: 'Your hotel and your account.'
   }[page];
 
@@ -285,7 +290,7 @@ export default function Manager({ session, signOut }) {
         actions={actions} onClose={() => setModal(null)} onReport={() => setModal({ type: 'issue', roomId: roomModal.id })} />}
       {modal?.type === 'addRooms' && <AddSpacesModal onClose={() => setModal(null)} onSubmit={async (list) => { if (await actions.addRooms(list)) setModal(null); }} />}
       {modal?.type === 'issue' && <IssueModal rooms={rooms} initialRoomId={modal.roomId || ''} onClose={() => setModal(null)} onSubmit={async (i) => { if (await actions.createIssue(i)) setModal(null); }} />}
-      {modal?.type === 'staff' && <StaffModal hotelCode={session.hotel.code} onClose={() => setModal(null)} onCreate={actions.createStaff} />}
+      {modal?.type === 'staff' && <StaffModal role={modal.role || 'housekeeper'} hotelCode={session.hotel.code} onClose={() => setModal(null)} onCreate={actions.createStaff} />}
       {modal?.type === 'pin' && <PinModal staff={d.staff.find((s) => s.id === modal.id)} onClose={() => setModal(null)} onSave={actions.setPin} />}
     </div>
   );
@@ -370,7 +375,7 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {it.kind === 'issue'
-                        ? `${it.issue.roomLabel ? it.issue.roomLabel + ' · ' : ''}${it.issue.reportedBy} · ${timeAgo(it.issue.createdAt)}`
+                        ? `${it.issue.roomLabel ? it.issue.roomLabel + ' · ' : ''}${it.issue.reportedBy} · ${timeAgo(it.issue.createdAt)}${it.issue.assignedTo ? ' · ' + (staff.find((x) => x.id === it.issue.assignedTo)?.fullName || 'someone') + ' is on it' : ''}`
                         : `Cleaned by ${it.room.assignee || 'unknown'}${it.room.cleanSeconds > 0 ? ' in ' + minutesLabel(it.room.cleanSeconds) : ''}`}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -407,22 +412,23 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
           </Panel>
         </div>
 
-        <Panel title="Team overview" subtitle={`${staff.filter((s) => s.active).length} active housekeeper${staff.filter((s) => s.active).length === 1 ? '' : 's'}`}
+        <Panel title="Team overview" subtitle={`${staff.filter((s) => s.active).length} active ${staff.filter((s) => s.active).length === 1 ? 'person' : 'people'}`}
           right={<button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => go('Team')}>Manage</button>}>
           {staff.length === 0 ? (
-            <EmptyState icon="users" title="No team yet" text="Add your housekeepers so you can assign rooms.">
+            <EmptyState icon="users" title="No team yet" text="Add your housekeepers and maintenance team so you can assign rooms and issues.">
               <button className={btnPrimary} onClick={() => setModal({ type: 'staff' })}>Add housekeeper</button>
             </EmptyState>
           ) : (
             <ul className="px-5 sm:px-6 pb-4">
               {staff.filter((s) => s.active).map((s) => {
-                const mine = allRooms.filter((r) => r.assignedTo === s.id);
-                const todo = mine.filter((r) => r.status === 'Dirty' || r.status === 'Cleaning').length;
+                const tech = s.role === 'maintenance';
+                const mine = tech ? issues.filter((i) => i.assignedTo === s.id) : allRooms.filter((r) => r.assignedTo === s.id);
+                const todo = tech ? mine.length : mine.filter((r) => r.status === 'Dirty' || r.status === 'Cleaning').length;
                 return (
                   <li key={s.id} className="flex items-center gap-3 py-2">
                     <span className="w-9 h-9 rounded-full bg-[#172B4D] text-white text-xs font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
-                    <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{s.fullName}</p><p className="text-xs text-slate-500">Housekeeper</p></div>
-                    <p className="text-xs text-slate-500 text-right tabular-nums">{todo} to clean<br />{mine.length} assigned</p>
+                    <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{s.fullName}</p><p className="text-xs text-slate-500">{tech ? 'Maintenance' : 'Housekeeper'}</p></div>
+                    <p className="text-xs text-slate-500 text-right tabular-nums">{tech ? <>{todo} open {todo === 1 ? 'issue' : 'issues'}</> : <>{todo} to clean<br />{mine.length} assigned</>}</p>
                   </li>
                 );
               })}
@@ -518,13 +524,21 @@ function Inspections({ rooms, actions }) {
 
 /* ---------------- Manutenção ---------------- */
 
-function Maintenance({ issues, onReport, actions }) {
+function Maintenance({ issues, technicians, staffById, onReport, onAddTech, actions }) {
   const [filter, setFilter] = useState('open');
   const list = issues.filter((i) => filter === 'all' || i.status !== 'resolved');
   const order = { urgent: 0, high: 1, normal: 2, low: 3 };
   list.sort((a, b) => (a.status === 'resolved') - (b.status === 'resolved') || order[a.priority] - order[b.priority]);
+  const unassigned = issues.filter((i) => i.status !== 'resolved' && !i.assignedTo).length;
   return (
-    <Panel title="Issues" subtitle="Reported by your team" right={<button className={btnPrimary} onClick={onReport}><Icon name="plus" className="w-4 h-4" />Report issue</button>}>
+    <Panel title="Issues" subtitle={technicians.length === 0 ? 'Reported by your team' : `Reported by your team${unassigned ? ` · ${unassigned} without anyone assigned` : ''}`}
+      right={<button className={btnPrimary} onClick={onReport}><Icon name="plus" className="w-4 h-4" />Report issue</button>}>
+      {technicians.length === 0 && (
+        <div className="mx-5 sm:mx-6 mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <span className="flex-1 basis-56">Add your maintenance people to give each issue to someone. They sign in with a PIN, like housekeepers, and only see their own issues.</span>
+          <button className={`${btnSmall} border border-slate-200 bg-white hover:bg-slate-50`} onClick={onAddTech}>Add maintenance person</button>
+        </div>
+      )}
       <div className="px-5 sm:px-6 pb-4 flex gap-1.5">
         {[['open', 'Open'], ['all', 'All']].map(([id, label]) => (
           <button key={id} onClick={() => setFilter(id)} aria-pressed={filter === id}
@@ -535,22 +549,37 @@ function Maintenance({ issues, onReport, actions }) {
         <EmptyState icon="check" title="No issues" text="Problems reported by your team will appear here." />
       ) : (
         <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
-          {list.map((i) => (
-            <li key={i.id} className={`py-4 flex flex-wrap items-start gap-3 ${i.status === 'resolved' ? 'opacity-60' : ''}`}>
-              <div className="min-w-0 flex-1 basis-56">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-sm">{i.title}</p>
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>
+          {list.map((i) => {
+            const who = staffById[i.assignedTo];
+            return (
+              <li key={i.id} className={`py-4 flex flex-wrap items-start gap-3 ${i.status === 'resolved' ? 'opacity-60' : ''}`}>
+                <div className="min-w-0 flex-1 basis-56">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-sm">{i.title}</p>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">{i.roomLabel ? `${i.roomLabel} · ` : ''}{i.reportedBy} · {timeAgo(i.createdAt)} · {ISSUE_STATUS_LABEL[i.status]}</p>
+                  {i.status !== 'resolved' && technicians.length > 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <label htmlFor={`as-${i.id}`} className="text-xs text-slate-500">Assigned to</label>
+                      <select id={`as-${i.id}`} value={i.assignedTo || ''} onChange={(e) => actions.assignIssue(i, e.target.value)}
+                        className={`px-2 py-1 border rounded-lg text-xs bg-white focus:outline-none focus:border-[#19A7A1] ${i.assignedTo ? 'border-[#19A7A1] text-[#0D7C77] font-medium' : 'border-slate-200 text-slate-500'}`}>
+                        <option value="">No one yet</option>
+                        {technicians.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {i.status !== 'resolved' && technicians.length === 0 && who && <p className="text-xs text-slate-500 mt-1">Assigned to {who.fullName}</p>}
+                  {i.status === 'resolved' && who && <p className="text-xs text-slate-500 mt-1">Fixed by {who.fullName}</p>}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">{i.roomLabel ? `${i.roomLabel} · ` : ''}{i.reportedBy} · {timeAgo(i.createdAt)} · {ISSUE_STATUS_LABEL[i.status]}</p>
-              </div>
-              <div className="flex gap-2">
-                {i.status === 'open' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'in_progress')}>Start work</button>}
-                {i.status !== 'resolved' && <button className={`${btnSmall} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`} onClick={() => actions.setIssueStatus(i, 'resolved')}>Resolve</button>}
-                {i.status === 'resolved' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'open')}>Reopen</button>}
-              </div>
-            </li>
-          ))}
+                <div className="flex gap-2">
+                  {i.status === 'open' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'in_progress')}>Start work</button>}
+                  {i.status !== 'resolved' && <button className={`${btnSmall} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`} onClick={() => actions.setIssueStatus(i, 'resolved')}>Resolve</button>}
+                  {i.status === 'resolved' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'open')}>Reopen</button>}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Panel>
@@ -559,7 +588,11 @@ function Maintenance({ issues, onReport, actions }) {
 
 /* ---------------- Equipa ---------------- */
 
-function Team({ staff, rooms, hotel, setModal, actions }) {
+function Team({ staff, rooms, issues, hotel, setModal, actions }) {
+  const groups = [
+    { role: 'housekeeper', title: 'Housekeepers', one: 'housekeeper', add: 'Add housekeeper', empty: 'No housekeepers yet', text: 'Add each person and give them a 4-digit PIN. You give them rooms to clean.' },
+    { role: 'maintenance', title: 'Maintenance team', one: 'maintenance person', add: 'Add maintenance person', empty: 'No maintenance team yet', text: 'Add the people who fix things. You give each issue to one of them, and they see only their own.' }
+  ];
   return (
     <>
       <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-wrap items-center gap-4">
@@ -572,21 +605,28 @@ function Team({ staff, rooms, hotel, setModal, actions }) {
         <CopyButton text={`${location.origin}/app`} label="Copy website address" />
       </section>
 
-      <Panel title="Housekeepers" subtitle={`${staff.length} ${staff.length === 1 ? 'person' : 'people'}`}
-        right={<button className={btnPrimary} onClick={() => setModal({ type: 'staff' })}><Icon name="plus" className="w-4 h-4" />Add housekeeper</button>}>
-        {staff.length === 0 ? (
-          <EmptyState icon="users" title="No housekeepers yet" text="Add each person and give them a 4-digit PIN." />
-        ) : (
-          <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
-            {staff.map((s) => <StaffRow key={s.id} s={s} hotel={hotel} assigned={rooms.filter((r) => r.assignedTo === s.id).length} setModal={setModal} actions={actions} />)}
-          </ul>
-        )}
-      </Panel>
+      {groups.map((g) => {
+        const list = staff.filter((s) => s.role === g.role);
+        return (
+          <Panel key={g.role} title={g.title} subtitle={`${list.length} ${list.length === 1 ? 'person' : 'people'}`}
+            right={<button className={btnPrimary} onClick={() => setModal({ type: 'staff', role: g.role })}><Icon name="plus" className="w-4 h-4" />{g.add}</button>}>
+            {list.length === 0 ? (
+              <EmptyState icon="users" title={g.empty} text={g.text} />
+            ) : (
+              <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
+                {list.map((s) => <StaffRow key={s.id} s={s} hotel={hotel}
+                  count={g.role === 'maintenance' ? issues.filter((i) => i.assignedTo === s.id && i.status !== 'resolved').length : rooms.filter((r) => r.assignedTo === s.id).length}
+                  setModal={setModal} actions={actions} />)}
+              </ul>
+            )}
+          </Panel>
+        );
+      })}
     </>
   );
 }
 
-function StaffRow({ s, hotel, assigned, setModal, actions }) {
+function StaffRow({ s, hotel, count, setModal, actions }) {
   const [show, setShow] = useState(false);
   const details = `Lodgora sign in\nWebsite: ${location.origin}/app\nHotel code: ${hotel.code}\nUsername: ${s.username}\nPIN: ${s.pin}`;
   return (
@@ -594,7 +634,7 @@ function StaffRow({ s, hotel, assigned, setModal, actions }) {
       <span className="w-10 h-10 rounded-full bg-[#172B4D] text-white text-sm font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
       <div className="min-w-0 flex-1 basis-40">
         <p className="font-semibold text-sm truncate">{s.fullName}{!s.active && <span className="ml-2 text-xs font-medium text-slate-500">(inactive)</span>}</p>
-        <p className="text-xs text-slate-500">Username <span className="font-mono">{s.username}</span> · {assigned} {assigned === 1 ? 'room' : 'rooms'} assigned</p>
+        <p className="text-xs text-slate-500">Username <span className="font-mono">{s.username}</span> · {s.role === 'maintenance' ? `${count} open ${count === 1 ? 'issue' : 'issues'}` : `${count} ${count === 1 ? 'room' : 'rooms'} assigned`}</p>
         <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2">
           {s.pin ? (
             <>
@@ -877,7 +917,8 @@ function IssueModal({ rooms, initialRoomId, onClose, onSubmit }) {
 
 const randomPin = () => String(Math.floor(1000 + Math.random() * 9000));
 
-function StaffModal({ hotelCode, onClose, onCreate }) {
+function StaffModal({ role = 'housekeeper', hotelCode, onClose, onCreate }) {
+  const noun = role === 'maintenance' ? 'maintenance person' : 'housekeeper';
   const [f, setF] = useState({ fullName: '', username: '', pin: randomPin() });
   const [touched, setTouched] = useState(false); // se a pessoa já editou o username à mão
   const [error, setError] = useState('');
@@ -895,7 +936,7 @@ function StaffModal({ hotelCode, onClose, onCreate }) {
     if (!/^[a-z0-9._-]{2,20}$/.test(f.username.trim().toLowerCase())) { setError('Username: 2 to 20 letters or numbers.'); return; }
     if (!/^[0-9]{4}$/.test(f.pin)) { setError('The PIN must have exactly 4 digits.'); return; }
     setBusy(true);
-    const err = await onCreate({ fullName: f.fullName, username: f.username, pin: f.pin });
+    const err = await onCreate({ fullName: f.fullName, username: f.username, pin: f.pin, role });
     setBusy(false);
     if (err) setError(err); else setCreated({ ...f, username: f.username.trim().toLowerCase() });
   };
@@ -917,7 +958,7 @@ function StaffModal({ hotelCode, onClose, onCreate }) {
   }
 
   return (
-    <Modal title="Add housekeeper" subtitle="They sign in on their phone with the hotel code, username and PIN." onClose={onClose}>
+    <Modal title={`Add ${noun}`} subtitle="They sign in on their phone with the hotel code, username and PIN." onClose={onClose}>
       <form onSubmit={submit} noValidate className="p-5 space-y-4">
         <Field id="st-name" label="Full name"><input id="st-name" className={inputCls} value={f.fullName} onChange={(e) => setName(e.target.value)} autoComplete="off" /></Field>
         <Field id="st-user" label="Username" hint="Lowercase letters or numbers. Filled in for you.">
@@ -929,7 +970,7 @@ function StaffModal({ hotelCode, onClose, onCreate }) {
             <button type="button" className={btnGhost} onClick={() => setF({ ...f, pin: randomPin() })} aria-label="Generate a new PIN"><Icon name="shuffle" className="w-4 h-4" /></button>
           </div>
         </Field>
-        <div className="flex gap-3"><button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>Cancel</button><button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? 'Adding…' : 'Add housekeeper'}</button></div>
+        <div className="flex gap-3"><button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>Cancel</button><button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? 'Adding…' : `Add ${noun}`}</button></div>
       </form>
     </Modal>
   );

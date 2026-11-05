@@ -70,7 +70,8 @@ create table public.issues (
   status       text not null default 'open' check (status in ('open', 'in_progress', 'resolved')),
   reported_by  text not null default '',
   created_at   timestamptz not null default now(),
-  resolved_at  timestamptz
+  resolved_at  timestamptz,
+  assigned_to  uuid references public.staff (id) on delete set null   -- quem da manutenção trata disto
 );
 
 create table public.activity (
@@ -215,7 +216,12 @@ create policy staff_select    on public.staff    for select to authenticated usi
 create policy rooms_all on public.rooms for all to authenticated
   using (hotel_id = public.current_hotel()) with check (hotel_id = public.current_hotel());
 create policy issues_all on public.issues for all to authenticated
-  using (hotel_id = public.current_hotel()) with check (hotel_id = public.current_hotel());
+  using (hotel_id = public.current_hotel())
+  with check (
+    hotel_id = public.current_hotel()
+    and (issues.assigned_to is null or exists (
+      select 1 from public.staff s where s.id = issues.assigned_to and s.hotel_id = issues.hotel_id and s.role = 'maintenance'))
+  );
 create policy cleaning_log_select on public.cleaning_log for select to authenticated using (hotel_id = public.current_hotel());
 create policy activity_select on public.activity for select to authenticated using (hotel_id = public.current_hotel());
 create policy activity_insert on public.activity for insert to authenticated with check (hotel_id = public.current_hotel());
@@ -312,6 +318,7 @@ begin
     raise exception 'Username must have 2 to 20 letters, numbers, dots or dashes';
   end if;
   if p_pin !~ '^[0-9]{4}$' then raise exception 'The PIN must have exactly 4 digits'; end if;
+  if coalesce(p_role, 'housekeeper') not in ('housekeeper', 'maintenance') then raise exception 'Invalid role'; end if;
   if exists (select 1 from public.staff where hotel_id = v_hotel and username = v_user) then
     raise exception 'That username is already used';
   end if;
@@ -337,7 +344,7 @@ begin
     where key = (select upper(h.code) || ':' || s.username from public.staff s join public.hotels h on h.id = s.hotel_id where s.id = p_staff_id);
 end $$;
 
-create function public.manager_set_staff_active(p_staff_id uuid, p_active boolean) returns void
+create or replace function public.manager_set_staff_active(p_staff_id uuid, p_active boolean) returns void
 language plpgsql security definer set search_path = public as $$
 declare
   v_hotel uuid := public.current_hotel();
@@ -348,6 +355,7 @@ begin
   if not p_active then
     delete from public.staff_sessions where staff_id = p_staff_id;
     update public.rooms set assigned_to = null where assigned_to = p_staff_id;
+    update public.issues set assigned_to = null where assigned_to = p_staff_id and status <> 'resolved';
   end if;
 end $$;
 
@@ -419,17 +427,17 @@ begin
   select * into v_hotel from public.hotels where id = v_staff.hotel_id;
 
   return json_build_object('token', v_token, 'staff_id', v_staff.id,
-                           'full_name', v_staff.full_name, 'hotel_name', v_hotel.name);
+                           'full_name', v_staff.full_name, 'hotel_name', v_hotel.name, 'role', v_staff.role);
 end $$;
 
-create function public.staff_me(p_token uuid) returns json
+create or replace function public.staff_me(p_token uuid) returns json
 language plpgsql security definer set search_path = public as $$
 declare
   v_staff public.staff := public.staff_from_token(p_token);
   v_hotel public.hotels;
 begin
   select * into v_hotel from public.hotels where id = v_staff.hotel_id;
-  return json_build_object('staff_id', v_staff.id, 'full_name', v_staff.full_name, 'hotel_name', v_hotel.name);
+  return json_build_object('staff_id', v_staff.id, 'full_name', v_staff.full_name, 'hotel_name', v_hotel.name, 'role', v_staff.role);
 end $$;
 
 create or replace function public.staff_rooms(p_token uuid) returns json
@@ -526,6 +534,59 @@ begin
     values (v_staff.hotel_id,
             'Issue reported' || case when v_room.id is not null then ' in ' || case when v_room.kind = 'area' then v_room.number else 'room ' || v_room.number end else '' end || ': ' || trim(p_title),
             v_staff.full_name);
+end $$;
+
+-- Manutenção: as avarias atribuídas à pessoa que entrou (as resolvidas ficam 3 dias à vista)
+create or replace function public.staff_issues(p_token uuid) returns json
+language plpgsql security definer set search_path = public as $$
+declare
+  v_staff public.staff := public.staff_from_token(p_token);
+  v_out json;
+begin
+  select coalesce(json_agg(json_build_object(
+           'id', i.id, 'title', i.title, 'priority', i.priority, 'status', i.status,
+           'reportedBy', i.reported_by, 'createdAt', i.created_at, 'resolvedAt', i.resolved_at,
+           'roomId', i.room_id,
+           'roomLabel', case when r.id is null then '' when r.kind = 'area' then r.number else 'Room ' || r.number end)
+         order by (i.status = 'resolved'),
+                  case i.priority when 'urgent' then 0 when 'high' then 1 when 'normal' then 2 else 3 end,
+                  i.created_at), '[]'::json)
+    into v_out
+    from public.issues i left join public.rooms r on r.id = i.room_id
+   where i.assigned_to = v_staff.id and i.hotel_id = v_staff.hotel_id
+     and (i.status <> 'resolved' or i.resolved_at > now() - interval '3 days');
+  return v_out;
+end $$;
+
+-- Manutenção: começar, resolver ou reabrir uma avaria que é sua
+create or replace function public.staff_set_issue_status(p_token uuid, p_issue_id uuid, p_status text) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_staff public.staff := public.staff_from_token(p_token);
+  v_issue public.issues;
+  v_room  public.rooms;
+begin
+  if p_status not in ('open', 'in_progress', 'resolved') then raise exception 'That change is not allowed'; end if;
+  select * into v_issue from public.issues where id = p_issue_id and assigned_to = v_staff.id and hotel_id = v_staff.hotel_id;
+  if not found then raise exception 'Issue not found'; end if;
+  update public.issues set status = p_status where id = v_issue.id;
+  select * into v_room from public.rooms where id = v_issue.room_id;
+  insert into public.activity (hotel_id, text, actor)
+    values (v_staff.hotel_id,
+            case p_status when 'resolved' then 'Issue resolved' when 'in_progress' then 'Work started' else 'Issue reopened' end
+              || case when v_room.id is not null then ' in ' || case when v_room.kind = 'area' then v_room.number else 'room ' || v_room.number end else '' end
+              || ': ' || v_issue.title,
+            v_staff.full_name);
+end $$;
+
+-- Todos os quartos e áreas (para quem reporta uma avaria fora da sua lista)
+create or replace function public.staff_room_list(p_token uuid) returns json
+language plpgsql security definer set search_path = public as $$
+declare
+  v_staff public.staff := public.staff_from_token(p_token);
+begin
+  return (select coalesce(json_agg(json_build_object('id', r.id, 'kind', r.kind, 'number', r.number) order by r.number), '[]'::json)
+            from public.rooms r where r.hotel_id = v_staff.hotel_id);
 end $$;
 
 -- ---------- Planeamento: limpezas marcadas para os próximos dias ----------

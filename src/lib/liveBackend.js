@@ -27,7 +27,7 @@ const toIssue = (i) => ({
   roomLabel: i.room ? (i.room.kind === 'area' ? i.room.number : `Room ${i.room.number}`) : '',
   roomInline: i.room ? (i.room.kind === 'area' ? i.room.number : `room ${i.room.number}`) : '',
   title: i.title, priority: i.priority, status: i.status, reportedBy: i.reported_by,
-  createdAt: i.created_at, resolvedAt: i.resolved_at || null
+  createdAt: i.created_at, resolvedAt: i.resolved_at || null, assignedTo: i.assigned_to || null
 });
 const toCleaning = (c) => ({
   id: c.id, roomId: c.room_id, label: c.label, kind: c.kind, type: c.type, staffId: c.staff_id,
@@ -91,7 +91,7 @@ export function createLiveBackend(url, key) {
         if (st?.token) {
           const { data, error } = await supabase.rpc('staff_me', { p_token: st.token });
           if (!error && data) {
-            return { kind: 'staff', name: data.full_name, hotel: { name: data.hotel_name }, staffId: data.staff_id };
+            return { kind: 'staff', name: data.full_name, hotel: { name: data.hotel_name }, staffId: data.staff_id, role: data.role || 'housekeeper' };
           }
           store.del(STAFF_KEY);
         }
@@ -120,7 +120,7 @@ export function createLiveBackend(url, key) {
         const data = check(await supabase.rpc('staff_login', { p_hotel_code: hotelCode, p_username: username, p_pin: pin }));
         if (data.error) throw new Error(data.error);
         store.set(STAFF_KEY, { token: data.token });
-        return { kind: 'staff', name: data.full_name, hotel: { name: data.hotel_name }, staffId: data.staff_id };
+        return { kind: 'staff', name: data.full_name, hotel: { name: data.hotel_name }, staffId: data.staff_id, role: data.role || 'housekeeper' };
       },
 
       async sendPasswordReset(email) {
@@ -175,7 +175,7 @@ export function createLiveBackend(url, key) {
       issues: {
         async list() {
           const rows = check(await supabase.from('issues')
-            .select('id, room_id, title, priority, status, reported_by, created_at, resolved_at, room:rooms(number, kind)')
+            .select('id, room_id, title, priority, status, reported_by, created_at, resolved_at, assigned_to, room:rooms(number, kind)')
             .order('created_at', { ascending: false }).limit(200));
           return rows.map(toIssue);
         },
@@ -186,6 +186,10 @@ export function createLiveBackend(url, key) {
         },
         async setStatus(id, status) {
           check(await supabase.from('issues').update({ status }).eq('id', id));
+        },
+        // Atribui a uma pessoa da manutenção (ou tira a atribuição com null)
+        async assign(id, staffId) {
+          check(await supabase.from('issues').update({ assigned_to: staffId || null }).eq('id', id));
         }
       },
 
@@ -205,9 +209,9 @@ export function createLiveBackend(url, key) {
             .select('id, full_name, username, role, active, pin_display').order('full_name'));
           return rows.map(toStaff);
         },
-        async create({ fullName, username, pin }) {
+        async create({ fullName, username, pin, role = 'housekeeper' }) {
           check(await supabase.rpc('manager_create_staff', {
-            p_full_name: fullName, p_username: username, p_pin: pin, p_role: 'housekeeper'
+            p_full_name: fullName, p_username: username, p_pin: pin, p_role: role
           }));
         },
         async setPin(id, pin) { check(await supabase.rpc('manager_set_staff_pin', { p_staff_id: id, p_pin: pin })); },
@@ -268,6 +272,9 @@ export function createLiveBackend(url, key) {
       async timer(roomId, action) {
         check(await supabase.rpc('staff_clean_timer', { p_token: token(), p_room_id: roomId, p_action: action }));
       },
+      async issues() { return check(await supabase.rpc('staff_issues', { p_token: token() })); },
+      async setIssueStatus(issueId, status) { check(await supabase.rpc('staff_set_issue_status', { p_token: token(), p_issue_id: issueId, p_status: status })); },
+      async roomList() { return check(await supabase.rpc('staff_room_list', { p_token: token() })); },
       async applyPlan(today) { return check(await supabase.rpc('staff_apply_plan', { p_token: token(), p_day: today })); },
       async reportIssue(roomId, title, priority) {
         check(await supabase.rpc('staff_report_issue', { p_token: token(), p_room_id: roomId || null, p_title: title, p_priority: priority }));

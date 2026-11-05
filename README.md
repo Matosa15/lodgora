@@ -52,3 +52,6 @@ A paused hotel (`active = false`) cannot sign in, neither the manager nor the ho
 
 ## Planner (planning cleaning ahead)
 Managers open **Planner** to choose, for each of the next 7 days, which rooms and areas get cleaned and by whom. Each day the plan goes onto the team's lists by itself the first time the manager or a housekeeper opens the app. Run `supabase/update-5.sql` once (after update-4) to add it.
+
+## Maintenance team
+In **Team**, add maintenance people next to the housekeepers. In **Maintenance**, each open issue has an "Assigned to" choice. Maintenance people sign in with the hotel code, username and PIN like housekeepers, and only see the issues given to them. Rooms can only be assigned to housekeepers. Run `supabase/update-6.sql` once (after update-5) to add it.
