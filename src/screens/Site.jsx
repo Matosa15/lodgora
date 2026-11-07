@@ -28,6 +28,7 @@ export default function Site() {
       <Header />
       <main>
         <Hero />
+        <Tour />
         <Day />
         <ForHousekeepers />
         <ForManagers />
@@ -128,7 +129,7 @@ function Hero() {
             <a href="#try" className={btnLight}>Play with it below</a>
             {(SITE.requestUrl || SITE.contactEmail) && <a {...request('Lodgora demo request')} className={btnLight}>Request a demo</a>}
           </div>
-          <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed.</p>
+          <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed. Or <a href="#tour" className="font-semibold text-[#0D7C77] hover:underline">watch the short tour</a>.</p>
         </div>
 
         <div>
@@ -168,6 +169,25 @@ function Hero() {
             </ul>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Vídeo de 1 minuto ---------------- */
+
+function Tour() {
+  return (
+    <section id="tour" className="mx-auto max-w-6xl px-5 pb-16 sm:pb-20 scroll-mt-16" aria-labelledby="tour-title">
+      <div className="max-w-3xl mx-auto text-center">
+        <h2 id="tour-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>See Lodgora in action</h2>
+        <p className="mt-3 text-lg">A short tour, from the housekeeper's phone to the manager's screen. Example data, no sound needed.</p>
+      </div>
+      <div className="mt-8 mx-auto max-w-4xl rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ boxShadow: '0 30px 50px -36px rgba(23,43,77,.45)' }}>
+        <video className="block w-full h-auto" controls playsInline preload="metadata" poster="/lodgora-tour-v2-poster.jpg" aria-label="Short tour of Lodgora: housekeeper, maintenance and manager screens">
+          <source src="/lodgora-tour-v2.mp4" type="video/mp4" />
+          Your browser cannot play this video. You can try the live demo above instead.
+        </video>
       </div>
     </section>
   );
