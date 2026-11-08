@@ -184,8 +184,8 @@ function Tour() {
         <p className="mt-3 text-lg">A short tour, from the housekeeper's phone to the manager's screen. Example data, no sound needed.</p>
       </div>
       <div className="mt-8 mx-auto max-w-4xl rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ boxShadow: '0 30px 50px -36px rgba(23,43,77,.45)' }}>
-        <video className="block w-full h-auto" controls playsInline preload="metadata" poster="/lodgora-tour-v2-poster.jpg" aria-label="Short tour of Lodgora: housekeeper, maintenance and manager screens">
-          <source src="/lodgora-tour-v2.mp4" type="video/mp4" />
+        <video className="block w-full h-auto" controls playsInline preload="metadata" poster="/lodgora-promo-v2-poster.jpg" aria-label="Short tour of Lodgora: housekeeper, maintenance and manager screens">
+          <source src="/lodgora-promo-v2.mp4" type="video/mp4" />
           Your browser cannot play this video. You can try the live demo above instead.
         </video>
       </div>
