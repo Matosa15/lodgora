@@ -65,7 +65,7 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
         style={{ background: 'linear-gradient(160deg,#3a4c70 0%,#14203a 40%,#0a1224 100%)', boxShadow: '0 40px 70px -28px rgba(23,43,77,.6), 0 18px 30px -18px rgba(23,43,77,.5), inset 0 0 0 1px rgba(255,255,255,.12)' }}>
         <div className="relative rounded-[2.4rem] bg-[#F3F6F9] overflow-hidden h-[37.5rem] flex flex-col" role="group" aria-label="Interactive example of the housekeeper screen">
           <StatusBar />
-          <div className="bg-white px-4 pb-3 flex items-center gap-2.5 border-b border-slate-200 flex-none">
+          <div className="bg-[#F3F6F9] px-4 pb-3 flex items-center gap-2.5 flex-none">
             <LogoMark className="w-7 h-7" />
             <div className="leading-tight min-w-0">
               <p className="text-[13px] font-bold truncate" style={{ color: INK }}>Northbridge Hotel</p>
@@ -76,7 +76,7 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
 
           <div className="flex-1 overflow-y-auto px-3.5 pt-4 pb-8 space-y-2.5">
             <div className="px-0.5 pb-1">
-              <p className="font-display text-[1.3rem] font-bold leading-tight" style={{ color: INK }}>Good morning, Emma</p>
+              <p className="font-geist tracking-[-0.03em] text-[1.3rem] font-bold leading-tight" style={{ color: INK }}>Good morning, Emma</p>
               <div className="mt-2 flex items-center gap-2.5">
                 <div className="h-1.5 flex-1 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true">
                   <div className="h-full rounded-full bg-[#0D7C77] transition-[width] duration-500" style={{ width: `${(done / rooms.length) * 100}%` }} />
@@ -88,26 +88,26 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
             {rooms.map((r) => {
               if (r.state === 'cleaning') {
                 return (
-                  <div key={r.n} className="rounded-2xl bg-white border border-slate-200 border-t-[3px] border-t-blue-500 p-3.5 shadow-[0_6px_16px_-10px_rgba(23,43,77,.35)]">
+                  <div key={r.n} className="rounded-3xl bg-white p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-display text-[1.65rem] font-bold leading-none" style={{ color: INK }}>Room {r.n}</p>
+                        <p className="font-geist tracking-[-0.03em] text-[1.65rem] font-bold leading-none" style={{ color: INK }}>Room {r.n}</p>
                         <p className="text-xs text-slate-500 mt-1.5">{r.type} · Floor {r.floor}</p>
                       </div>
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-full border ${r.running ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full ${r.running ? 'bg-[#F4F5F7] text-slate-700' : 'bg-amber-50 text-amber-700'}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${r.running ? 'bg-blue-500' : 'bg-amber-500'}`} />{r.running ? 'Cleaning' : 'Paused'}
                       </span>
                     </div>
-                    <div className={`mt-3 rounded-xl border py-3 text-center ${r.running ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100'}`}>
+                    <div className={`mt-3 rounded-2xl py-3 text-center ${r.running ? 'bg-[#F4F5F7]' : 'bg-amber-50'}`}>
                       <p className="text-[11px] font-semibold text-slate-500">{r.running ? 'Cleaning time' : 'Timer paused'}</p>
-                      <p className="font-display text-[2.6rem] leading-[1.1] font-bold tabular-nums" style={{ color: INK }}>{clock(r.secs)}</p>
+                      <p className="font-geist tracking-[-0.03em] text-[2.6rem] leading-[1.1] font-bold tabular-nums" style={{ color: INK }}>{clock(r.secs)}</p>
                     </div>
                     <div className="mt-2.5 grid grid-cols-2 gap-2 text-sm font-semibold">
-                      <button type="button" onClick={() => onToggle(r.n)} className="h-11 rounded-xl border border-slate-200 bg-white text-slate-700 active:bg-slate-50 inline-flex items-center justify-center gap-1.5">
+                      <button type="button" onClick={() => onToggle(r.n)} className="h-11 rounded-full bg-[#F0F1F4] text-slate-800 active:bg-[#E4E6EB] inline-flex items-center justify-center gap-1.5">
                         <Icon name={r.running ? 'pause' : 'play'} className="w-4 h-4" />{r.running ? 'Pause' : 'Resume'}
                       </button>
                       <button type="button" onClick={() => onFinish(r.n)} aria-label={`Finish room ${r.n}`}
-                        className={`h-11 rounded-xl bg-[#0D7C77] text-white active:bg-[#0A6A66] inline-flex items-center justify-center gap-1.5 ${hint === 'finish' ? 'pulse-teal' : ''}`}>
+                        className={`h-11 rounded-full bg-[#0B0B0F] text-white active:bg-[#2A2B33] inline-flex items-center justify-center gap-1.5 ${hint === 'finish' ? 'pulse-teal' : ''}`}>
                         <Icon name="check" className="w-4 h-4" />Finish
                       </button>
                     </div>
@@ -116,9 +116,9 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
               }
               const stripe = r.state === 'ready' ? 'border-t-emerald-500' : r.state === 'review' ? 'border-t-amber-500' : 'border-t-orange-400';
               return (
-                <div key={r.n} className={`rounded-2xl bg-white border border-slate-200 border-t-[3px] ${stripe} px-3.5 py-3 flex items-center gap-3`}>
+                <div key={r.n} className={`rounded-3xl bg-white px-4 py-3.5 flex items-center gap-3`}>
                   <div className="min-w-0 flex-1">
-                    <p className="font-display text-lg font-bold leading-none" style={{ color: INK }}>Room {r.n}</p>
+                    <p className="font-geist tracking-[-0.03em] text-lg font-bold leading-none" style={{ color: INK }}>Room {r.n}</p>
                     <p className="text-[11px] mt-1.5 text-slate-500 truncate">
                       {r.state === 'todo' && (r.sentBack ? 'Sent back by the manager' : `${r.type} · needs cleaning`)}
                       {r.state === 'review' && `Cleaned in ${took(r.secs)} · waiting for inspection`}
@@ -128,7 +128,7 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
                   {r.state === 'todo' && (active
                     ? <span className="text-[11px] font-medium text-slate-400">Up next</span>
                     : <button type="button" onClick={() => onStart(r.n)} aria-label={`Start cleaning room ${r.n}`}
-                        className={`h-9 px-3.5 rounded-lg bg-[#0D7C77] text-white text-[13px] font-semibold active:bg-[#0A6A66] ${hint === 'start' ? 'pulse-teal' : ''}`}>Start</button>)}
+                        className={`h-9 px-4 rounded-full bg-[#0B0B0F] text-white text-[13px] font-semibold active:bg-[#2A2B33] ${hint === 'start' ? 'pulse-teal' : ''}`}>Start</button>)}
                   {r.state === 'review' && <Icon name="inspect" className="w-5 h-5 text-amber-500" />}
                   {r.state === 'ready' && <Icon name="check" className="w-5 h-5 text-emerald-500" />}
                 </div>
@@ -153,8 +153,8 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
   const review = rooms.filter((r) => r.state === 'review');
   const ready = rooms.filter((r) => r.state === 'ready').length;
   return (
-    <div className="rounded-2xl bg-white border border-slate-200 shadow-[0_30px_60px_-36px_rgba(23,43,77,.45)] overflow-hidden w-full max-w-md flex flex-col">
-      <div className="px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5 bg-[#FAFBFC]">
+    <div className="rounded-[2rem] bg-[#F4F5F7] overflow-hidden w-full max-w-md flex flex-col">
+      <div className="px-5 py-4 flex items-center gap-2.5">
         <LogoMark className="w-6 h-6" />
         <p className="text-sm font-bold" style={{ color: INK }}>Manager screen</p>
         <span className="ml-auto text-xs font-semibold text-slate-500 tabular-nums" aria-live="polite">{ready} of {rooms.length} ready</span>
@@ -163,7 +163,7 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
       <div className="px-5 pt-4">
         <ul className="grid grid-cols-4 gap-2" aria-label="Room status">
           {rooms.map((r) => (
-            <li key={r.n} className="rounded-lg px-2.5 pt-2 pb-2.5 bg-white border border-slate-200 transition-shadow" style={{ boxShadow: `inset 0 -3px 0 ${ACCENT[r.state]}` }}>
+            <li key={r.n} className="rounded-2xl px-3 py-2.5 bg-white">
               <p className="text-xl font-semibold tabular-nums tracking-tight leading-none" style={{ color: INK }}>{r.n}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-[10px] leading-tight text-slate-600">
                 <span className={`w-1.5 h-1.5 rounded-full flex-none transition-colors ${DOT[r.state]}`} />{WORD[r.state]}
@@ -176,18 +176,18 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
       <div className="px-5 pt-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Waiting for your inspection</p>
         {review.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500 rounded-lg border border-dashed border-slate-300 px-4 py-5 text-center">Nothing to inspect yet. Press <strong className="text-slate-700">Finish</strong> on the phone.</p>
+          <p className="mt-2 text-sm text-slate-500 rounded-2xl bg-white px-4 py-5 text-center">Nothing to inspect yet. Press <strong className="text-slate-700">Finish</strong> on the phone.</p>
         ) : (
           <ul className="mt-2 space-y-2">
             {review.map((r) => (
-              <li key={r.n} className="feed-in rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3 flex items-center gap-3">
+              <li key={r.n} className="feed-in rounded-2xl bg-white px-3.5 py-3 flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold" style={{ color: INK }}>Room {r.n}</p>
                   <p className="text-xs text-slate-500">Cleaned in {took(r.secs)} by Emma Clarke</p>
                 </div>
-                <button type="button" onClick={() => onBack(r.n)} className="h-9 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50">Send back</button>
+                <button type="button" onClick={() => onBack(r.n)} className="h-9 px-3 rounded-full bg-[#F0F1F4] text-xs font-semibold text-slate-700 hover:bg-[#E4E6EB]">Send back</button>
                 <button type="button" onClick={() => onApprove(r.n)} aria-label={`Approve room ${r.n}`}
-                  className={`h-9 px-3 rounded-lg bg-[#0D7C77] text-white text-xs font-semibold hover:bg-[#0A6A66] ${hint === 'approve' ? 'pulse-teal' : ''}`}>Approve</button>
+                  className={`h-9 px-4 rounded-full bg-[#0B0B0F] text-white text-xs font-semibold hover:bg-[#2A2B33] ${hint === 'approve' ? 'pulse-teal' : ''}`}>Approve</button>
               </li>
             ))}
           </ul>
@@ -287,8 +287,8 @@ export function StatsMock() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
-          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
+          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-geist tracking-[-0.03em] text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
+          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-geist tracking-[-0.03em] text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
         </div>
 
         <p className="mt-5 text-sm font-semibold min-h-[1.25rem]" style={{ color: INK }} aria-live="polite">
@@ -332,7 +332,7 @@ export function PlanPicker() {
       <div className="px-6 pt-6 pb-5 border-b border-slate-200">
         <label htmlFor="rooms-range" className="flex items-baseline justify-between gap-4 text-sm font-semibold" style={{ color: INK }}>
           How many rooms does your hotel have?
-          <span className="font-display text-3xl font-bold tabular-nums">{rooms > 100 ? '100+' : rooms}</span>
+          <span className="font-geist tracking-[-0.03em] text-3xl font-bold tabular-nums">{rooms > 100 ? '100+' : rooms}</span>
         </label>
         <input id="rooms-range" type="range" min="5" max="110" step="1" value={rooms} onChange={(e) => setRooms(Number(e.target.value))}
           className="mt-4 w-full accent-[#0D7C77]" aria-valuetext={`${rooms > 100 ? 'More than 100' : rooms} rooms`} />
@@ -344,10 +344,10 @@ export function PlanPicker() {
           return (
             <li key={p.name} className={`flex items-center justify-between gap-4 px-6 py-5 transition-colors ${on ? 'bg-[#F4F5F7]' : ''}`}>
               <div>
-                <p className="font-display font-semibold text-xl flex items-center gap-2" style={{ color: INK }}>{p.name}{on && <span className="text-[11px] font-semibold rounded-full bg-[#0D7C77] text-white px-2 py-0.5">Your plan</span>}</p>
+                <p className="font-geist tracking-[-0.03em] font-semibold text-xl flex items-center gap-2" style={{ color: INK }}>{p.name}{on && <span className="text-[11px] font-semibold rounded-full bg-[#0D7C77] text-white px-2 py-0.5">Your plan</span>}</p>
                 <p className="text-sm text-slate-500 mt-0.5">{p.rooms}</p>
               </div>
-              <p className="text-right"><span className={`font-display font-bold text-4xl tabular-nums transition-colors ${on ? '' : 'text-slate-400'}`} style={on ? { color: INK } : undefined}>{p.price} €</span><span className="text-sm text-slate-500"> per month</span></p>
+              <p className="text-right"><span className={`font-geist tracking-[-0.03em] font-bold text-4xl tabular-nums transition-colors ${on ? '' : 'text-slate-400'}`} style={on ? { color: INK } : undefined}>{p.price} €</span><span className="text-sm text-slate-500"> per month</span></p>
             </li>
           );
         })}

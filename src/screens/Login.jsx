@@ -3,10 +3,10 @@ import { backend } from '../lib/backend';
 import { Icon, LogoMark } from '../components/ui';
 import { SITE } from '../lib/site';
 
-const INK = '#172B4D';
-const input = 'w-full h-12 px-4 rounded-xl border border-slate-300 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0D7C77] focus:ring-2 focus:ring-[#0D7C77]/20 transition-shadow';
-const primary = 'w-full h-12 rounded-xl bg-[#0D7C77] hover:bg-[#0A6A66] text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-default focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]';
-const secondary = 'w-full h-12 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-[#172B4D] text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-colors';
+const INK = '#0B0B0F';
+const input = 'w-full h-14 px-5 rounded-2xl border-2 border-transparent bg-[#F4F5F7] text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#0B0B0F] transition-colors';
+const primary = 'w-full h-14 rounded-full bg-[#0B0B0F] hover:bg-[#2A2B33] text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-default focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B0B0F]';
+const secondary = 'w-full h-14 rounded-full bg-[#F0F1F4] hover:bg-[#E4E6EB] text-[#0B0B0F] text-[15px] font-semibold inline-flex items-center justify-center gap-2 transition-colors';
 
 // Campo com etiqueta, ajuda e erro
 function Field({ id, label, hint, error, children }) {
@@ -43,13 +43,13 @@ function Showcase() {
   }, []);
   const ready = rooms.filter(([, st]) => st === 'Ready').length;
   return (
-    <div className="mt-10 max-w-sm rounded-2xl bg-white border border-[#CBE6E4] p-4 shadow-[0_24px_44px_-30px_rgba(23,43,77,.5)]" aria-hidden="true">
+    <div className="mt-10 max-w-sm rounded-3xl bg-white p-4" aria-hidden="true">
       <div className="flex items-center justify-between text-xs font-semibold text-slate-500"><span>Today</span><span className="tabular-nums">{ready} of 4 ready</span></div>
       <ul className="mt-3 grid grid-cols-4 gap-2">
         {rooms.map(([n, st]) => (
-          <li key={n} className="rounded-lg bg-[#F3F9F8] px-2 pt-2 pb-2.5 text-center transition-shadow duration-500" style={{ boxShadow: `inset 0 -3px 0 ${SHOW_COLOR[st]}` }}>
+          <li key={n} className="rounded-2xl bg-[#F4F5F7] px-2 py-2.5 text-center">
             <span className="block text-lg font-semibold tabular-nums tracking-tight leading-none" style={{ color: INK }}>{n}</span>
-            <span className="block mt-1 text-[10px] text-slate-500 truncate">{st === 'Awaiting inspection' ? 'Inspect' : st === 'Dirty' ? 'Dirty' : st}</span>
+            <span className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-slate-500"><i className="w-1.5 h-1.5 rounded-full flex-none transition-colors duration-500" style={{ background: SHOW_COLOR[st] }} /><span className="truncate">{st === 'Awaiting inspection' ? 'Inspect' : st}</span></span>
           </li>
         ))}
       </ul>
@@ -62,22 +62,21 @@ export default function Login({ onSession, notice }) {
   const [tab, setTab] = useState(isDemo ? 'manager' : 'staff'); // quem abre a demo é, quase sempre, um gerente
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] bg-white">
+    <div className="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] bg-white font-geist">
       {/* Painel de marca (só em ecrãs grandes) */}
-      <aside className="hidden lg:flex flex-col justify-between p-12 xl:p-16 relative overflow-hidden border-r border-[#CBE6E4]"
-        style={{ background: 'radial-gradient(34rem 24rem at 90% 0%, #CDEBE8 0%, rgba(205,235,232,0) 70%), radial-gradient(30rem 20rem at 0% 100%, #F3EBDD 0%, rgba(243,235,221,0) 70%), #E4F3F2' }}>
+      <aside className="hidden lg:flex flex-col justify-between p-12 xl:p-16 relative overflow-hidden bg-[#F4F5F7] m-3 rounded-[2.5rem]">
         <a href="/" className="flex items-center gap-3 w-fit" aria-label="Lodgora website">
           <LogoMark className="w-10 h-10" />
-          <span className="font-display text-2xl font-bold tracking-tight" style={{ color: INK }}>Lodgora</span>
+          <span className="font-semibold text-2xl tracking-[-0.03em]" style={{ color: INK }}>Lodgora</span>
         </a>
 
         <div>
-          <h1 className="font-bold text-4xl xl:text-[2.8rem] leading-[1.08] tracking-[-0.03em]" style={{ color: INK }}>
-            Every room ready,<br />without the phone calls.
+          <h1 className="font-semibold text-5xl xl:text-[4rem] leading-[1] tracking-[-0.05em]" style={{ color: INK }}>
+            Every room ready.<br />No phone calls.
           </h1>
           <ul className="mt-8 space-y-3.5 text-slate-700">
             {['See which rooms are ready, in real time.', 'Housekeepers use a simple screen on their phone.', 'Maintenance issues reported once, never lost.'].map((t) => (
-              <li key={t} className="flex gap-3"><span className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-none shadow-sm"><Icon name="check" className="w-3.5 h-3.5 text-[#0D7C77]" /></span>{t}</li>
+              <li key={t} className="flex gap-3"><span className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-none shadow-sm"><Icon name="check" className="w-3.5 h-3.5 text-[#0B0B0F]" /></span>{t}</li>
             ))}
           </ul>
 
@@ -87,14 +86,14 @@ export default function Login({ onSession, notice }) {
         <p className="text-sm text-slate-500">Built for independent and mid-sized hotels.</p>
       </aside>
 
-      <main className="flex items-center justify-center px-5 py-10 sm:p-10 min-h-screen lg:min-h-0 bg-[#F7F9FB] lg:bg-white">
+      <main className="flex items-center justify-center px-5 py-10 sm:p-10 min-h-screen lg:min-h-0 bg-white">
         <div className="w-full max-w-[26rem]">
           <a href="/" className="flex items-center gap-2.5 mb-8 lg:hidden w-fit" aria-label="Lodgora website">
             <LogoMark />
-            <span className="font-display font-bold text-xl tracking-tight" style={{ color: INK }}>Lodgora</span>
+            <span className="font-semibold text-xl tracking-[-0.03em]" style={{ color: INK }}>Lodgora</span>
           </a>
 
-          <h2 className="font-bold text-3xl tracking-[-0.03em]" style={{ color: INK }}>Sign in</h2>
+          <h2 className="font-semibold text-4xl tracking-[-0.045em]" style={{ color: INK }}>Sign in</h2>
           <p className="text-slate-500 mt-1.5">Choose how you use Lodgora.</p>
 
           {notice && (
@@ -113,8 +112,8 @@ export default function Login({ onSession, notice }) {
               const on = tab === r.id;
               return (
                 <button key={r.id} role="tab" aria-selected={on} onClick={() => setTab(r.id)}
-                  className={`text-left rounded-xl border-2 p-3.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77] ${on ? 'border-[#0D7C77] bg-[#EEF8F7]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                  <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${on ? 'bg-[#0D7C77] text-white' : 'bg-slate-100 text-slate-500'}`}><Icon name={r.icon} className="w-[18px] h-[18px]" /></span>
+                  className={`text-left rounded-3xl border-2 p-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B0B0F] ${on ? 'border-[#0B0B0F] bg-white' : 'border-transparent bg-[#F4F5F7] hover:bg-[#ECEDF1]'}`}>
+                  <span className={`w-10 h-10 rounded-full flex items-center justify-center ${on ? 'bg-[#0B0B0F] text-white' : 'bg-white text-slate-500'}`}><Icon name={r.icon} className="w-[18px] h-[18px]" /></span>
                   <span className="block mt-2.5 font-semibold text-[15px]" style={{ color: INK }}>{r.label}</span>
                   <span className="block mt-0.5 text-xs leading-snug text-slate-500">{r.text}</span>
                 </button>
@@ -126,7 +125,7 @@ export default function Login({ onSession, notice }) {
             {tab === 'staff' ? <StaffForm onSession={onSession} isDemo={isDemo} /> : <ManagerForm onSession={onSession} isDemo={isDemo} />}
           </div>
           <p className="mt-8 text-sm text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-            <span>New to Lodgora? <a href="/" className="font-semibold text-[#0D7C77] hover:underline">See what it does</a></span>
+            <span>New to Lodgora? <a href="/" className="font-semibold text-[#0B0B0F] hover:underline">See what it does</a></span>
           </p>
         </div>
       </main>
@@ -169,7 +168,7 @@ function StaffForm({ onSession, isDemo }) {
         <div className="relative">
           <div className="grid grid-cols-4 gap-3" aria-hidden="true">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className={`h-14 rounded-xl border-2 bg-white flex items-center justify-center text-2xl text-[#172B4D] transition-colors ${focus && pin.length === i ? 'border-[#0D7C77] ring-2 ring-[#0D7C77]/20' : pin.length > i ? 'border-slate-400' : 'border-slate-300'}`}>{pin[i] ? '●' : ''}</div>
+              <div key={i} className={`h-16 rounded-2xl border-2 flex items-center justify-center text-2xl text-[#0B0B0F] transition-colors ${focus && pin.length === i ? 'border-[#0B0B0F] bg-white' : 'border-transparent bg-[#F4F5F7]'}`}>{pin[i] ? '●' : ''}</div>
             ))}
           </div>
           <input id="l-pin" className="absolute inset-0 w-full h-full opacity-0 cursor-text" value={pin} type="password"
@@ -233,7 +232,7 @@ function ManagerForm({ onSession, isDemo }) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-sm leading-relaxed p-5" role="status">
         {notice}
-        <button className="block mt-4 font-semibold text-[#0D7C77] hover:underline" onClick={() => { setNotice(''); setMode('signin'); }}>Back to sign in</button>
+        <button className="block mt-4 font-semibold text-[#0B0B0F] hover:underline" onClick={() => { setNotice(''); setMode('signin'); }}>Back to sign in</button>
       </div>
     );
   }
@@ -254,7 +253,7 @@ function ManagerForm({ onSession, isDemo }) {
                 <input id="m-name" className={input} value={f.fullName} onChange={(e) => set('fullName', e.target.value)} autoComplete="name" />
               </Field>
               <Field id="m-invite" label="Invitation code" error={errors.inviteCode}
-                hint={SITE.contactEmail || SITE.requestUrl ? <>No code yet? <a className="font-semibold text-[#0D7C77] hover:underline" {...(SITE.requestUrl ? { href: SITE.requestUrl, target: '_blank', rel: 'noopener noreferrer' } : { href: `mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Lodgora invitation')}` })}>Ask for one</a>.</> : 'Lodgora gives you this code when your hotel joins.'}>
+                hint={SITE.contactEmail || SITE.requestUrl ? <>No code yet? <a className="font-semibold text-[#0B0B0F] hover:underline" {...(SITE.requestUrl ? { href: SITE.requestUrl, target: '_blank', rel: 'noopener noreferrer' } : { href: `mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Lodgora invitation')}` })}>Ask for one</a>.</> : 'Lodgora gives you this code when your hotel joins.'}>
                 <input id="m-invite" className={`${input} uppercase tracking-wider`} value={f.inviteCode} autoComplete="off" autoCapitalize="characters" placeholder="A1B2C-D3E4F"
                   onChange={(e) => set('inviteCode', e.target.value)} />
               </Field>
@@ -271,7 +270,7 @@ function ManagerForm({ onSession, isDemo }) {
               autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
           </Field>}
           {mode === 'signin' && (
-            <button type="button" className="block text-sm font-semibold text-[#0D7C77] hover:underline -mt-1" onClick={() => { setMode('forgot'); setErrors({}); }}>Forgot your password?</button>
+            <button type="button" className="block text-sm font-semibold text-[#0B0B0F] hover:underline -mt-1" onClick={() => { setMode('forgot'); setErrors({}); }}>Forgot your password?</button>
           )}
           {mode === 'forgot' && <p className="text-sm text-slate-500">We will email you a link to choose a new password.</p>}
           {errors.form && <p className="text-sm text-rose-600 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2" role="alert">{errors.form}</p>}

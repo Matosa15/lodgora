@@ -42,15 +42,16 @@ export function Icon({ name, className = 'w-5 h-5' }) {
   );
 }
 
-export function LogoMark({ className = 'w-8 h-8' }) {
+export function LogoMark({ className = 'w-8 h-8', dark = false }) {
+  const a = dark ? '#fff' : '#0B0B0F', b = dark ? '#19A7A1' : '#0D7C77', c = dark ? '#4A5160' : '#C9CDD4';
   return (
-    <span className={`${className} rounded-lg bg-[#172B4D] flex items-center justify-center flex-none`}>
-      <svg viewBox="0 0 24 24" className="w-[62%] h-[62%]" aria-hidden="true">
-        <rect x="4" y="13" width="4" height="7" rx="1.5" fill="#fff" />
-        <rect x="10" y="9" width="4" height="11" rx="1.5" fill="#19A7A1" />
-        <rect x="16" y="4" width="4" height="16" rx="1.5" fill="#fff" />
-      </svg>
-    </span>
+    <svg viewBox="8 8 48 48" className={`${className} flex-none`} aria-hidden="true">
+      <rect x="8" y="8" width="22" height="22" rx="7" fill={a} />
+      <rect x="34" y="8" width="22" height="22" rx="7" fill={b} />
+      <path d="M39.5 19.5l4 4 7-8" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="8" y="34" width="22" height="22" rx="7" fill={a} />
+      <rect x="34" y="34" width="22" height="22" rx="7" fill={c} />
+    </svg>
   );
 }
 
