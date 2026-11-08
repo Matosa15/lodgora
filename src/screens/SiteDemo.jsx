@@ -244,7 +244,7 @@ export function TryIt() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white border border-slate-200 px-4 py-3 max-w-4xl mx-auto shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 rounded-full bg-[#F4F5F7] px-5 py-3 max-w-4xl mx-auto">
         {num && <span className="flex-none w-7 h-7 rounded-full bg-[#0D7C77] text-white text-sm font-semibold flex items-center justify-center">{num}</span>}
         <p className="text-sm font-medium flex-1 min-w-[12rem]" style={{ color: INK }} aria-live="polite">{text}</p>
         <button type="button" onClick={reset} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5"><Icon name="refresh" className="w-4 h-4" />Start over</button>
@@ -278,7 +278,7 @@ export function StatsMock() {
 
   return (
     <figure>
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-[0_18px_40px_-28px_rgba(23,43,77,.4)]">
+      <div className="rounded-3xl bg-white p-5 sm:p-7">
         <div role="group" aria-label="Choose a period" className="inline-flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
           {Object.entries(PERIODS).map(([k, v]) => (
             <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}
@@ -287,8 +287,8 @@ export function StatsMock() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-[#F6F2EA] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
-          <div className="rounded-lg bg-[#F6F2EA] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
+          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
+          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
         </div>
 
         <p className="mt-5 text-sm font-semibold min-h-[1.25rem]" style={{ color: INK }} aria-live="polite">
@@ -328,7 +328,7 @@ export function PlanPicker() {
   const [rooms, setRooms] = useState(30);
   const plan = SITE.plans.find((p) => rooms <= p.max);
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-3xl overflow-hidden">
       <div className="px-6 pt-6 pb-5 border-b border-slate-200">
         <label htmlFor="rooms-range" className="flex items-baseline justify-between gap-4 text-sm font-semibold" style={{ color: INK }}>
           How many rooms does your hotel have?
@@ -342,7 +342,7 @@ export function PlanPicker() {
         {SITE.plans.map((p) => {
           const on = plan && plan.name === p.name;
           return (
-            <li key={p.name} className={`flex items-center justify-between gap-4 px-6 py-5 transition-colors ${on ? 'bg-[#F6F2EA]' : ''}`}>
+            <li key={p.name} className={`flex items-center justify-between gap-4 px-6 py-5 transition-colors ${on ? 'bg-[#F4F5F7]' : ''}`}>
               <div>
                 <p className="font-display font-semibold text-xl flex items-center gap-2" style={{ color: INK }}>{p.name}{on && <span className="text-[11px] font-semibold rounded-full bg-[#0D7C77] text-white px-2 py-0.5">Your plan</span>}</p>
                 <p className="text-sm text-slate-500 mt-0.5">{p.rooms}</p>

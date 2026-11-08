@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
 import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
-import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName } from '../lib/constants';
+import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName, tidyName } from '../lib/constants';
 
 const ORDER = { Cleaning: 0, Dirty: 1, 'Awaiting inspection': 2, Ready: 3, Occupied: 4, 'Out of service': 5 };
 
@@ -68,8 +68,8 @@ export default function Housekeeper({ session, signOut }) {
         <div className="max-w-xl mx-auto px-4 h-14 flex items-center gap-3">
           <LogoMark className="w-8 h-8" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-sm font-bold text-[#172B4D] truncate">{session.name}</p>
-            <p className="text-xs text-slate-500 truncate">{session.hotel.name}</p>
+            <p className="text-sm font-bold text-[#172B4D] truncate">{tidyName(session.name)}</p>
+            <p className="text-xs text-slate-500 truncate">Housekeeping · {tidyName(session.hotel.name)}</p>
           </div>
           <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
             <Icon name="refresh" className="w-[18px] h-[18px]" />

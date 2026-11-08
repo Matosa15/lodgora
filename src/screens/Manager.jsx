@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { backend } from '../lib/backend';
 import { useHotelData } from '../lib/useHotelData';
 import {
-  AREA_PRESETS, AREA_TYPE, ISSUE_STATUS_LABEL, PRIORITY_STYLE, ROOM_TYPES, STATUSES, STATUS_STYLE, initials, isArea, minutesLabel, spaceInline, spaceName, statusLabel, timeAgo, timeOfDay
+  AREA_PRESETS, AREA_TYPE, ISSUE_STATUS_LABEL, PRIORITY_STYLE, ROOM_TYPES, STATUSES, STATUS_STYLE, initials, isArea, minutesLabel, spaceInline, spaceName, statusLabel, timeAgo, timeOfDay, tidyName, tidyTitle
 } from '../lib/constants';
 import {
   CleanTimer, CopyButton, EmptyState, Field, Icon, LogoMark, Modal, Panel, Spinner, StatusBadge, WherePicker, IssueNotes, NoteBox,
@@ -372,13 +372,13 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold">{it.kind === 'issue' ? it.issue.title : `${spaceName(it.room)} needs inspection`}</p>
+                      <p className="text-sm font-semibold">{it.kind === 'issue' ? tidyTitle(it.issue.title) : `${spaceName(it.room)} needs inspection`}</p>
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[it.priority]}`}>{it.priority}</span>
                       {it.kind === 'issue' && it.issue.needsHelp && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-600 text-white">Needs help</span>}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {it.kind === 'issue'
-                        ? `${it.issue.roomLabel ? it.issue.roomLabel + ' · ' : ''}${it.issue.reportedBy} · ${timeAgo(it.issue.createdAt)}${it.issue.assignedTo ? ' · ' + (staff.find((x) => x.id === it.issue.assignedTo)?.fullName || 'someone') + ' is on it' : ''}`
+                        ? `${it.issue.roomLabel ? it.issue.roomLabel + ' · ' : ''}${tidyName(it.issue.reportedBy)} · ${timeAgo(it.issue.createdAt)}${it.issue.assignedTo ? ' · ' + (staff.find((x) => x.id === it.issue.assignedTo)?.fullName || 'someone') + ' is on it' : ''}`
                         : `Cleaned by ${it.room.assignee || 'unknown'}${it.room.cleanSeconds > 0 ? ' in ' + minutesLabel(it.room.cleanSeconds) : ''}`}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -558,11 +558,11 @@ function Maintenance({ issues, technicians, staffById, onReport, onAddTech, acti
               <li key={i.id} className={`py-4 flex flex-wrap items-start gap-3 ${i.status === 'resolved' ? 'opacity-60' : ''}`}>
                 <div className="min-w-0 flex-1 basis-56">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-sm">{i.title}</p>
+                    <p className="font-semibold text-sm">{tidyTitle(i.title)}</p>
                     <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>
                     {i.needsHelp && i.status !== 'resolved' && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-600 text-white">Needs help</span>}
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">{i.roomLabel ? `${i.roomLabel} · ` : ''}{i.reportedBy} · {timeAgo(i.createdAt)} · {ISSUE_STATUS_LABEL[i.status]}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{i.roomLabel ? `${i.roomLabel} · ` : ''}{tidyName(i.reportedBy)} · {timeAgo(i.createdAt)} · {ISSUE_STATUS_LABEL[i.status]}</p>
                   {i.status !== 'resolved' && technicians.length > 0 && (
                     <div className="mt-2 flex items-center gap-2">
                       <label htmlFor={`as-${i.id}`} className="text-xs text-slate-500">Assigned to</label>
@@ -713,7 +713,7 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
         {issues.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-slate-600 mb-2">Open issues</p>
-            <ul className="space-y-1.5">{issues.map((i) => <li key={i.id} className="text-sm flex items-center gap-2"><span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>{i.title}</li>)}</ul>
+            <ul className="space-y-1.5">{issues.map((i) => <li key={i.id} className="text-sm flex items-center gap-2"><span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>{tidyTitle(i.title)}</li>)}</ul>
           </div>
         )}
         <DeleteSpace room={room} onDelete={() => actions.remove(room)} />

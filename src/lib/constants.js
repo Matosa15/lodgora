@@ -68,3 +68,7 @@ export function dayKey(n = 0) {
 }
 // "Wed 4 Nov" para um dia 'AAAA-MM-DD'
 export const dayLabel = (key) => new Date(key + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+// Só para mostrar: "jonh status" -> "Jonh Status", "shower" -> "Shower". Não altera o que está guardado.
+export const tidyName = (s) => String(s || '').trim().replace(/(^|[\s\-'])(\p{L})/gu, (_, a, b) => a + b.toUpperCase());
+export const tidyTitle = (s) => { const t = String(s || '').trim(); return t.charAt(0).toUpperCase() + t.slice(1); };

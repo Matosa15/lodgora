@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
 import { Icon, IssueNotes, LogoMark, NoteBox, Spinner, btnGhost, btnPrimary, useToast } from '../components/ui';
-import { ISSUE_STATUS_LABEL, PRIORITY_STYLE, timeAgo } from '../lib/constants';
+import { ISSUE_STATUS_LABEL, PRIORITY_STYLE, timeAgo, tidyName, tidyTitle } from '../lib/constants';
 import { ReportModal } from './Housekeeper';
 
 const BAR = { urgent: 'border-t-rose-500', high: 'border-t-amber-500', normal: 'border-t-slate-300', low: 'border-t-slate-200' };
@@ -63,8 +63,8 @@ export default function Technician({ session, signOut }) {
         <div className="max-w-xl mx-auto px-4 h-14 flex items-center gap-3">
           <LogoMark className="w-8 h-8" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-sm font-bold text-[#172B4D] truncate">{session.name}</p>
-            <p className="text-xs text-slate-500 truncate">{session.hotel.name} · Maintenance</p>
+            <p className="text-sm font-bold text-[#172B4D] truncate">{tidyName(session.name)}</p>
+            <p className="text-xs text-slate-500 truncate">Maintenance · {tidyName(session.hotel.name)}</p>
           </div>
           <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
             <Icon name="refresh" className="w-[18px] h-[18px]" />
@@ -126,8 +126,8 @@ function IssueCard({ issue, busy, change, addNote }) {
     <article className={`bg-white rounded-xl border border-slate-200 border-t-[3px] ${resolved ? 'border-t-emerald-400 opacity-75' : BAR[issue.priority]} p-4 shadow-sm`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-[#172B4D] leading-snug">{issue.title}</h2>
-          <p className="text-sm text-slate-500 mt-1">{issue.roomLabel ? `${issue.roomLabel} · ` : ''}{issue.reportedBy} · {timeAgo(issue.createdAt)}</p>
+          <h2 className="text-lg font-bold text-[#172B4D] leading-snug">{tidyTitle(issue.title)}</h2>
+          <p className="text-sm text-slate-500 mt-1">{issue.roomLabel ? `${issue.roomLabel} · ` : ''}{tidyName(issue.reportedBy)} · {timeAgo(issue.createdAt)}</p>
         </div>
         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize flex-none ${PRIORITY_STYLE[issue.priority]}`}>{issue.priority}</span>
       </div>

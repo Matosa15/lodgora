@@ -98,7 +98,7 @@ function Privacy() {
       <S title="5. Where data is stored and who helps us">
         <List items={[
           'Supabase: database, sign-in and emails such as password reset. Our database is in the European Union (Ireland).',
-          'Cloudflare: hosts and delivers the website. It processes technical data such as IP addresses to deliver pages and protect the site.',
+          'Cloudflare: hosts and delivers the website. It processes technical data such as IP addresses to deliver pages and protect the site. We also use Cloudflare Web Analytics to count visits (pages viewed, country and where a visit came from). It does not use cookies and does not follow visitors across websites.',
           'Tally: the "Request a pilot" form on the website is hosted by Tally (tally.so). If you use it, the details you type (name, hotel, email, number of rooms, message) are sent to Tally and to us.',
           'Google Fonts: this website loads its typefaces from Google, which means your browser sends your IP address to Google when a page opens.'
         ]} />
@@ -110,7 +110,7 @@ function Privacy() {
 
       <S title="6. Cookies and similar technologies">
         <p>
-          We do not use advertising or analytics cookies. The app stores a sign-in session in your browser's local storage so that you stay signed in.
+          We do not use advertising cookies, and our visit counting does not use cookies. The app stores a sign-in session in your browser's local storage so that you stay signed in.
           This is necessary for the service to work. Signing out removes it.
         </p>
       </S>
