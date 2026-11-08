@@ -287,8 +287,8 @@ export function StatsMock() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-[#F3F6F8] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
-          <div className="rounded-lg bg-[#F3F6F8] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
+          <div className="rounded-lg bg-[#F6F2EA] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
+          <div className="rounded-lg bg-[#F6F2EA] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-display text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
         </div>
 
         <p className="mt-5 text-sm font-semibold min-h-[1.25rem]" style={{ color: INK }} aria-live="polite">
@@ -342,7 +342,7 @@ export function PlanPicker() {
         {SITE.plans.map((p) => {
           const on = plan && plan.name === p.name;
           return (
-            <li key={p.name} className={`flex items-center justify-between gap-4 px-6 py-5 transition-colors ${on ? 'bg-[#E9F5F4]' : ''}`}>
+            <li key={p.name} className={`flex items-center justify-between gap-4 px-6 py-5 transition-colors ${on ? 'bg-[#F6F2EA]' : ''}`}>
               <div>
                 <p className="font-display font-semibold text-xl flex items-center gap-2" style={{ color: INK }}>{p.name}{on && <span className="text-[11px] font-semibold rounded-full bg-[#0D7C77] text-white px-2 py-0.5">Your plan</span>}</p>
                 <p className="text-sm text-slate-500 mt-0.5">{p.rooms}</p>

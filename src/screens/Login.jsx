@@ -48,7 +48,7 @@ function Showcase() {
       <ul className="mt-3 grid grid-cols-4 gap-2">
         {rooms.map(([n, st]) => (
           <li key={n} className="rounded-lg bg-[#F3F9F8] px-2 pt-2 pb-2.5 text-center transition-shadow duration-500" style={{ boxShadow: `inset 0 -3px 0 ${SHOW_COLOR[st]}` }}>
-            <span className="plate-num block text-lg leading-none" style={{ color: INK }}>{n}</span>
+            <span className="block text-lg font-semibold tabular-nums tracking-tight leading-none" style={{ color: INK }}>{n}</span>
             <span className="block mt-1 text-[10px] text-slate-500 truncate">{st === 'Awaiting inspection' ? 'Inspect' : st === 'Dirty' ? 'Dirty' : st}</span>
           </li>
         ))}
@@ -72,7 +72,7 @@ export default function Login({ onSession, notice }) {
         </a>
 
         <div>
-          <h1 className="font-display font-semibold text-4xl xl:text-[2.8rem] leading-[1.08] tracking-tight" style={{ color: INK }}>
+          <h1 className="font-bold text-4xl xl:text-[2.8rem] leading-[1.08] tracking-[-0.03em]" style={{ color: INK }}>
             Every room ready,<br />without the phone calls.
           </h1>
           <ul className="mt-8 space-y-3.5 text-slate-700">
@@ -94,7 +94,7 @@ export default function Login({ onSession, notice }) {
             <span className="font-display font-bold text-xl tracking-tight" style={{ color: INK }}>Lodgora</span>
           </a>
 
-          <h2 className="font-display font-semibold text-3xl tracking-tight" style={{ color: INK }}>Sign in</h2>
+          <h2 className="font-bold text-3xl tracking-[-0.03em]" style={{ color: INK }}>Sign in</h2>
           <p className="text-slate-500 mt-1.5">Choose how you use Lodgora.</p>
 
           {notice && (

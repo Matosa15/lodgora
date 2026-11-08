@@ -8,7 +8,6 @@ import { Reveal, TryIt, StatsMock, PlanPicker } from './SiteDemo';
 const INK = '#172B4D';
 
 const demoHref = '/app?demo';
-const ACCENT = { Ready: '#10B981', Dirty: '#F97316', Cleaning: '#3B82F6', 'Awaiting inspection': '#F59E0B' };
 const mailto = (subject) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent(subject)}`;
 // Pedido de demo/piloto: abre o formulário (noutro separador) ou, sem formulário, um email
 const request = (subject) => (SITE.requestUrl ? { href: SITE.requestUrl, target: '_blank', rel: 'noopener noreferrer' } : { href: mailto(subject) });
@@ -24,7 +23,7 @@ export default function Site() {
   }, []);
 
   return (
-    <div className="bg-white text-slate-700">
+    <div className="bg-[#FCFAF6] text-slate-700">
       <Header />
       <main>
         <Hero />
@@ -47,7 +46,7 @@ export default function Site() {
 export function Header() {
   const links = [['How it works', '/#how'], ['Features', '/#features'], ['Pricing', '/#pricing'], ['Questions', '/#faq']];
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 pt-safe">
+    <header className="sticky top-0 z-30 bg-[#F6F2EA]/95 backdrop-blur border-b border-[#E6DFD0] pt-safe">
       <div className="mx-auto max-w-6xl h-16 px-5 flex items-center gap-6">
         <a href="/" className="flex items-center gap-2.5" aria-label="Lodgora home">
           <LogoMark />
@@ -65,101 +64,36 @@ export function Header() {
   );
 }
 
-/* ---------------- Início: o corredor de placas de porta ---------------- */
-
-const START = [
-  ['201', 'Ready'], ['202', 'Dirty'], ['203', 'Cleaning'],
-  ['204', 'Awaiting inspection'], ['205', 'Dirty'], ['206', 'Ready'],
-  ['207', 'Cleaning'], ['208', 'Dirty'], ['209', 'Ready']
-];
-const NEXT = { Dirty: 'Cleaning', Cleaning: 'Awaiting inspection', 'Awaiting inspection': 'Ready', Ready: 'Dirty' };
-const WHO = {
-  Cleaning: (n) => `A housekeeper pressed Start cleaning in room ${n}.`,
-  'Awaiting inspection': (n) => `A housekeeper pressed Finish in room ${n}. It now waits for your inspection.`,
-  Ready: (n) => `You approved room ${n}. It is ready for the next guest.`,
-  Dirty: (n) => `A guest checked out of room ${n}. It needs cleaning.`
-};
-
-const AUTO_ORDER = ['202', '205', '208', '203', '207', '204', '202', '205'];
-const prefersReduced = () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---------------- Início ---------------- */
 
 function Hero() {
-  const [rooms, setRooms] = useState(START);
-  const [feed, setFeed] = useState([]);
-  const [playing, setPlaying] = useState(() => !prefersReduced());
-  const roomsRef = useRef(START);
-  const idRef = useRef(0);
-  const stepRef = useRef(0);
-  const ready = rooms.filter(([, s]) => s === 'Ready').length;
-
-  const advance = (n) => {
-    const current = roomsRef.current.find(([num]) => num === n)[1];
-    const next = NEXT[current];
-    const updated = roomsRef.current.map(([num, s]) => (num === n ? [num, next] : [num, s]));
-    roomsRef.current = updated;
-    setRooms(updated);
-    setFeed((f) => [{ id: ++idRef.current, text: WHO[next](n) }, ...f].slice(0, 2));
-  };
-
-  // Uma manhã de exemplo vai-se desenrolando sozinha, até alguém tocar numa placa ou carregar em Pause
-  useEffect(() => {
-    if (!playing) return undefined;
-    const t = setInterval(() => advance(AUTO_ORDER[stepRef.current++ % AUTO_ORDER.length]), 2400);
-    return () => clearInterval(t);
-  }, [playing]);
-
-  const tap = (n) => { setPlaying(false); advance(n); };
-
+  const canAsk = !!(SITE.requestUrl || SITE.contactEmail);
   return (
-    <section className="relative overflow-hidden" aria-labelledby="hero-title">
-      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(60rem 28rem at 85% -5%, #DFF1F0 0%, rgba(223,241,240,0) 60%), radial-gradient(40rem 22rem at -5% 100%, #F3EBDD 0%, rgba(243,235,221,0) 60%)' }} />
-      <div className="relative mx-auto max-w-6xl px-5 pt-14 pb-20 sm:pt-20 sm:pb-28 grid lg:grid-cols-[1fr_1fr] gap-14 lg:gap-20 items-center">
+    <section className="relative overflow-hidden bg-[#F6F2EA] border-b border-[#E6DFD0]" aria-labelledby="hero-title">
+      <div className="relative mx-auto max-w-6xl px-5 pt-14 pb-24 sm:pt-20 sm:pb-28 grid lg:grid-cols-[0.92fr_1.08fr] gap-16 lg:gap-12 items-center">
         <div>
-          <h1 id="hero-title" className="font-bold text-[2.25rem] sm:text-[2.9rem] lg:text-[3.15rem] leading-[1.08] tracking-[-0.03em]" style={{ color: INK }}>
-            Know which rooms are <span className="text-[#0D7C77]">ready</span>, without the phone calls.
+          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-[#8A6A2F]">Housekeeping &amp; maintenance for independent hotels</p>
+          <h1 id="hero-title" className="mt-5 font-serif font-medium text-[2.6rem] sm:text-6xl lg:text-[4.2rem] leading-[1.04] tracking-[-0.025em]" style={{ color: INK }}>
+            Every room ready, <em className="text-[#0D7C77]">without</em> the phone calls.
           </h1>
-          <p className="mt-6 text-lg leading-relaxed max-w-[30rem]">
+          <p className="mt-6 text-lg sm:text-xl leading-relaxed max-w-[32rem] text-slate-600">
             Your team updates rooms from their phones. You see every room, every cleaning time and every problem as it happens.
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
-            <a href={demoHref} className={btnPrimary}>Try the live demo</a>
-            <a href="#tour" className={btnLight}>Watch the 48-second tour</a>
+          <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+            {canAsk ? <a {...request('Lodgora pilot')} className={`${btnPrimary} !px-7 !py-4 !text-base !rounded-[10px]`}>Ask for a free {SITE.pilotDays}-day pilot</a> : <a href={demoHref} className={`${btnPrimary} !px-7 !py-4 !text-base !rounded-[10px]`}>Try the live demo</a>}
+            {canAsk && <a href={demoHref} className="text-base font-semibold border-b-[1.5px] border-[#172B4D] pb-0.5 hover:text-[#0D7C77] hover:border-[#0D7C77]" style={{ color: INK }}>Try the live demo</a>}
           </div>
-          <p className="mt-5 text-sm text-slate-500">Example data, no account needed.{(SITE.requestUrl || SITE.contactEmail) && <> Or <a {...request('Lodgora demo request')} className="font-semibold text-[#0D7C77] hover:underline">request a demo</a>.</>}</p>
+          <p className="mt-7 text-sm text-slate-500 flex flex-wrap gap-x-5 gap-y-1">
+            <span>No app to install</span><span>PIN login</span><span>Set up in minutes</span>
+            <a href="#tour" className="font-semibold text-[#0D7C77] hover:underline">Watch the 48-second tour</a>
+          </p>
         </div>
-
-        <div>
-          <div className="rounded-3xl p-4 sm:p-6 border border-white/70" style={{ background: 'rgba(255,255,255,.65)', boxShadow: '0 40px 70px -40px rgba(23,43,77,.35), 0 0 0 1px rgba(23,43,77,.05)' }}>
-            <ul className="grid grid-cols-3 gap-3 sm:gap-4">
-              {rooms.map(([n, s]) => (
-                <li key={n}>
-                  <button type="button" onClick={() => tap(n)}
-                    aria-label={`Room ${n}, ${statusLabel(s)}. Press to move it to the next step.`}
-                    className="relative w-full min-h-[7rem] rounded-xl px-3.5 pt-3.5 pb-3.5 text-left active:translate-y-px hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
-                    style={{ background: '#fff', border: '1px solid #E3EAF0', boxShadow: '0 8px 16px -12px rgba(23,43,77,.3)' }}>
-                                        <span className="block text-[1.7rem] sm:text-[2rem] font-semibold tracking-tight tabular-nums leading-none" style={{ color: INK }}>{n}</span>
-                    <span className="mt-3.5 flex items-start gap-2 text-[13px] leading-tight text-slate-500">
-                      <span key={s} className={`mt-[3px] w-2 h-2 rounded-full flex-none dot-pop ${STATUS_STYLE[s].dot}`} aria-hidden="true" />{statusLabel(s)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <div className="relative lg:ml-4">
+          <div className="rounded-xl overflow-hidden bg-white lg:w-[122%]" style={{ boxShadow: '0 60px 90px -40px rgba(20,35,63,.45), 0 0 0 1px rgba(20,35,63,.08)' }}>
+            <img src="/site-dashboard.jpg" width="1800" height="1125" alt="The Lodgora manager dashboard showing rooms ready, cleaning pending and issues that need attention" className="block w-full h-auto" />
           </div>
-          <div className="mt-6 px-1">
-            <div className="flex items-end justify-between gap-4">
-              <p className="text-xl font-semibold tracking-tight" style={{ color: INK }} aria-live="polite">{ready} of {rooms.length} rooms are ready</p>
-              <button type="button" onClick={() => setPlaying((p) => !p)} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5 flex-none">
-                <Icon name={playing ? 'pause' : 'play'} className="w-4 h-4" />{playing ? 'Pause the example' : 'Play a sample morning'}
-              </button>
-            </div>
-            <div className="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true"><div className="h-full rounded-r-[4px] bg-[#0D7C77] transition-[width] duration-500" style={{ width: `${(ready / rooms.length) * 100}%` }} /></div>
-            <ul className="mt-4 min-h-[3.4rem] space-y-1.5" aria-label="What just happened">
-              {feed.length === 0 && <li className="text-sm text-slate-500">Tap a room to move it to the next step, like your team would.</li>}
-              {feed.map((f) => (
-                <li key={f.id} className="feed-in flex gap-2 text-sm text-slate-600"><span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#19A7A1] flex-none" />{f.text}</li>
-              ))}
-            </ul>
+          <div className="absolute -bottom-10 -left-2 sm:-left-8 w-[28%] min-w-[7.5rem] max-w-[12.5rem] rounded-[1.7rem] p-[5px] bg-[#14233F]" style={{ boxShadow: '0 40px 60px -24px rgba(20,35,63,.6)' }}>
+            <img src="/site-phone.jpg" width="600" height="1299" alt="The housekeeper screen on a phone with a cleaning timer running" className="block w-full h-auto rounded-[1.4rem]" />
           </div>
         </div>
       </div>
@@ -171,9 +105,9 @@ function Hero() {
 
 function Tour() {
   return (
-    <section id="tour" className="mx-auto max-w-6xl px-5 pb-16 sm:pb-20 scroll-mt-16" aria-labelledby="tour-title">
+    <section id="tour" className="mx-auto max-w-6xl px-5 pt-16 sm:pt-24 pb-16 sm:pb-24 scroll-mt-16" aria-labelledby="tour-title">
       <div className="max-w-3xl mx-auto text-center">
-        <h2 id="tour-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>See Lodgora in action</h2>
+        <h2 id="tour-title" className="font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em]" style={{ color: INK }}>See Lodgora in action</h2>
         <p className="mt-3 text-lg">A short tour, from the housekeeper's phone to the manager's screen. Example data, no sound needed.</p>
       </div>
       <div className="mt-8 mx-auto max-w-4xl rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ boxShadow: '0 30px 50px -36px rgba(23,43,77,.45)' }}>
@@ -195,15 +129,15 @@ function Day() {
     ['You approve and keep track', 'Finished rooms wait for your inspection. You approve them or send them back, and see times and problems on one screen.']
   ];
   return (
-    <section id="how" className="bg-[#F3F6F8] border-y border-slate-200" aria-labelledby="how-title">
+    <section id="how" className="bg-[#F6F2EA] border-y border-[#E6DFD0]" aria-labelledby="how-title">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-        <h2 id="how-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight max-w-xl" style={{ color: INK }}>How a day works with Lodgora</h2>
+        <h2 id="how-title" className="font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em] max-w-xl" style={{ color: INK }}>How a day works with Lodgora</h2>
         <ol className="mt-10 grid md:grid-cols-3 gap-x-10 gap-y-8">
           {steps.map(([title, text], i) => (
             <li key={title} className="flex gap-4 group/step">
-              <span className="plate-num text-5xl leading-none flex-none w-9" style={{ color: '#0D7C77' }} aria-hidden="true">{i + 1}</span>
+              <span className="font-serif text-5xl leading-none flex-none w-9" style={{ color: '#8A6A2F' }} aria-hidden="true">{i + 1}</span>
               <div>
-                <h3 className="font-display font-semibold text-xl leading-snug" style={{ color: INK }}>{title}</h3>
+                <h3 className="font-serif font-medium text-xl leading-snug" style={{ color: INK }}>{title}</h3>
                 <p className="mt-2 leading-relaxed">{text}</p>
               </div>
             </li>
@@ -221,8 +155,8 @@ function ForHousekeepers() {
     <section id="try" className="mx-auto max-w-6xl px-5 py-16 sm:py-24 scroll-mt-16" aria-labelledby="hk-title">
       <Reveal>
         <div className="text-center max-w-3xl mx-auto">
-          <p className="text-sm font-semibold text-[#0D7C77]">Try it yourself</p>
-          <h2 id="hk-title" className="mt-2 font-bold text-3xl sm:text-4xl tracking-[-0.03em] [text-wrap:balance]" style={{ color: INK }}>One screen for the housekeeper, one for you</h2>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-[#8A6A2F]">Try it yourself</p>
+          <h2 id="hk-title" className="mt-2 font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em] [text-wrap:balance]" style={{ color: INK }}>One screen for the housekeeper, one for you</h2>
           <p className="mt-4 text-lg leading-relaxed">Press Finish on the phone and watch the manager screen update.</p>
           <ul className="mt-6 flex flex-wrap justify-center gap-2.5">
             {['No app to install', 'Sign in with a 4-digit PIN', 'Report a problem from the same screen'].map((t) => (
@@ -240,10 +174,10 @@ function ForHousekeepers() {
 
 function ForManagers() {
   return (
-    <section className="bg-[#F3F6F8] border-y border-slate-200" aria-labelledby="mg-title">
+    <section className="bg-[#F6F2EA] border-y border-[#E6DFD0]" aria-labelledby="mg-title">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:py-24 grid md:grid-cols-2 gap-12 md:gap-20 items-center">
         <Reveal>
-          <h2 id="mg-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>See how long cleaning really takes</h2>
+          <h2 id="mg-title" className="font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em]" style={{ color: INK }}>See how long cleaning really takes</h2>
           <p className="mt-5 leading-relaxed max-w-md">
             Lodgora keeps a record of every finished cleaning. You see the average time for each room type and for each person, how many rooms you
             approved first time, and how fast maintenance problems get fixed.
@@ -277,14 +211,14 @@ function Everything() {
   ];
   return (
     <section id="features" className="mx-auto max-w-6xl px-5 py-16 sm:py-24" aria-labelledby="ft-title">
-      <h2 id="ft-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight max-w-xl" style={{ color: INK }}>Everything your housekeeping team needs, and nothing else</h2>
+      <h2 id="ft-title" className="font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em] max-w-xl" style={{ color: INK }}>Everything your housekeeping team needs, and nothing else</h2>
       <ul className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {items.map(([icon, title, text], i) => (
           <li key={title}>
             <Reveal delay={(i % 3) * 90} className="h-full">
               <div className="h-full rounded-xl border border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-[#19A7A1] hover:shadow-[0_18px_30px_-22px_rgba(23,43,77,.5)]">
-                <span className="w-10 h-10 rounded-lg bg-[#E4F3F2] flex items-center justify-center"><Icon name={icon} className="w-5 h-5 text-[#0D7C77]" /></span>
-                <h3 className="mt-4 font-display font-semibold text-lg" style={{ color: INK }}>{title}</h3>
+                <span className="w-10 h-10 rounded-lg bg-[#EFE8D8] flex items-center justify-center"><Icon name={icon} className="w-5 h-5 text-[#0D7C77]" /></span>
+                <h3 className="mt-4 font-serif font-medium text-lg" style={{ color: INK }}>{title}</h3>
                 <p className="mt-1.5 leading-relaxed">{text}</p>
               </div>
             </Reveal>
@@ -299,10 +233,10 @@ function Everything() {
 
 function Pricing() {
   return (
-    <section id="pricing" className="bg-[#F3F6F8] border-y border-slate-200" aria-labelledby="pr-title">
+    <section id="pricing" className="bg-[#F6F2EA] border-y border-[#E6DFD0]" aria-labelledby="pr-title">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:py-24 grid lg:grid-cols-[1fr_1.3fr] gap-10 lg:gap-20">
         <div>
-          <h2 id="pr-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>Pay by the size of your hotel</h2>
+          <h2 id="pr-title" className="font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em]" style={{ color: INK }}>Pay by the size of your hotel</h2>
           <p className="mt-5 leading-relaxed max-w-md">
             Every plan includes everything on this page. The only difference is how many rooms you have. Start with a free {SITE.pilotDays}-day pilot
             with your own rooms and your own team.
@@ -328,7 +262,7 @@ function Faq() {
   ];
   return (
     <section id="faq" className="mx-auto max-w-6xl px-5 py-16 sm:py-24" aria-labelledby="fq-title">
-      <h2 id="fq-title" className="font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>Questions hotels ask</h2>
+      <h2 id="fq-title" className="font-serif font-medium text-3xl sm:text-[2.6rem] leading-[1.1] tracking-[-0.02em]" style={{ color: INK }}>Questions hotels ask</h2>
       <div className="mt-8 max-w-3xl divide-y divide-slate-200 border-y border-slate-200">
         {qa.map(([q, a]) => (
           <details key={q} className="group py-4">
@@ -347,22 +281,21 @@ function Faq() {
 /* ---------------- Fecho e rodapé ---------------- */
 
 function Closing() {
+  const canAsk = !!(SITE.requestUrl || SITE.contactEmail);
   return (
-    <section className="relative overflow-hidden bg-[#E4F3F2] border-y border-[#CBE6E4]" aria-labelledby="cl-title">
-      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:py-24">
-        <div>
-          <h2 id="cl-title" className="font-display font-semibold text-3xl sm:text-5xl tracking-tight max-w-xl leading-[1.08]" style={{ color: INK }}>Imagine opening one screen and seeing every room ready.</h2>
-          <p className="mt-5 max-w-lg leading-relaxed">Open the demo and try it as a manager and as a housekeeper. It takes two minutes, with no account.</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a href={demoHref} className={btnPrimary}>Try the live demo</a>
-            {(SITE.requestUrl || SITE.contactEmail) && <a {...request('Lodgora pilot')} className={btnLight}>Ask for a free pilot</a>}
-          </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
-            {['Free ' + SITE.pilotDays + '-day pilot', 'No app to install', 'Set up in minutes'].map((t) => (
-              <li key={t} className="flex items-center gap-2"><Icon name="check" className="w-4 h-4 text-[#0D7C77]" />{t}</li>
-            ))}
-          </ul>
+    <section className="relative overflow-hidden bg-[#14233F]" aria-labelledby="cl-title">
+      <div className="relative mx-auto max-w-3xl px-5 py-20 sm:py-28 text-center">
+        <h2 id="cl-title" className="font-serif font-medium text-[2.3rem] sm:text-[3.4rem] tracking-[-0.02em] leading-[1.06] text-white [text-wrap:balance]">Start your free {SITE.pilotDays}-day pilot.</h2>
+        <p className="mt-5 text-lg leading-relaxed max-w-xl mx-auto text-slate-300">Try Lodgora with your team for {SITE.pilotDays} days. Or open the demo first, with no account needed.</p>
+        <div className="mt-9 flex flex-wrap justify-center gap-3">
+          {canAsk ? <a {...request('Lodgora pilot')} className={`${btn} bg-[#2DD4BF] text-[#14233F] hover:bg-[#5EEAD4] !px-7 !py-4 !text-base !rounded-[10px]`}>Ask for a free pilot</a> : <a href={demoHref} className={`${btn} bg-[#2DD4BF] text-[#14233F] hover:bg-[#5EEAD4] !px-7 !py-4 !text-base !rounded-[10px]`}>Try the live demo</a>}
+          {canAsk && <a href={demoHref} className={`${btn} text-white !px-7 !py-4 !text-base !rounded-[10px] border border-white/30 hover:bg-white/10`}>Try the live demo</a>}
         </div>
+        <ul className="mt-9 flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm text-slate-300">
+          {['Free ' + SITE.pilotDays + '-day pilot', 'No app to install', 'Set up in minutes'].map((t) => (
+            <li key={t} className="flex items-center gap-2"><Icon name="check" className="w-4 h-4 text-[#2DD4BF]" />{t}</li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -370,7 +303,7 @@ function Closing() {
 
 export function Footer() {
   return (
-    <footer className="bg-white border-t border-slate-200">
+    <footer className="bg-[#F6F2EA] border-t border-[#E6DFD0]">
       <div className="mx-auto max-w-6xl px-5 py-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500">
         <span className="flex items-center gap-2"><LogoMark className="w-6 h-6" /><span className="font-display font-bold" style={{ color: INK }}>Lodgora</span></span>
         <span>Housekeeping and maintenance for independent hotels.</span>
