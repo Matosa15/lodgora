@@ -98,7 +98,7 @@ function Hero() {
     const updated = roomsRef.current.map(([num, s]) => (num === n ? [num, next] : [num, s]));
     roomsRef.current = updated;
     setRooms(updated);
-    setFeed((f) => [{ id: ++idRef.current, text: WHO[next](n) }, ...f].slice(0, 3));
+    setFeed((f) => [{ id: ++idRef.current, text: WHO[next](n) }, ...f].slice(0, 2));
   };
 
   // Uma manhã de exemplo vai-se desenrolando sozinha, até alguém tocar numa placa ou carregar em Pause
@@ -113,39 +113,32 @@ function Hero() {
   return (
     <section className="relative overflow-hidden" aria-labelledby="hero-title">
       <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(60rem 28rem at 85% -5%, #DFF1F0 0%, rgba(223,241,240,0) 60%), radial-gradient(40rem 22rem at -5% 100%, #F3EBDD 0%, rgba(243,235,221,0) 60%)' }} />
-      <div className="relative mx-auto max-w-6xl px-5 pt-12 pb-16 sm:pt-16 sm:pb-20 grid lg:grid-cols-[1.02fr_1fr] gap-12 lg:gap-16 items-center">
+      <div className="relative mx-auto max-w-6xl px-5 pt-14 pb-20 sm:pt-20 sm:pb-28 grid lg:grid-cols-[1fr_1fr] gap-14 lg:gap-20 items-center">
         <div>
-          <h1 id="hero-title" className="font-display font-semibold text-[2.5rem] sm:text-5xl lg:text-[3.4rem] leading-[1.06] tracking-tight" style={{ color: INK }}>
-            Know which rooms are{' '}
-            <span className="relative inline-block whitespace-nowrap"><span className="relative">ready</span><span aria-hidden="true" className="absolute left-0 right-0 bottom-[0.06em] h-[0.2em] rounded-full bg-[#19A7A1]/35 -z-0" /></span>{' '}
-            without picking up the phone.
+          <h1 id="hero-title" className="font-bold text-[2.25rem] sm:text-[2.9rem] lg:text-[3.15rem] leading-[1.08] tracking-[-0.03em]" style={{ color: INK }}>
+            Know which rooms are <span className="text-[#0D7C77]">ready</span>, without the phone calls.
           </h1>
-          <p className="mt-6 text-lg leading-relaxed max-w-[34rem]">
-            Lodgora is a simple tool for hotel housekeeping and maintenance. Your team updates rooms from their phones, and you see
-            every room, every cleaning time and every problem as it happens.
+          <p className="mt-6 text-lg leading-relaxed max-w-[30rem]">
+            Your team updates rooms from their phones. You see every room, every cleaning time and every problem as it happens.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-wrap items-center gap-3">
             <a href={demoHref} className={btnPrimary}>Try the live demo</a>
-            <a href="#try" className={btnLight}>Play with it below</a>
-            {(SITE.requestUrl || SITE.contactEmail) && <a {...request('Lodgora demo request')} className={btnLight}>Request a demo</a>}
+            <a href="#tour" className={btnLight}>Watch the 48-second tour</a>
           </div>
-          <p className="mt-4 text-sm text-slate-500">The demo opens in your browser with example data. No account needed. Or <a href="#tour" className="font-semibold text-[#0D7C77] hover:underline">watch the short tour</a>.</p>
+          <p className="mt-5 text-sm text-slate-500">Example data, no account needed.{(SITE.requestUrl || SITE.contactEmail) && <> Or <a {...request('Lodgora demo request')} className="font-semibold text-[#0D7C77] hover:underline">request a demo</a>.</>}</p>
         </div>
 
         <div>
-          <div className="rounded-2xl p-5 sm:p-7 border border-[#D5E8E6]" style={{ background: '#EAF4F3', boxShadow: '0 30px 50px -36px rgba(23,43,77,.4)' }}>
+          <div className="rounded-3xl p-4 sm:p-6 border border-white/70" style={{ background: 'rgba(255,255,255,.65)', boxShadow: '0 40px 70px -40px rgba(23,43,77,.35), 0 0 0 1px rgba(23,43,77,.05)' }}>
             <ul className="grid grid-cols-3 gap-3 sm:gap-4">
               {rooms.map(([n, s]) => (
                 <li key={n}>
                   <button type="button" onClick={() => tap(n)}
                     aria-label={`Room ${n}, ${statusLabel(s)}. Press to move it to the next step.`}
-                    className="relative w-full min-h-[7.25rem] rounded-xl px-3.5 pt-4 pb-4 text-left active:translate-y-px hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
-                    style={{ background: '#fff', border: '1px solid #DCE5EA', boxShadow: `inset 0 -4px 0 ${ACCENT[s]}, 0 10px 18px -12px rgba(23,43,77,.35)`, transition: 'box-shadow .3s' }}>
-                    {['top-1.5 left-1.5', 'top-1.5 right-1.5', 'bottom-1.5 left-1.5', 'bottom-1.5 right-1.5'].map((pos) => (
-                      <span key={pos} aria-hidden="true" className={`absolute ${pos} w-1 h-1 rounded-full bg-slate-200`} />
-                    ))}
-                    <span className="plate-num block text-[2rem] sm:text-[2.5rem] leading-none" style={{ color: INK }}>{n}</span>
-                    <span className="mt-3 flex items-start gap-2 text-[13px] leading-tight text-slate-600">
+                    className="relative w-full min-h-[7rem] rounded-xl px-3.5 pt-3.5 pb-3.5 text-left active:translate-y-px hover:-translate-y-0.5 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D7C77]"
+                    style={{ background: '#fff', border: '1px solid #E3EAF0', boxShadow: '0 8px 16px -12px rgba(23,43,77,.3)' }}>
+                                        <span className="block text-[1.7rem] sm:text-[2rem] font-semibold tracking-tight tabular-nums leading-none" style={{ color: INK }}>{n}</span>
+                    <span className="mt-3.5 flex items-start gap-2 text-[13px] leading-tight text-slate-500">
                       <span key={s} className={`mt-[3px] w-2 h-2 rounded-full flex-none dot-pop ${STATUS_STYLE[s].dot}`} aria-hidden="true" />{statusLabel(s)}
                     </span>
                   </button>
@@ -153,15 +146,15 @@ function Hero() {
               ))}
             </ul>
           </div>
-          <div className="mt-5">
+          <div className="mt-6 px-1">
             <div className="flex items-end justify-between gap-4">
-              <p className="font-display text-2xl font-semibold" style={{ color: INK }} aria-live="polite">{ready} of {rooms.length} rooms are ready</p>
+              <p className="text-xl font-semibold tracking-tight" style={{ color: INK }} aria-live="polite">{ready} of {rooms.length} rooms are ready</p>
               <button type="button" onClick={() => setPlaying((p) => !p)} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5 flex-none">
                 <Icon name={playing ? 'pause' : 'play'} className="w-4 h-4" />{playing ? 'Pause the example' : 'Play a sample morning'}
               </button>
             </div>
             <div className="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true"><div className="h-full rounded-r-[4px] bg-[#0D7C77] transition-[width] duration-500" style={{ width: `${(ready / rooms.length) * 100}%` }} /></div>
-            <ul className="mt-3 min-h-[4.75rem] space-y-1.5" aria-label="What just happened">
+            <ul className="mt-4 min-h-[3.4rem] space-y-1.5" aria-label="What just happened">
               {feed.length === 0 && <li className="text-sm text-slate-500">Tap a room to move it to the next step, like your team would.</li>}
               {feed.map((f) => (
                 <li key={f.id} className="feed-in flex gap-2 text-sm text-slate-600"><span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#19A7A1] flex-none" />{f.text}</li>
