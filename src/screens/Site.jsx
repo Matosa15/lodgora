@@ -91,12 +91,8 @@ function Hero() {
         </div>
         <div className="relative rounded-[2rem] sm:rounded-[2.75rem] overflow-hidden" style={{ background: GREY }}>
           <div className="relative mx-auto w-full max-w-[34rem] aspect-[4/5] sm:aspect-[4/4.7]">
-            <div className="absolute left-[8%] top-[8%] w-[48%] rounded-[2rem] p-[5px] bg-[#0B0B0F]" style={{ boxShadow: '0 40px 60px -28px rgba(11,11,15,.55)' }}>
-              <img src="/site-phone.jpg" width="600" height="1299" alt="The housekeeper screen on a phone with a cleaning timer running" className="block w-full h-auto rounded-[1.65rem]" />
-            </div>
-            <div className="absolute right-[6%] bottom-[6%] w-[36%] rounded-[1.7rem] p-[4px] bg-[#0B0B0F]" style={{ boxShadow: '0 40px 60px -28px rgba(11,11,15,.55)' }}>
-              <img src="/site-phone2.jpg" width="600" height="1298" alt="The maintenance screen on a phone with a list of open problems" className="block w-full h-auto rounded-[1.4rem]" />
-            </div>
+            <img src="/site-iphone-hk.webp" width="864" height="1732" alt="The housekeeper screen on a phone with a cleaning timer running" className="absolute left-[7%] top-[7%] w-[48%] h-auto drop-shadow-[0_36px_40px_rgba(11,11,15,.28)]" />
+            <img src="/site-iphone-mt.webp" width="864" height="1732" alt="The maintenance screen on a phone with a list of open problems" className="absolute right-[5%] bottom-[5%] w-[37%] h-auto drop-shadow-[0_36px_40px_rgba(11,11,15,.28)]" />
             <div className={`${chip} left-[3%] bottom-[16%]`}><span className="w-2 h-2 rounded-full bg-[#0D7C77]" aria-hidden="true" /><span className="text-[13px] leading-tight"><b className="block font-semibold" style={{ color: INK }}>Room 203 is ready</b><span className="text-slate-500">Approved just now</span></span></div>
             <div className={`${chip} right-[4%] top-[3.5%]`}><span className="w-2 h-2 rounded-full bg-[#F97316]" aria-hidden="true" /><span className="text-[13px] leading-tight"><b className="block font-semibold" style={{ color: INK }}>Leak in room 106</b><span className="text-slate-500">Sent to Tom, urgent</span></span></div>
           </div>
