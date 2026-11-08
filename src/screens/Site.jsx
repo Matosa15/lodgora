@@ -220,22 +220,13 @@ function ForHousekeepers() {
   return (
     <section id="try" className="mx-auto max-w-6xl px-5 py-16 sm:py-24 scroll-mt-16" aria-labelledby="hk-title">
       <Reveal>
-        <div className="grid md:grid-cols-2 gap-8 md:gap-20 items-end">
-          <div>
-            <p className="text-sm font-semibold text-[#0D7C77]">Try it yourself</p>
-            <h2 id="hk-title" className="mt-2 font-display font-semibold text-3xl sm:text-4xl tracking-tight" style={{ color: INK }}>One screen for the housekeeper, one for you</h2>
-            <p className="mt-5 leading-relaxed max-w-md">
-              The housekeeper sees only their rooms and common areas, with one big button for what to do next. A timer starts when they press Start.
-              They can pause it for a break and press Finish when they are done. You see it on your screen straight away.
-            </p>
-          </div>
-          <ul className="space-y-3 max-w-md">
-            {[
-              'Works in the phone browser. Nothing to install.',
-              'Sign in with a 4-digit PIN. You can see and change every PIN.',
-              'Report a broken lamp or a leaking tap from the same screen.'
-            ].map((t) => (
-              <li key={t} className="flex gap-3"><Icon name="check" className="w-5 h-5 flex-none mt-0.5 text-[#0D7C77]" /><span>{t}</span></li>
+        <div className="text-center max-w-3xl mx-auto">
+          <p className="text-sm font-semibold text-[#0D7C77]">Try it yourself</p>
+          <h2 id="hk-title" className="mt-2 font-bold text-3xl sm:text-4xl tracking-[-0.03em] [text-wrap:balance]" style={{ color: INK }}>One screen for the housekeeper, one for you</h2>
+          <p className="mt-4 text-lg leading-relaxed">Press Finish on the phone and watch the manager screen update.</p>
+          <ul className="mt-6 flex flex-wrap justify-center gap-2.5">
+            {['No app to install', 'Sign in with a 4-digit PIN', 'Report a problem from the same screen'].map((t) => (
+              <li key={t} className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm"><Icon name="check" className="w-4 h-4 text-[#0D7C77]" />{t}</li>
             ))}
           </ul>
         </div>

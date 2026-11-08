@@ -137,6 +137,7 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
           </div>
 
           <div aria-live="polite" className={`absolute left-4 right-4 bottom-7 rounded-xl bg-[#172B4D] text-white text-[13px] font-medium px-3.5 py-2.5 shadow-lg transition-all duration-300 ${toast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>{toast}</div>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#F3F6F9] via-[#F3F6F9]/90 to-transparent" />
           <span aria-hidden="true" className="absolute bottom-2 left-1/2 -translate-x-1/2 w-28 h-1 rounded-full bg-slate-900/85" />
         </div>
       </div>
@@ -152,7 +153,7 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
   const review = rooms.filter((r) => r.state === 'review');
   const ready = rooms.filter((r) => r.state === 'ready').length;
   return (
-    <div className="rounded-2xl bg-white border border-slate-200 shadow-[0_18px_40px_-26px_rgba(23,43,77,.45)] overflow-hidden w-full max-w-md">
+    <div className="rounded-2xl bg-white border border-slate-200 shadow-[0_30px_60px_-36px_rgba(23,43,77,.45)] overflow-hidden w-full max-w-md flex flex-col">
       <div className="px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5 bg-[#FAFBFC]">
         <LogoMark className="w-6 h-6" />
         <p className="text-sm font-bold" style={{ color: INK }}>Manager screen</p>
@@ -163,7 +164,7 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
         <ul className="grid grid-cols-4 gap-2" aria-label="Room status">
           {rooms.map((r) => (
             <li key={r.n} className="rounded-lg px-2.5 pt-2 pb-2.5 bg-white border border-slate-200 transition-shadow" style={{ boxShadow: `inset 0 -3px 0 ${ACCENT[r.state]}` }}>
-              <p className="plate-num text-xl leading-none" style={{ color: INK }}>{r.n}</p>
+              <p className="text-xl font-semibold tabular-nums tracking-tight leading-none" style={{ color: INK }}>{r.n}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-[10px] leading-tight text-slate-600">
                 <span className={`w-1.5 h-1.5 rounded-full flex-none transition-colors ${DOT[r.state]}`} />{WORD[r.state]}
               </p>
@@ -181,7 +182,7 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
             {review.map((r) => (
               <li key={r.n} className="feed-in rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-3 flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-display font-bold" style={{ color: INK }}>Room {r.n}</p>
+                  <p className="font-semibold" style={{ color: INK }}>Room {r.n}</p>
                   <p className="text-xs text-slate-500">Cleaned in {took(r.secs)} by Emma Clarke</p>
                 </div>
                 <button type="button" onClick={() => onBack(r.n)} className="h-9 px-2.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50">Send back</button>
@@ -193,7 +194,7 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
         )}
       </div>
 
-      <div className="px-5 pt-5 pb-5">
+      <div className="px-5 pt-5 pb-5 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Activity</p>
         <ul className="mt-2 space-y-1.5 min-h-[4.5rem]">
           {feed.slice(0, 3).map((f) => (
@@ -243,13 +244,14 @@ export function TryIt() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white border border-slate-200 px-4 py-3 max-w-3xl mx-auto">
-        {num && <span className="plate-num flex-none w-7 h-7 rounded-full bg-[#0D7C77] text-white text-base flex items-center justify-center">{num}</span>}
+      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white border border-slate-200 px-4 py-3 max-w-4xl mx-auto shadow-sm">
+        {num && <span className="flex-none w-7 h-7 rounded-full bg-[#0D7C77] text-white text-sm font-semibold flex items-center justify-center">{num}</span>}
         <p className="text-sm font-medium flex-1 min-w-[12rem]" style={{ color: INK }} aria-live="polite">{text}</p>
         <button type="button" onClick={reset} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5"><Icon name="refresh" className="w-4 h-4" />Start over</button>
       </div>
-      <div className="mt-8 flex flex-col md:flex-row items-center md:items-start justify-center gap-10 lg:gap-16">
+      <div className="mt-8 flex flex-col md:flex-row items-center md:items-stretch justify-center gap-8 lg:gap-12">
         <Phone rooms={rooms} onStart={start} onToggle={toggle} onFinish={finish} toast={toast} hint={showHint} />
+        <div aria-hidden="true" className="hidden md:flex items-center text-[#0D7C77]"><svg viewBox="0 0 40 16" className="w-10 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 8h34M29 2l7 6-7 6" /></svg></div>
         <ManagerPanel rooms={rooms} feed={feed} onApprove={approve} onBack={back} hint={showHint} />
       </div>
     </div>
