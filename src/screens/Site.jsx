@@ -113,8 +113,8 @@ function Tour() {
         <p className="mt-3 text-lg">A short tour, from the housekeeper's phone to the manager's screen. Example data, no sound needed.</p>
       </div>
       <div className="mt-8 mx-auto max-w-4xl rounded-[1.5rem] sm:rounded-[2.25rem] overflow-hidden bg-[#0B0B0F]">
-        <video className="block w-full h-auto" controls playsInline preload="metadata" poster="/lodgora-promo-v3-poster.jpg" aria-label="Short tour of Lodgora: housekeeper, maintenance and manager screens">
-          <source src="/lodgora-promo-v3.mp4" type="video/mp4" />
+        <video className="block w-full h-auto" controls playsInline preload="metadata" poster="/lodgora-promo-v4-poster.jpg" aria-label="Short tour of Lodgora: housekeeper, maintenance and manager screens">
+          <source src="/lodgora-promo-v4.mp4" type="video/mp4" />
           Your browser cannot play this video. You can try the live demo above instead.
         </video>
       </div>

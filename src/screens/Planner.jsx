@@ -69,7 +69,7 @@ export default function Planner({ rooms, plan, staff, search, onSet, onClear, on
 
   const clearDay = () => onClear(today.map((p) => ({ roomId: p.roomId, day })), `${dayLabel(day)} cleared`);
 
-  const small = `${btnSmall} border border-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5 disabled:opacity-50 disabled:hover:bg-white`;
+  const small = `${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:hover:bg-white`;
   const prevCount = prevDay ? plan.filter((p) => p.day === prevDay && !planOf.has(`${p.roomId}|${day}`)).length : 0;
 
   if (rooms.length === 0) {
@@ -90,7 +90,7 @@ export default function Planner({ rooms, plan, staff, search, onSet, onClear, on
           const on = d === day;
           return (
             <button key={d} onClick={() => setDay(d)} aria-pressed={on}
-              className={`shrink-0 min-w-[5.5rem] rounded-xl border px-3 py-2 text-left transition-colors ${on ? 'bg-[#172B4D] border-[#172B4D] text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              className={`shrink-0 min-w-[5.5rem] rounded-2xl px-3.5 py-2.5 text-left transition-colors ${on ? 'bg-[#0B0B0F] text-white' : 'bg-[#F4F5F7] text-slate-700 hover:bg-[#E4E6EB]'}`}>
               <span className="block text-xs font-semibold">{label(d, i)}</span>
               <span className={`block text-[11px] ${on ? 'text-white/70' : 'text-slate-500'}`}>{i === 0 ? dayLabel(d) : ''}{i === 0 ? ' · ' : ''}{n === 0 ? 'nothing yet' : `${n} to clean`}</span>
             </button>
@@ -117,7 +117,7 @@ export default function Planner({ rooms, plan, staff, search, onSet, onClear, on
         <div className="px-5 sm:px-6 pb-3 flex gap-1.5" role="group" aria-label="Show rooms or common areas">
           {[['all', 'Everything'], ['room', 'Rooms'], ['area', 'Common areas']].map(([id, text]) => (
             <button key={id} onClick={() => setKind(id)} aria-pressed={kind === id}
-              className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-colors ${kind === id ? 'bg-[#0D7C77] border-[#0D7C77] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{text}</button>
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${kind === id ? 'bg-[#0B0B0F] text-white' : 'bg-[#F4F5F7] text-slate-600 hover:bg-[#E4E6EB]'}`}>{text}</button>
           ))}
         </div>
       )}
@@ -134,12 +134,12 @@ export default function Planner({ rooms, plan, staff, search, onSet, onClear, on
             return (
               <li key={r.id} className="py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <div className="min-w-0 flex-1 basis-40">
-                  <p className="font-semibold text-[#172B4D] text-sm">{spaceName(r)}</p>
+                  <p className="font-semibold text-[#0B0B0F] text-sm">{spaceName(r)}</p>
                   <p className="text-xs text-slate-500">{r.type}{!isArea(r) && r.floor ? ` · floor ${r.floor}` : ''}</p>
                 </div>
                 <label className="sr-only" htmlFor={`plan-${r.id}`}>{`${spaceName(r)} on ${dayLabel(day)}`}</label>
                 <select id={`plan-${r.id}`} value={value} onChange={(e) => change(r, e.target.value)}
-                  className={`${inputCls} !w-56 max-w-full ${p ? 'border-[#19A7A1] bg-[#E4F3F2]/60 font-medium text-[#0D7C77]' : 'text-slate-500'}`}>
+                  className={`${inputCls} !w-56 max-w-full ${p ? 'bg-[#E4F3F2] font-medium text-[#0D7C77]' : 'text-slate-500'}`}>
                   <option value={NOT_PLANNED}>Not planned</option>
                   <option value={NO_ONE}>Clean, no one yet</option>
                   {housekeepers.map((s) => <option key={s.id} value={s.id}>{s.fullName}</option>)}

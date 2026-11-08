@@ -205,12 +205,12 @@ export default function Manager({ session, signOut }) {
   }[page];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#F4F5F7]">
       {/* Barra lateral */}
-      <aside className={`fixed inset-y-0 left-0 w-60 bg-white border-r border-slate-200 flex flex-col z-40 transition-transform lg:translate-x-0 ${menuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`} aria-label="Main navigation">
-        <div className="h-16 flex items-center gap-2 px-6 border-b border-slate-100 pt-safe">
+      <aside className={`fixed inset-y-0 left-0 w-60 bg-white flex flex-col z-40 transition-transform lg:translate-x-0 ${menuOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`} aria-label="Main navigation">
+        <div className="h-16 flex items-center gap-2.5 px-6 pt-safe">
           <LogoMark />
-          <span className="font-bold text-xl tracking-tight text-[#172B4D]">Lodgora</span>
+          <span className="font-bold text-xl tracking-tight text-[#0B0B0F]">Lodgora</span>
         </div>
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
           {NAV.map((g) => (
@@ -222,7 +222,7 @@ export default function Manager({ session, signOut }) {
                   const n = it.badge ? badges[it.badge] : null;
                   return (
                     <button key={it.name} onClick={() => go(it.name)} aria-current={active ? 'page' : undefined}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active ? 'bg-[#172B4D] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-full text-sm font-medium transition-colors ${active ? 'bg-[#0B0B0F] text-white' : 'text-slate-600 hover:bg-[#F4F5F7]'}`}>
                       <span className="flex items-center gap-3"><Icon name={it.icon} className={`w-[18px] h-[18px] ${active ? 'text-[#19A7A1]' : ''}`} />{it.label || it.name}</span>
                       {n !== null && n > 0 && (
                         <span className={`text-xs px-2 py-0.5 rounded-full tabular-nums ${active ? 'bg-white/20 text-white' : it.alert ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>{n}</span>
@@ -235,8 +235,8 @@ export default function Manager({ session, signOut }) {
           ))}
         </div>
         <div className="p-4 border-t border-slate-100">
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <p className="text-xs font-semibold text-[#172B4D] truncate">{session.hotel.name}</p>
+          <div className="bg-[#F4F5F7] p-3 rounded-2xl">
+            <p className="text-xs font-semibold text-[#0B0B0F] truncate">{session.hotel.name}</p>
             <p className="text-xs text-slate-500 mt-0.5">Hotel code <span className="font-mono font-semibold">{session.hotel.code}</span></p>
             {backend.mode === 'demo' && <p className="text-[11px] text-amber-700 mt-1">Demo data</p>}
           </div>
@@ -245,21 +245,21 @@ export default function Manager({ session, signOut }) {
       {menuOpen && <div className="fixed inset-0 bg-slate-900/40 z-30 lg:hidden" onClick={() => setMenuOpen(false)}></div>}
 
       <div className="lg:ml-60 min-w-0">
-        <header className="sticky top-0 z-20 bg-white border-b border-slate-200 pt-safe">
+        <header className="sticky top-0 z-20 bg-white pt-safe">
           <div className="h-16 flex items-center gap-3 px-4 sm:px-8">
-            <button onClick={() => setMenuOpen(true)} aria-label="Open menu" className="lg:hidden w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600">
+            <button onClick={() => setMenuOpen(true)} aria-label="Open menu" className="lg:hidden w-9 h-9 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600">
               <Icon name="menu" />
             </button>
             <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-3 whitespace-nowrap text-sm">
               <span className="font-medium text-slate-400">{session.hotel.name}</span><span className="text-slate-300">/</span>
-              <span className="font-semibold text-[#172B4D]">{pageTitle}</span>
+              <span className="font-semibold text-[#0B0B0F]">{pageTitle}</span>
             </nav>
             <div className="flex items-center gap-3 ml-auto min-w-0">
               <div className="relative min-w-0">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><Icon name="search" className="w-4 h-4" /></span>
                 <label htmlFor="search" className="sr-only">Search rooms, issues and team</label>
                 <input id="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search rooms, staff…"
-                  className="w-full sm:w-64 pl-9 pr-8 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-[#19A7A1]" />
+                  className="w-full sm:w-64 pl-9 pr-8 py-2 bg-[#F4F5F7] border-2 border-transparent rounded-full text-sm focus:outline-none focus:bg-white focus:border-[#0B0B0F]" />
                 {search && (
                   <button onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
                     <Icon name="x" className="w-3.5 h-3.5" />
@@ -268,7 +268,7 @@ export default function Manager({ session, signOut }) {
               </div>
               <button className={`${btnPrimary} hidden sm:inline-flex`} onClick={() => setModal({ type: 'issue' })}><Icon name="plus" className="w-4 h-4" />Report issue</button>
               <div className="hidden md:flex items-center gap-3 pl-3 border-l border-slate-200">
-                <span className="w-9 h-9 rounded-full bg-[#172B4D] text-white text-sm font-medium flex items-center justify-center" aria-hidden="true">{initials(session.name)}</span>
+                <span className="w-9 h-9 rounded-full bg-[#0B0B0F] text-white text-sm font-medium flex items-center justify-center" aria-hidden="true">{initials(session.name)}</span>
                 <div className="leading-tight"><p className="text-xs font-semibold">{session.name}</p><p className="text-[11px] text-slate-500">Manager</p></div>
               </div>
             </div>
@@ -278,7 +278,7 @@ export default function Manager({ session, signOut }) {
         <main className="p-4 sm:p-8 max-w-[1400px] space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-[#172B4D]">{page === 'Dashboard' ? `Good ${greeting()}, ${session.name.split(' ')[0]}` : pageTitle}</h1>
+              <h1 className="text-2xl font-bold text-[#0B0B0F]">{page === 'Dashboard' ? `Good ${greeting()}, ${session.name.split(' ')[0]}` : pageTitle}</h1>
               <p className="text-slate-500 text-sm mt-1">{subtitle}</p>
             </div>
             <button className={`${btnPrimary} sm:hidden`} onClick={() => setModal({ type: 'issue' })}><Icon name="plus" className="w-4 h-4" />Report issue</button>
@@ -321,8 +321,8 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
   return (
     <>
       {showSetup && (
-        <section className="rounded-xl border border-[#19A7A1]/40 bg-teal-50/60 p-5 sm:p-6">
-          <h2 className="text-lg font-bold text-[#172B4D]">Let's set up your hotel</h2>
+        <section className="rounded-3xl bg-[#E4F3F2] p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-[#0B0B0F]">Let's set up your hotel</h2>
           <p className="text-sm text-slate-600 mt-1">Two quick steps and your team can start using Lodgora.</p>
           <ol className="mt-4 space-y-3">
             <li className="flex flex-wrap items-center gap-3">
@@ -342,12 +342,12 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {cards.map((c) => (
-          <button key={c.label} onClick={c.onClick} className="text-left bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm flex items-center justify-between gap-3">
+          <button key={c.label} onClick={c.onClick} className="text-left bg-white p-5 rounded-3xl hover:bg-white/70 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{c.label}</p>
-              <p className="flex items-baseline gap-2 mt-1"><span className="text-2xl font-bold text-[#172B4D] tabular-nums">{c.value}</span><span className="text-xs text-slate-400">{c.caption}</span></p>
+              <p className="flex items-baseline gap-2 mt-1"><span className="text-2xl font-bold text-[#0B0B0F] tabular-nums">{c.value}</span><span className="text-xs text-slate-400">{c.caption}</span></p>
             </div>
-            <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-none ${c.tone}`}><Icon name={c.icon} /></span>
+            <span className={`w-11 h-11 rounded-full flex items-center justify-center flex-none ${c.tone}`}><Icon name={c.icon} /></span>
           </button>
         ))}
       </div>
@@ -367,7 +367,7 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
             <ul className="px-5 sm:px-6 pb-4">
               {attention.map((it) => (
                 <li key={it.key} className="flex gap-3 py-3 border-t border-slate-100 first:border-0">
-                  <span className={`w-9 h-9 rounded-lg flex items-center justify-center flex-none ${it.kind === 'issue' ? (it.priority === 'urgent' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700') : 'bg-amber-50 text-amber-700'}`}>
+                  <span className={`w-9 h-9 rounded-full flex items-center justify-center flex-none ${it.kind === 'issue' ? (it.priority === 'urgent' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700') : 'bg-amber-50 text-amber-700'}`}>
                     <Icon name={it.kind === 'issue' ? 'wrench' : 'inspect'} className="w-[18px] h-[18px]" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -383,10 +383,10 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
                     </p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {it.kind === 'inspection'
-                        ? <button className={`${btnSmall} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`} onClick={() => actions.approve(it.room)}>Approve</button>
-                        : <button className={`${btnSmall} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`} onClick={() => actions.setIssueStatus(it.issue, 'resolved')}>Mark resolved</button>}
+                        ? <button className={`${btnSmall} bg-[#0B0B0F] text-white hover:bg-[#2A2B33]`} onClick={() => actions.approve(it.room)}>Approve</button>
+                        : <button className={`${btnSmall} bg-[#0B0B0F] text-white hover:bg-[#2A2B33]`} onClick={() => actions.setIssueStatus(it.issue, 'resolved')}>Mark resolved</button>}
                       {(it.kind === 'inspection' || it.issue.roomId) && (
-                        <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => openRoom(it.kind === 'inspection' ? it.room.id : it.issue.roomId)}>Open</button>
+                        <button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={() => openRoom(it.kind === 'inspection' ? it.room.id : it.issue.roomId)}>Open</button>
                       )}
                     </div>
                   </div>
@@ -416,7 +416,7 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
         </div>
 
         <Panel title="Team overview" subtitle={`${staff.filter((s) => s.active).length} active ${staff.filter((s) => s.active).length === 1 ? 'person' : 'people'}`}
-          right={<button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => go('Team')}>Manage</button>}>
+          right={<button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={() => go('Team')}>Manage</button>}>
           {staff.length === 0 ? (
             <EmptyState icon="users" title="No team yet" text="Add your housekeepers and maintenance team so you can assign rooms and issues.">
               <button className={btnPrimary} onClick={() => setModal({ type: 'staff' })}>Add housekeeper</button>
@@ -429,7 +429,7 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
                 const todo = tech ? mine.length : mine.filter((r) => r.status === 'Dirty' || r.status === 'Cleaning').length;
                 return (
                   <li key={s.id} className="flex items-center gap-3 py-2">
-                    <span className="w-9 h-9 rounded-full bg-[#172B4D] text-white text-xs font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
+                    <span className="w-9 h-9 rounded-full bg-[#0B0B0F] text-white text-xs font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
                     <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{s.fullName}</p><p className="text-xs text-slate-500">{tech ? 'Maintenance' : 'Housekeeper'}</p></div>
                     <p className="text-xs text-slate-500 text-right tabular-nums">{tech ? <>{todo} open {todo === 1 ? 'issue' : 'issues'}</> : <>{todo} to clean<br />{mine.length} assigned</>}</p>
                   </li>
@@ -446,7 +446,7 @@ function Dashboard({ stats, rooms, allRooms, hasAreas, kindFilter, setKindFilter
 function ReadinessPanel({ title, subtitle, rooms, search, statusFilter, setStatusFilter, openRoom, onAdd, onDistribute, hasAreas, kindFilter, setKindFilter, onRequestAreas }) {
   const filters = ['All', ...STATUSES];
   const shown = rooms.filter((r) => statusFilter === 'All' || r.status === statusFilter);
-  const small = `${btnSmall} border border-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5`;
+  const small = `${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB] inline-flex items-center gap-1.5`;
   return (
     <Panel title={title} subtitle={subtitle}
       right={
@@ -460,14 +460,14 @@ function ReadinessPanel({ title, subtitle, rooms, search, statusFilter, setStatu
         <div className="px-5 sm:px-6 pb-3 flex gap-1.5" role="group" aria-label="Show rooms or common areas">
           {[['all', 'Everything'], ['room', 'Rooms'], ['area', 'Common areas']].map(([id, label]) => (
             <button key={id} onClick={() => setKindFilter(id)} aria-pressed={kindFilter === id}
-              className={`px-3 py-1 rounded-lg border text-xs font-semibold transition-colors ${kindFilter === id ? 'bg-[#0D7C77] border-[#0D7C77] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${kindFilter === id ? 'bg-[#0B0B0F] text-white' : 'bg-[#F4F5F7] text-slate-600 hover:bg-[#E4E6EB]'}`}>{label}</button>
           ))}
         </div>
       )}
       <div className="px-5 sm:px-6 pb-4 flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
         {filters.map((s) => (
           <button key={s} onClick={() => setStatusFilter(s)} aria-pressed={statusFilter === s}
-            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${statusFilter === s ? 'bg-[#172B4D] border-[#172B4D] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${statusFilter === s ? 'bg-[#0B0B0F] border-[#172B4D] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
             {s === 'All' ? 'All' : statusLabel(s)} <span className="ml-1 font-semibold tabular-nums">{s === 'All' ? rooms.length : rooms.filter((r) => r.status === s).length}</span>
           </button>
         ))}
@@ -482,8 +482,8 @@ function ReadinessPanel({ title, subtitle, rooms, search, statusFilter, setStatu
         <div className="px-5 sm:px-6 pb-6 grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
           {shown.map((r) => (
             <button key={r.id} onClick={() => openRoom(r.id)} aria-label={`${spaceName(r)}, ${r.type}, ${statusLabel(r.status)}`}
-              className={`text-left bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 border-t-[3px] ${STATUS_STYLE[r.status].bar} rounded-xl p-4 transition-colors flex flex-col gap-3 min-w-0`}>
-              <div><span className="text-base font-bold text-[#172B4D]">{spaceName(r)}</span><p className="text-xs text-slate-500">{r.type}</p></div>
+              className={`text-left bg-[#F4F5F7] hover:bg-[#ECEDF1] rounded-3xl p-4 transition-colors flex flex-col gap-3 min-w-0`}>
+              <div><span className="text-base font-bold text-[#0B0B0F]">{spaceName(r)}</span><p className="text-xs text-slate-500">{r.type}</p></div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={r.status} />
                 {r.status === 'Cleaning' && (
@@ -512,7 +512,7 @@ function Inspections({ rooms, actions }) {
         <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
           {rooms.map((r) => (
             <li key={r.id} className="py-4 flex flex-wrap items-center gap-3">
-              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#172B4D]">{spaceName(r)}</p><p className="text-xs text-slate-500">{r.type} · cleaned by {r.assignee || 'unknown'}{r.cleanSeconds > 0 && ` in ${minutesLabel(r.cleanSeconds)}`}</p></div>
+              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#0B0B0F]">{spaceName(r)}</p><p className="text-xs text-slate-500">{r.type} · cleaned by {r.assignee || 'unknown'}{r.cleanSeconds > 0 && ` in ${minutesLabel(r.cleanSeconds)}`}</p></div>
               <div className="flex gap-2">
                 <button className={btnGhost} onClick={() => actions.sendBack(r)}>Send back</button>
                 <button className={btnPrimary} onClick={() => actions.approve(r)}><Icon name="check" className="w-4 h-4" />Approve</button>
@@ -537,15 +537,15 @@ function Maintenance({ issues, technicians, staffById, onReport, onAddTech, acti
     <Panel title="Issues" subtitle={technicians.length === 0 ? 'Reported by your team' : `Reported by your team${unassigned ? ` · ${unassigned} without anyone assigned` : ''}`}
       right={<button className={btnPrimary} onClick={onReport}><Icon name="plus" className="w-4 h-4" />Report issue</button>}>
       {technicians.length === 0 && (
-        <div className="mx-5 sm:mx-6 mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+        <div className="mx-5 sm:mx-6 mb-4 rounded-2xl bg-[#F4F5F7] px-4 py-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
           <span className="flex-1 basis-56">Add your maintenance people to give each issue to someone. They sign in with a PIN, like housekeepers, and only see their own issues.</span>
-          <button className={`${btnSmall} border border-slate-200 bg-white hover:bg-slate-50`} onClick={onAddTech}>Add maintenance person</button>
+          <button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={onAddTech}>Add maintenance person</button>
         </div>
       )}
       <div className="px-5 sm:px-6 pb-4 flex gap-1.5">
         {[['open', 'Open'], ['all', 'All']].map(([id, label]) => (
           <button key={id} onClick={() => setFilter(id)} aria-pressed={filter === id}
-            className={`px-3 py-1 rounded-full border text-xs font-medium ${filter === id ? 'bg-[#172B4D] border-[#172B4D] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+            className={`px-3 py-1 rounded-full border text-xs font-medium ${filter === id ? 'bg-[#0B0B0F] border-[#172B4D] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{label}</button>
         ))}
       </div>
       {list.length === 0 ? (
@@ -579,9 +579,9 @@ function Maintenance({ issues, technicians, staffById, onReport, onAddTech, acti
                   {i.status !== 'resolved' && <NoteBox collapsible label={i.notes?.length ? 'Reply' : 'Add a note'} placeholder="Write a note for your team…" onSend={(t) => actions.addIssueNote(i, t)} />}
                 </div>
                 <div className="flex gap-2">
-                  {i.status === 'open' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'in_progress')}>Start work</button>}
-                  {i.status !== 'resolved' && <button className={`${btnSmall} bg-[#0D7C77] text-white hover:bg-[#0A6A66]`} onClick={() => actions.setIssueStatus(i, 'resolved')}>Resolve</button>}
-                  {i.status === 'resolved' && <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setIssueStatus(i, 'open')}>Reopen</button>}
+                  {i.status === 'open' && <button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={() => actions.setIssueStatus(i, 'in_progress')}>Start work</button>}
+                  {i.status !== 'resolved' && <button className={`${btnSmall} bg-[#0B0B0F] text-white hover:bg-[#2A2B33]`} onClick={() => actions.setIssueStatus(i, 'resolved')}>Resolve</button>}
+                  {i.status === 'resolved' && <button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={() => actions.setIssueStatus(i, 'open')}>Reopen</button>}
                 </div>
               </li>
             );
@@ -601,10 +601,10 @@ function Team({ staff, rooms, issues, hotel, setModal, actions }) {
   ];
   return (
     <>
-      <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-wrap items-center gap-4">
+      <section className="bg-white rounded-3xl p-5 sm:p-6 flex flex-wrap items-center gap-4">
         <div className="flex-1 basis-64">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Hotel code</p>
-          <p className="text-3xl font-bold font-mono tracking-widest text-[#172B4D] mt-1">{hotel.code}</p>
+          <p className="text-3xl font-bold font-mono tracking-widest text-[#0B0B0F] mt-1">{hotel.code}</p>
           <p className="text-sm text-slate-500 mt-1">Your team opens <span className="font-semibold text-slate-700">{location.origin}/app</span> on their phone and signs in with this code, their username and PIN.</p>
         </div>
         <CopyButton text={hotel.code} label="Copy code" />
@@ -637,7 +637,7 @@ function StaffRow({ s, hotel, count, setModal, actions }) {
   const details = `Lodgora sign in\nWebsite: ${location.origin}/app\nHotel code: ${hotel.code}\nUsername: ${s.username}\nPIN: ${s.pin}`;
   return (
     <li className={`py-3 flex flex-wrap items-center gap-3 ${s.active ? '' : 'opacity-60'}`}>
-      <span className="w-10 h-10 rounded-full bg-[#172B4D] text-white text-sm font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
+      <span className="w-10 h-10 rounded-full bg-[#0B0B0F] text-white text-sm font-semibold flex items-center justify-center flex-none" aria-hidden="true">{initials(s.fullName)}</span>
       <div className="min-w-0 flex-1 basis-40">
         <p className="font-semibold text-sm truncate">{s.fullName}{!s.active && <span className="ml-2 text-xs font-medium text-slate-500">(inactive)</span>}</p>
         <p className="text-xs text-slate-500">Username <span className="font-mono">{s.username}</span> · {s.role === 'maintenance' ? `${count} open ${count === 1 ? 'issue' : 'issues'}` : `${count} ${count === 1 ? 'room' : 'rooms'} assigned`}</p>
@@ -645,7 +645,7 @@ function StaffRow({ s, hotel, count, setModal, actions }) {
           {s.pin ? (
             <>
               <span>PIN</span>
-              <span className="font-mono font-semibold tracking-widest text-[#172B4D] text-sm" data-testid={`pin-${s.username}`}>{show ? s.pin : '••••'}</span>
+              <span className="font-mono font-semibold tracking-widest text-[#0B0B0F] text-sm" data-testid={`pin-${s.username}`}>{show ? s.pin : '••••'}</span>
               <button type="button" onClick={() => setShow(!show)} aria-label={show ? `Hide PIN of ${s.fullName}` : `Show PIN of ${s.fullName}`}
                 className="inline-flex items-center gap-1 font-semibold text-[#0D7C77] hover:underline"><Icon name={show ? 'eyeoff' : 'eye'} className="w-3.5 h-3.5" />{show ? 'Hide' : 'Show'}</button>
               <CopyButton text={details} label="Copy login details" />
@@ -656,8 +656,8 @@ function StaffRow({ s, hotel, count, setModal, actions }) {
         </p>
       </div>
       <div className="flex gap-2">
-        <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => setModal({ type: 'pin', id: s.id })}>Change PIN</button>
-        <button className={`${btnSmall} border border-slate-200 hover:bg-slate-50`} onClick={() => actions.setActive(s, !s.active)}>{s.active ? 'Deactivate' : 'Activate'}</button>
+        <button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={() => setModal({ type: 'pin', id: s.id })}>Change PIN</button>
+        <button className={`${btnSmall} bg-[#F0F1F4] hover:bg-[#E4E6EB]`} onClick={() => actions.setActive(s, !s.active)}>{s.active ? 'Deactivate' : 'Activate'}</button>
       </div>
     </li>
   );
@@ -685,9 +685,9 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
       <div className="p-5 space-y-5">
         <div className="flex items-center justify-between"><span className="text-xs text-slate-500">Current status</span><StatusBadge status={room.status} /></div>
         {room.status === 'Cleaning' && (
-          <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-2xl bg-[#F4F5F7] px-3 py-2.5">
             <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5"><Icon name="timer" className="w-4 h-4" />{room.cleanRunningSince ? 'Cleaning time' : 'Paused at'}</span>
-            <CleanTimer room={room} className="text-lg text-[#172B4D]" />
+            <CleanTimer room={room} className="text-lg text-[#0B0B0F]" />
           </div>
         )}
         {room.status === 'Awaiting inspection' && room.cleanSeconds > 0 && (
@@ -698,7 +698,7 @@ function RoomModal({ room, staff, issues, actions, onClose, onReport }) {
           <div className="flex flex-wrap gap-2" role="group" aria-labelledby="rm-status">
             {STATUSES.filter((s) => !(isArea(room) && s === 'Occupied')).map((s) => (
               <button key={s} aria-pressed={room.status === s} onClick={() => actions.setStatus(room, s)}
-                className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${room.status === s ? 'bg-[#172B4D] text-white border-[#172B4D]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>{statusLabel(s)}</button>
+                className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${room.status === s ? 'bg-[#0B0B0F] text-white border-[#172B4D]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>{statusLabel(s)}</button>
             ))}
           </div>
         </div>
@@ -802,10 +802,10 @@ function AddSpacesModal({ onClose, onSubmit }) {
   return (
     <Modal title="Add rooms or common areas" subtitle="Rooms and areas that already exist are skipped." onClose={onClose}>
       <div className="px-5 pt-4">
-        <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-lg" role="tablist">
+        <div className="grid grid-cols-2 gap-1 bg-[#F4F5F7] p-1 rounded-full" role="tablist">
           {[['room', 'Rooms'], ['area', 'Common areas']].map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={`py-1.5 rounded-md text-sm font-semibold transition-colors ${tab === id ? 'bg-white text-[#172B4D] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{label}</button>
+              className={`py-1.5 rounded-md text-sm font-semibold transition-colors ${tab === id ? 'bg-white text-[#0B0B0F] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{label}</button>
           ))}
         </div>
       </div>
@@ -843,7 +843,7 @@ function AddRoomsForm({ onClose, onSubmit }) {
       <Field id="ar-type" label="Room type" error={error}>
         <RoomTypeSelect id="ar-type" value={f.type} onChange={(v) => set('type', v)} />
       </Field>
-      <p className="text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{total ? `This creates ${total} room${total > 1 ? 's' : ''}: ${from} to ${to}.` : 'Enter a valid range.'}</p>
+      <p className="text-sm text-slate-600 bg-[#F4F5F7] rounded-2xl px-3.5 py-2.5">{total ? `This creates ${total} room${total > 1 ? 's' : ''}: ${from} to ${to}.` : 'Enter a valid range.'}</p>
       <div className="flex gap-3"><button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>Cancel</button><button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? 'Adding…' : 'Add rooms'}</button></div>
     </form>
   );
@@ -879,7 +879,7 @@ function AddAreasForm({ onClose, onSubmit }) {
         <div className="flex flex-wrap gap-2" role="group" aria-labelledby="aa-label">
           {[...AREA_PRESETS, ...extra].map((name) => (
             <button key={name} type="button" onClick={() => toggle(name)} aria-pressed={picked.includes(name)}
-              className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${picked.includes(name) ? 'bg-[#0D7C77] border-[#0D7C77] text-white' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}>{name}</button>
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${picked.includes(name) ? 'bg-[#0B0B0F] text-white' : 'bg-[#F4F5F7] text-slate-700 hover:bg-[#E4E6EB]'}`}>{name}</button>
           ))}
         </div>
       </div>
@@ -890,7 +890,7 @@ function AddAreasForm({ onClose, onSubmit }) {
           <button type="button" className={btnGhost} onClick={addCustom}>Add</button>
         </div>
       </Field>
-      <p className="text-sm text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{picked.length ? `This adds ${picked.length} common area${picked.length > 1 ? 's' : ''}.` : 'Pick the areas your team cleans.'}</p>
+      <p className="text-sm text-slate-600 bg-[#F4F5F7] rounded-2xl px-3.5 py-2.5">{picked.length ? `This adds ${picked.length} common area${picked.length > 1 ? 's' : ''}.` : 'Pick the areas your team cleans.'}</p>
       <div className="flex gap-3"><button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>Cancel</button><button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? 'Adding…' : 'Add areas'}</button></div>
     </form>
   );
@@ -951,7 +951,7 @@ function StaffModal({ role = 'housekeeper', hotelCode, onClose, onCreate }) {
     return (
       <Modal title={`${created.fullName} was added`} subtitle="Give these details to your colleague. You can see the PIN again any time in Team." onClose={onClose}>
         <div className="p-5 space-y-4">
-          <dl className="bg-slate-50 rounded-xl border border-slate-200 p-4 grid grid-cols-[6rem_1fr] gap-y-2 text-sm">
+          <dl className="bg-[#F4F5F7] rounded-2xl p-4 grid grid-cols-[6rem_1fr] gap-y-2 text-sm">
             <dt className="text-slate-500">Hotel code</dt><dd className="font-mono font-semibold">{hotelCode}</dd>
             <dt className="text-slate-500">Username</dt><dd className="font-mono font-semibold">{created.username}</dd>
             <dt className="text-slate-500">PIN</dt><dd className="font-mono font-semibold tracking-widest">{created.pin}</dd>

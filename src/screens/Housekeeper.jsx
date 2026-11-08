@@ -63,18 +63,18 @@ export default function Housekeeper({ session, signOut }) {
   const pct = sorted.length ? Math.round((done / sorted.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
-      <header className="sticky top-0 z-20 bg-white border-b border-slate-200 pt-safe">
+    <div className="min-h-screen bg-[#F4F5F7]">
+      <header className="sticky top-0 z-20 bg-white pt-safe">
         <div className="max-w-xl mx-auto px-4 h-14 flex items-center gap-3">
           <LogoMark className="w-8 h-8" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-sm font-bold text-[#172B4D] truncate">{tidyName(session.name)}</p>
+            <p className="text-sm font-bold text-[#0B0B0F] truncate">{tidyName(session.name)}</p>
             <p className="text-xs text-slate-500 truncate">Housekeeping · {tidyName(session.hotel.name)}</p>
           </div>
-          <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+          <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
             <Icon name="refresh" className="w-[18px] h-[18px]" />
           </button>
-          <button onClick={signOut} aria-label="Sign out" className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+          <button onClick={signOut} aria-label="Sign out" className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
             <Icon name="logout" className="w-[18px] h-[18px]" />
           </button>
         </div>
@@ -93,10 +93,10 @@ export default function Housekeeper({ session, signOut }) {
 
         {rooms !== null && (
           <>
-            <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <section className="bg-white rounded-3xl p-4 shadow-sm">
               <div className="flex items-baseline justify-between">
                 <p className="text-sm text-slate-500">Your cleaning today</p>
-                <p className="text-2xl font-bold text-[#172B4D] tabular-nums">{done}<span className="text-base text-slate-400 font-semibold"> / {sorted.length}</span></p>
+                <p className="text-2xl font-bold text-[#0B0B0F] tabular-nums">{done}<span className="text-base text-slate-400 font-semibold"> / {sorted.length}</span></p>
               </div>
               <div className="h-2 bg-slate-100 rounded-full mt-3 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
                 <div className="h-full bg-[#19A7A1] rounded-full transition-all" style={{ width: pct + '%' }}></div>
@@ -104,17 +104,17 @@ export default function Housekeeper({ session, signOut }) {
             </section>
 
             {sorted.length === 0 ? (
-              <div className="bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+              <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center text-slate-500">
                 <Icon name="bed" className="w-7 h-7 mx-auto mb-2" />
                 <p className="font-semibold text-slate-800">Nothing assigned yet</p>
                 <p className="text-sm mt-1">Your manager will assign rooms and areas to you. This page updates by itself.</p>
               </div>
             ) : (
               sorted.map((room) => (
-                <article key={room.id} className={`bg-white rounded-xl border border-slate-200 border-t-[3px] ${STATUS_STYLE[room.status]?.bar || ''} p-4 shadow-sm`}>
+                <article key={room.id} className={`bg-white rounded-3xl p-4 shadow-sm`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="text-2xl font-bold text-[#172B4D] leading-none">{spaceName(room)}</h2>
+                      <h2 className="text-2xl font-bold text-[#0B0B0F] leading-none">{spaceName(room)}</h2>
                       <p className="text-sm text-slate-500 mt-1">{isArea(room) ? room.type : `${room.type} · Floor ${room.floor}`}</p>
                     </div>
                     <StatusBadge status={room.status} />
@@ -130,7 +130,7 @@ export default function Housekeeper({ session, signOut }) {
                     )}
                     {room.status === 'Cleaning' && (
                       <>
-                        <div className={`rounded-xl border p-4 text-center ${room.cleanRunningSince ? 'bg-blue-50 border-blue-100 text-[#172B4D]' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                        <div className={`rounded-2xl p-4 text-center ${room.cleanRunningSince ? 'bg-[#F4F5F7] text-[#0B0B0F]' : 'bg-amber-50 text-amber-700'}`}>
                           <p className="text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
                             <Icon name="timer" className="w-3.5 h-3.5" />{room.cleanRunningSince ? 'Cleaning time' : 'Paused'}
                           </p>
@@ -158,14 +158,14 @@ export default function Housekeeper({ session, signOut }) {
                       </>
                     )}
                     {room.status === 'Awaiting inspection' && (
-                      <p className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2.5 text-center font-medium">
+                      <p className="text-sm text-amber-700 bg-amber-50 rounded-2xl px-3 py-2.5 text-center font-medium">
                         Waiting for the inspector{room.cleanSeconds > 0 && <span className="block text-xs font-normal">Cleaned in {minutesLabel(room.cleanSeconds)}</span>}
                       </p>
                     )}
                     {room.status === 'Ready' && (
-                      <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 text-center font-medium">Approved. Ready for guests</p>
+                      <p className="text-sm text-emerald-700 bg-emerald-50 rounded-2xl px-3 py-2.5 text-center font-medium">Approved. Ready for guests</p>
                     )}
-                    <button className={`${btnGhost} w-full`} onClick={() => setReport({ roomId: room.id })}>
+                    <button className={`${btnGhost} w-full !bg-white`} onClick={() => setReport({ roomId: room.id })}>
                       <Icon name="wrench" className="w-4 h-4" />Report a problem here
                     </button>
                   </div>
@@ -173,7 +173,7 @@ export default function Housekeeper({ session, signOut }) {
               ))
             )}
 
-            <button className={`${btnGhost} w-full`} onClick={() => setReport({ roomId: '' })}>
+            <button className={`${btnGhost} w-full !bg-white`} onClick={() => setReport({ roomId: '' })}>
               <Icon name="plus" className="w-4 h-4" />Report another problem
             </button>
           </>

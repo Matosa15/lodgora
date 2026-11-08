@@ -55,15 +55,15 @@ export function LogoMark({ className = 'w-8 h-8', dark = false }) {
   );
 }
 
-export const inputCls = 'w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[#19A7A1] focus:ring-1 focus:ring-[#19A7A1]';
-export const btnPrimary = 'inline-flex items-center justify-center gap-2 bg-[#0D7C77] hover:bg-[#0A6A66] text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-default';
-export const btnGhost = 'inline-flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-default';
-export const btnSmall = 'px-2.5 py-1 rounded-lg text-xs font-semibold';
+export const inputCls = 'w-full px-4 py-3 border-2 border-transparent rounded-2xl text-sm bg-[#F4F5F7] placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#0B0B0F] transition-colors';
+export const btnPrimary = 'inline-flex items-center justify-center gap-2 bg-[#0B0B0F] hover:bg-[#2A2B33] text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-default';
+export const btnGhost = 'inline-flex items-center justify-center gap-2 bg-[#F0F1F4] hover:bg-[#E4E6EB] text-[#0B0B0F] px-5 py-2.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-default';
+export const btnSmall = 'px-3 py-1.5 rounded-full text-xs font-semibold';
 
 export function StatusBadge({ status }) {
   const s = STATUS_STYLE[status] || STATUS_STYLE.Occupied;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${s.badge}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${s.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`}></span>{statusLabel(status)}
     </span>
   );
@@ -92,14 +92,14 @@ export function Modal({ title, subtitle, onClose, children, sheet = false }) {
     <div className={`fixed inset-0 bg-slate-900/40 z-50 flex justify-center p-4 overflow-y-auto ${sheet ? 'items-end sm:items-center' : 'items-center'}`}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-slate-200 outline-none max-h-[calc(100vh-2rem)] overflow-y-auto">
-        <div className="flex justify-between items-start gap-3 p-5 pb-3 border-b border-slate-100">
+        className="bg-white rounded-[2rem] shadow-xl w-full max-w-md outline-none max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <div className="flex justify-between items-start gap-3 p-6 pb-3">
           <div className="min-w-0">
-            <h3 className="text-lg font-bold text-[#172B4D]">{title}</h3>
+            <h3 className="text-lg font-semibold text-[#0B0B0F]">{title}</h3>
             {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
           <button onClick={onClose} aria-label="Close"
-            className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 flex-none">
+            className="w-9 h-9 rounded-full bg-[#F4F5F7] hover:bg-[#E4E6EB] flex items-center justify-center text-slate-500 flex-none">
             <Icon name="x" className="w-4 h-4" />
           </button>
         </div>
@@ -125,7 +125,7 @@ export function WherePicker({ id, rooms, value, onChange }) {
       <div className="flex gap-1.5 flex-wrap" role="group" aria-label="What is it about?">
         {tabs.map(([k, label]) => (
           <button key={k} type="button" onClick={() => pick(k)} aria-pressed={mode === k}
-            className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${mode === k ? 'bg-[#0D7C77] border-[#0D7C77] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${mode === k ? 'bg-[#0B0B0F] text-white' : 'bg-[#F4F5F7] text-slate-600 hover:bg-[#E4E6EB]'}`}>{label}</button>
         ))}
       </div>
       {mode !== 'none' && (
@@ -144,7 +144,7 @@ export function IssueNotes({ notes }) {
   return (
     <ul className="mt-2 space-y-1.5" aria-label="Notes">
       {notes.map((n) => (
-        <li key={n.id} className={`rounded-lg px-3 py-2 text-sm ${n.byStaff ? 'bg-slate-50 border border-slate-200' : 'bg-[#E4F3F2] border border-[#BFE3E0]'}`}>
+        <li key={n.id} className={`rounded-2xl px-3.5 py-2.5 text-sm ${n.byStaff ? 'bg-[#F4F5F7]' : 'bg-[#E4F3F2]'}`}>
           <p className="text-slate-800 break-words">{n.body}</p>
           <p className="text-[11px] text-slate-500 mt-0.5">{n.author} · {timeAgo(n.createdAt)}</p>
         </li>
@@ -172,11 +172,11 @@ export function NoteBox({ onSend, cannotFix = false, collapsible = false, label 
     <div className="mt-2">
       <label className="sr-only" htmlFor={`note-${label}`}>{label}</label>
       <textarea id={`note-${label}`} rows={2} maxLength={500} value={text} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder}
-        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[#19A7A1] focus:ring-1 focus:ring-[#19A7A1] resize-none" />
+        className="w-full px-4 py-3 border-2 border-transparent rounded-2xl text-sm bg-[#F4F5F7] focus:outline-none focus:bg-white focus:border-[#0B0B0F] resize-none" />
       {error && <p className="text-xs text-rose-600 mt-1" role="alert">{error}</p>}
       <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" disabled={busy} onClick={() => send(false)} className="px-3 py-2 rounded-lg text-sm font-semibold bg-[#0D7C77] hover:bg-[#0A6A66] text-white disabled:opacity-60">Send note</button>
-        {cannotFix && <button type="button" disabled={busy} onClick={() => send(true)} className="px-3 py-2 rounded-lg text-sm font-semibold border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-60">I can't fix this</button>}
+        <button type="button" disabled={busy} onClick={() => send(false)} className="px-4 py-2 rounded-full text-sm font-semibold bg-[#0B0B0F] hover:bg-[#2A2B33] text-white disabled:opacity-60">Send note</button>
+        {cannotFix && <button type="button" disabled={busy} onClick={() => send(true)} className="px-4 py-2 rounded-full text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-60">I can't fix this</button>}
         {collapsible && <button type="button" onClick={() => { setOpen(false); setError(''); }} className="px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-800">Cancel</button>}
       </div>
     </div>
@@ -185,10 +185,10 @@ export function NoteBox({ onSend, cannotFix = false, collapsible = false, label 
 
 export function Panel({ title, subtitle, right, children }) {
   return (
-    <section className="bg-white rounded-xl border border-slate-200 shadow-sm min-w-0">
+    <section className="bg-white rounded-3xl min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4">
         <div>
-          <h2 className="text-lg font-bold text-[#172B4D]">{title}</h2>
+          <h2 className="text-lg font-semibold text-[#0B0B0F]">{title}</h2>
           {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
         </div>
         {right}
@@ -200,7 +200,7 @@ export function Panel({ title, subtitle, right, children }) {
 
 export function EmptyState({ icon = 'inbox', title, text, children }) {
   return (
-    <div className="mx-5 sm:mx-6 mb-6 border border-dashed border-slate-200 rounded-xl py-8 px-4 text-center text-slate-500 flex flex-col items-center gap-2">
+    <div className="mx-5 sm:mx-6 mb-6 bg-[#F4F5F7] rounded-3xl py-8 px-4 text-center text-slate-500 flex flex-col items-center gap-2">
       <Icon name={icon} className="w-6 h-6" />
       <p className="font-semibold text-slate-800 text-sm">{title}</p>
       {text && <p className="text-xs max-w-sm">{text}</p>}
@@ -235,7 +235,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={show}>
       {children}
       {toast && (
-        <div role="status" className={`fixed left-4 right-4 sm:left-auto sm:right-5 bottom-5 z-[60] px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm text-white sm:max-w-sm ${toast.kind === 'error' ? 'bg-rose-700' : 'bg-[#172B4D]'}`}
+        <div role="status" className={`fixed left-4 right-4 sm:left-auto sm:right-5 bottom-5 z-[60] px-5 py-3.5 rounded-full shadow-xl flex items-center gap-3 text-sm text-white sm:max-w-sm ${toast.kind === 'error' ? 'bg-rose-700' : 'bg-[#0B0B0F]'}`}
           style={{ marginBottom: 'env(safe-area-inset-bottom)' }}>
           <span className={toast.kind === 'error' ? 'text-white' : 'text-[#19A7A1]'}>
             <Icon name={toast.kind === 'error' ? 'alert' : 'check'} className="w-[18px] h-[18px]" />

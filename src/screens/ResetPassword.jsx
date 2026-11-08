@@ -25,9 +25,9 @@ export default function ResetPassword({ onDone, onCancel }) {
       <form onSubmit={submit} className="w-full max-w-sm space-y-4" noValidate>
         <div className="flex items-center gap-2 mb-6">
           <LogoMark />
-          <span className="font-bold text-xl tracking-tight text-[#172B4D]">Lodgora</span>
+          <span className="font-bold text-xl tracking-tight text-[#0B0B0F]">Lodgora</span>
         </div>
-        <h1 className="text-2xl font-bold text-[#172B4D]">Choose a new password</h1>
+        <h1 className="text-2xl font-bold text-[#0B0B0F]">Choose a new password</h1>
         <p className="text-sm text-slate-500">Pick a password you have not used before. You will be signed in right after.</p>
         <Field id="np-pass" label="New password">
           <input id="np-pass" type="password" className={inputCls} value={password} autoComplete="new-password" onChange={(e) => { setPassword(e.target.value); setError(''); }} />

@@ -47,7 +47,7 @@ export default function Statistics({ rooms, issues }) {
         <div className="flex gap-1.5" role="group" aria-label="Time period">
           {PERIODS.map((p) => (
             <button key={p.id} onClick={() => setPeriod(p.id)} aria-pressed={period === p.id}
-              className={`px-3.5 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${period === p.id ? 'bg-[#172B4D] border-[#172B4D] text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{p.label}</button>
+              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${period === p.id ? 'bg-[#0B0B0F] text-white' : 'bg-white text-slate-600 hover:bg-[#E4E6EB]'}`}>{p.label}</button>
           ))}
         </div>
         <button className={`${btnGhost} ml-auto`} onClick={load}><Icon name="refresh" className="w-4 h-4" />Refresh</button>
@@ -134,9 +134,9 @@ export default function Statistics({ rooms, issues }) {
 
 function Tile({ label, value, sub }) {
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+    <div className="bg-white p-5 rounded-3xl">
       <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold text-[#172B4D] tabular-nums mt-1">{value}</p>
+      <p className="text-2xl font-bold text-[#0B0B0F] tabular-nums mt-1">{value}</p>
       <p className="text-xs text-slate-500 mt-1">{sub}</p>
     </div>
   );
@@ -144,9 +144,9 @@ function Tile({ label, value, sub }) {
 
 function Mini({ label, value }) {
   return (
-    <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5">
+    <div className="rounded-2xl bg-[#F4F5F7] px-3.5 py-2.5">
       <p className="text-xs text-slate-500">{label}</p>
-      <p className="text-lg font-bold text-[#172B4D] tabular-nums">{value}</p>
+      <p className="text-lg font-bold text-[#0B0B0F] tabular-nums">{value}</p>
     </div>
   );
 }
@@ -168,10 +168,10 @@ function Columns({ buckets }) {
         {buckets.map((b, i) => (
           <div key={b.key} role="listitem" tabIndex={0} aria-label={`${b.label}: ${b.count} ${b.count === 1 ? 'cleaning' : 'cleanings'}, ${durationLabel(b.seconds)} in total`}
             className="group relative flex-1 min-w-0 h-full flex flex-col items-center justify-end outline-none">
-            {b.count === max && b.count > 0 && <span className="text-[11px] font-semibold text-[#172B4D] mb-1 tabular-nums">{b.count}</span>}
+            {b.count === max && b.count > 0 && <span className="text-[11px] font-semibold text-[#0B0B0F] mb-1 tabular-nums">{b.count}</span>}
             <div className="w-full max-w-[24px] rounded-t-[4px] transition-opacity group-hover:opacity-80 group-focus:opacity-80"
               style={{ height: b.count ? `${Math.max(3, (b.count / max) * 82)}%` : '0', background: BAR }} />
-            <span className={`pointer-events-none absolute bottom-full mb-1 z-10 whitespace-nowrap ${i > buckets.length * 0.6 ? 'right-0' : i < buckets.length * 0.2 ? 'left-0' : 'left-1/2 -translate-x-1/2'} rounded-md bg-[#172B4D] text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 group-focus:opacity-100`}>
+            <span className={`pointer-events-none absolute bottom-full mb-1 z-10 whitespace-nowrap ${i > buckets.length * 0.6 ? 'right-0' : i < buckets.length * 0.2 ? 'left-0' : 'left-1/2 -translate-x-1/2'} rounded-md bg-[#0B0B0F] text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 group-focus:opacity-100`}>
               {b.label}: {b.count} · {durationLabel(b.seconds)}
             </span>
           </div>
@@ -195,7 +195,7 @@ function HBars({ rows }) {
         <li key={r.name} title={`${r.name}: ${r.text} (${r.note})`}>
           <div className="flex items-baseline justify-between gap-3 text-sm">
             <span className="truncate text-slate-700">{r.name}{r.tag && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{r.tag}</span>}</span>
-            <span className="font-semibold text-[#172B4D] tabular-nums whitespace-nowrap">{r.text} <span className="font-normal text-slate-400 text-xs">{r.note}</span></span>
+            <span className="font-semibold text-[#0B0B0F] tabular-nums whitespace-nowrap">{r.text} <span className="font-normal text-slate-400 text-xs">{r.note}</span></span>
           </div>
           <div className="h-2.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
             <div className="h-full rounded-r-[4px]" style={{ width: `${Math.max(3, (r.value / max) * 100)}%`, background: BAR }} />
@@ -211,7 +211,7 @@ function StatusBar({ title, data }) {
   const shown = data.byStatus.filter((s) => s.count > 0);
   return (
     <div>
-      <div className="flex items-baseline justify-between"><p className="text-sm font-semibold text-[#172B4D]">{title}</p><p className="text-xs text-slate-500 tabular-nums">{data.total} in total</p></div>
+      <div className="flex items-baseline justify-between"><p className="text-sm font-semibold text-[#0B0B0F]">{title}</p><p className="text-xs text-slate-500 tabular-nums">{data.total} in total</p></div>
       {data.total === 0 ? <p className="text-xs text-slate-500 mt-2">None added yet.</p> : (
         <>
           <div className="flex gap-0.5 h-3 mt-2" role="img" aria-label={`${title}: ${shown.map((s) => `${s.count} ${statusLabel(s.status)}`).join(', ')}`}>
@@ -222,7 +222,7 @@ function StatusBar({ title, data }) {
               <li key={s.status} className="flex items-start gap-2 text-slate-600">
                 <span className={`w-2 h-2 rounded-full flex-none mt-1 ${STATUS_STYLE[s.status].dot}`} />
                 <span className="flex-1 leading-tight">{statusLabel(s.status)}</span>
-                <span className="font-semibold text-[#172B4D] tabular-nums">{s.count}</span>
+                <span className="font-semibold text-[#0B0B0F] tabular-nums">{s.count}</span>
               </li>
             ))}
           </ul>
@@ -249,7 +249,7 @@ function TeamTable({ rows }) {
         <tbody>
           {rows.map((r) => (
             <tr key={r.name} className="border-b border-slate-100 last:border-0">
-              <td className="py-3 pr-3 font-semibold text-[#172B4D] whitespace-nowrap">{r.name}</td>
+              <td className="py-3 pr-3 font-semibold text-[#0B0B0F] whitespace-nowrap">{r.name}</td>
               <td className="py-3 pr-3">
                 <div className="flex items-center gap-2">
                   <span className="w-8 tabular-nums font-semibold">{r.count}</span>
@@ -293,7 +293,7 @@ function RecentTable({ rows, sameDay }) {
             return (
               <tr key={c.id} className="border-b border-slate-100 last:border-0">
                 <td className="py-2.5 pr-3 text-slate-500 whitespace-nowrap tabular-nums">{when(c.finishedAt)}</td>
-                <td className="py-2.5 pr-3 font-semibold text-[#172B4D] whitespace-nowrap">{c.kind === 'area' ? c.label : `Room ${c.label}`}</td>
+                <td className="py-2.5 pr-3 font-semibold text-[#0B0B0F] whitespace-nowrap">{c.kind === 'area' ? c.label : `Room ${c.label}`}</td>
                 <td className="py-2.5 pr-3 whitespace-nowrap">{c.staffName || '–'}</td>
                 <td className="py-2.5 pr-3 tabular-nums whitespace-nowrap">{durationLabel(c.seconds)}</td>
                 <td className="py-2.5"><span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${res.cls}`}>{res.label}</span></td>

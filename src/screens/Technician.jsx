@@ -58,18 +58,18 @@ export default function Technician({ session, signOut }) {
   const done = (issues || []).filter((i) => i.status === 'resolved');
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
-      <header className="sticky top-0 z-20 bg-white border-b border-slate-200 pt-safe">
+    <div className="min-h-screen bg-[#F4F5F7]">
+      <header className="sticky top-0 z-20 bg-white pt-safe">
         <div className="max-w-xl mx-auto px-4 h-14 flex items-center gap-3">
           <LogoMark className="w-8 h-8" />
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="text-sm font-bold text-[#172B4D] truncate">{tidyName(session.name)}</p>
+            <p className="text-sm font-bold text-[#0B0B0F] truncate">{tidyName(session.name)}</p>
             <p className="text-xs text-slate-500 truncate">Maintenance · {tidyName(session.hotel.name)}</p>
           </div>
-          <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+          <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
             <Icon name="refresh" className="w-[18px] h-[18px]" />
           </button>
-          <button onClick={signOut} aria-label="Sign out" className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50">
+          <button onClick={signOut} aria-label="Sign out" className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
             <Icon name="logout" className="w-[18px] h-[18px]" />
           </button>
         </div>
@@ -88,13 +88,13 @@ export default function Technician({ session, signOut }) {
 
         {issues !== null && (
           <>
-            <section className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-baseline justify-between">
+            <section className="bg-white rounded-3xl p-4 shadow-sm flex items-baseline justify-between">
               <p className="text-sm text-slate-500">Your open issues</p>
-              <p className="text-2xl font-bold text-[#172B4D] tabular-nums">{open.length}</p>
+              <p className="text-2xl font-bold text-[#0B0B0F] tabular-nums">{open.length}</p>
             </section>
 
             {open.length === 0 ? (
-              <div className="bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+              <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center text-slate-500">
                 <Icon name="wrench" className="w-7 h-7 mx-auto mb-2" />
                 <p className="font-semibold text-slate-800">Nothing to fix right now</p>
                 <p className="text-sm mt-1">Your manager will give you issues here. This page updates by itself.</p>
@@ -108,7 +108,7 @@ export default function Technician({ session, signOut }) {
               </>
             )}
 
-            <button className={`${btnGhost} w-full`} onClick={openReport}>
+            <button className={`${btnGhost} w-full !bg-white`} onClick={openReport}>
               <Icon name="plus" className="w-4 h-4" />Report another problem
             </button>
           </>
@@ -123,15 +123,15 @@ export default function Technician({ session, signOut }) {
 function IssueCard({ issue, busy, change, addNote }) {
   const resolved = issue.status === 'resolved';
   return (
-    <article className={`bg-white rounded-xl border border-slate-200 border-t-[3px] ${resolved ? 'border-t-emerald-400 opacity-75' : BAR[issue.priority]} p-4 shadow-sm`}>
+    <article className={`bg-white rounded-3xl ${resolved ? 'opacity-75' : ''} p-4 shadow-sm`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-[#172B4D] leading-snug">{tidyTitle(issue.title)}</h2>
+          <h2 className="text-lg font-bold text-[#0B0B0F] leading-snug">{tidyTitle(issue.title)}</h2>
           <p className="text-sm text-slate-500 mt-1">{issue.roomLabel ? `${issue.roomLabel} · ` : ''}{tidyName(issue.reportedBy)} · {timeAgo(issue.createdAt)}</p>
         </div>
         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize flex-none ${PRIORITY_STYLE[issue.priority]}`}>{issue.priority}</span>
       </div>
-      {issue.needsHelp && !resolved && <p className="mt-3 text-sm text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2 font-medium">Your manager knows you need help with this.</p>}
+      {issue.needsHelp && !resolved && <p className="mt-3 text-sm text-rose-700 bg-rose-50 rounded-2xl px-3 py-2 font-medium">Your manager knows you need help with this.</p>}
       <IssueNotes notes={issue.notes} />
       {!resolved && <NoteBox cannotFix collapsible label="Write a note to your manager" placeholder="e.g. I need a new part, or: the guest is still in the room" onSend={(t, blocked) => addNote(issue, t, blocked)} />}
       <div className="mt-4 space-y-2">
@@ -140,7 +140,7 @@ function IssueCard({ issue, busy, change, addNote }) {
         )}
         {issue.status === 'in_progress' && (
           <>
-            <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2.5 text-center font-medium">{ISSUE_STATUS_LABEL.in_progress}</p>
+            <p className="text-sm text-slate-700 bg-[#F4F5F7] rounded-2xl px-3 py-2.5 text-center font-medium">{ISSUE_STATUS_LABEL.in_progress}</p>
             <button className={`${btnPrimary} w-full py-4 text-base`} disabled={busy} onClick={() => change(issue, 'resolved', 'Marked as fixed')}>
               <Icon name="check" className="w-5 h-5" />Mark as fixed
             </button>
@@ -148,7 +148,7 @@ function IssueCard({ issue, busy, change, addNote }) {
         )}
         {resolved && (
           <>
-            <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2.5 text-center font-medium">Fixed</p>
+            <p className="text-sm text-emerald-700 bg-emerald-50 rounded-2xl px-3 py-2.5 text-center font-medium">Fixed</p>
             <button className="w-full text-sm text-slate-500 py-1 hover:text-slate-800" disabled={busy} onClick={() => change(issue, 'open', 'Issue reopened')}>It is not fixed yet</button>
           </>
         )}
