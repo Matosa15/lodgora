@@ -3,15 +3,15 @@
 import { Header, Footer } from './Site';
 import { SITE } from '../lib/site';
 
-const INK = '#172B4D';
+const INK = '#0B0B0F';
 
 function Page({ title, children }) {
   return (
-    <div className="bg-white text-slate-700 min-h-screen flex flex-col">
+    <div className="bg-white text-slate-700 min-h-screen font-geist flex flex-col">
       <Header />
       <main className="flex-1">
         <article className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
-          <h1 className="font-display font-semibold text-4xl tracking-tight" style={{ color: INK }}>{title}</h1>
+          <h1 className="font-geist font-semibold text-4xl tracking-[-0.04em]" style={{ color: INK }}>{title}</h1>
           <p className="mt-2 text-sm text-slate-500">Last updated: {SITE.legal.updated}</p>
           <div className="mt-8 space-y-9 leading-relaxed">{children}</div>
         </article>
@@ -24,7 +24,7 @@ function Page({ title, children }) {
 function S({ title, children }) {
   return (
     <section>
-      <h2 className="font-display font-semibold text-xl" style={{ color: INK }}>{title}</h2>
+      <h2 className="font-geist font-semibold text-xl tracking-[-0.025em]" style={{ color: INK }}>{title}</h2>
       <div className="mt-3 space-y-3">{children}</div>
     </section>
   );
@@ -47,11 +47,11 @@ function OperatorLines() {
   const { name, businessId, address } = SITE.legal;
   const lines = [name, businessId && `Business ID: ${businessId}`, address, SITE.contactEmail].filter(Boolean);
   if (!lines.length) return null;
-  return <p className="rounded-lg bg-[#F3F6F8] border border-slate-200 px-4 py-3 text-sm">{lines.map((l) => <span key={l} className="block">{l}</span>)}</p>;
+  return <p className="rounded-2xl bg-[#F4F5F7] px-5 py-4 text-sm">{lines.map((l) => <span key={l} className="block">{l}</span>)}</p>;
 }
 
 export default function Legal({ page }) {
-  return page === 'terms' ? <Terms /> : <Privacy />;
+  return page === 'terms' ? <Terms /> : page === 'dpa' ? <Dpa /> : <Privacy />;
 }
 
 function Privacy() {
@@ -67,6 +67,7 @@ function Privacy() {
         <p>
           <strong>For a hotel's own data</strong> (its staff, rooms and cleaning records), the hotel decides what is entered and why. The hotel is the controller
           and Lodgora is the processor: we only handle that data to run the service for the hotel and following its instructions.
+          The terms of that arrangement are in our <a className="text-[#0D7C77] underline" href="/dpa">data processing agreement</a>.
         </p>
         <p>
           <strong>For manager accounts, contact requests and visitors to this website</strong>, Lodgora is the controller.
@@ -235,6 +236,98 @@ function Terms() {
       {SITE.contactEmail && (
         <S title="11. Contact">
           <p>Questions: <a className="text-[#0D7C77] underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a></p>
+        </S>
+      )}
+    </Page>
+  );
+}
+
+function Dpa() {
+  return (
+    <Page title="Data processing agreement">
+      <S title="1. Purpose">
+        <Operator />
+        <OperatorLines />
+        <p>
+          This agreement applies when a hotel (the <strong>controller</strong>) uses Lodgora and Lodgora (the <strong>processor</strong>) handles personal data on
+          the hotel's behalf. It forms part of the <a className="text-[#0D7C77] underline" href="/terms">terms of service</a> and takes effect when the hotel
+          starts using Lodgora, including during the free pilot. It is meant to meet Article 28 of the EU General Data Protection Regulation (GDPR).
+        </p>
+      </S>
+
+      <S title="2. What we process, and why">
+        <List items={[
+          'Subject: the hotel\'s staff (managers, housekeepers, maintenance staff).',
+          'Data: full name, username, a 4-digit PIN (stored as a hash), role, and work records: rooms cleaned, cleaning times, inspection results, maintenance reports and the activity log.',
+          'Purpose: to provide the Lodgora service to the hotel, and for nothing else.',
+          'Duration: while the hotel uses Lodgora, and until deletion as set out in section 8.'
+        ]} />
+        <p>Guest personal data is not part of this agreement, and the hotel agrees not to enter it into Lodgora.</p>
+      </S>
+
+      <S title="3. Our commitments as processor">
+        <List items={[
+          'We process the data only on the hotel\'s documented instructions, which are these terms and the hotel\'s use of the service. If we think an instruction breaks the law, we will say so.',
+          'Anyone working for us who can access the data is bound by confidentiality.',
+          'We apply the security measures in section 5.',
+          'We help the hotel answer requests from staff who want to use their rights (access, correction, deletion, export).',
+          'We tell the hotel without undue delay, and in any case within 48 hours, after we become aware of a personal data breach affecting its data.',
+          'We delete or return the hotel\'s data when the agreement ends (section 8).',
+          'We give the hotel the information it reasonably needs to show that we follow this agreement, and we allow reasonable audits with notice.'
+        ]} />
+      </S>
+
+      <S title="4. Sub-processors">
+        <p>The hotel allows us to use these sub-processors to run the service:</p>
+        <List items={[
+          'Supabase: database, sign-in and system emails (data stored in the European Union).',
+          'Cloudflare: hosting, delivery and security of the website and app.'
+        ]} />
+        <p>
+          We have a data processing agreement with each of them. If we add or replace a sub-processor, we tell hotel managers by email at least 30 days in
+          advance, and the hotel may object during that time. If we cannot agree, the hotel may end the agreement without charge.
+        </p>
+      </S>
+
+      <S title="5. Security measures">
+        <List items={[
+          'Encryption of all traffic between users and the service.',
+          'Passwords and PINs stored only as secure hashes.',
+          'Data separated per hotel, enforced in the database.',
+          'Temporary lock after repeated wrong PIN entries.',
+          'Access to production data limited to what is needed to run and support the service.'
+        ]} />
+      </S>
+
+      <S title="6. International transfers">
+        <p>
+          Data is stored in the European Union. If a sub-processor transfers data outside the European Economic Area, it must do so under the European
+          Commission's standard contractual clauses or another valid transfer mechanism.
+        </p>
+      </S>
+
+      <S title="7. The hotel's responsibilities">
+        <List items={[
+          'The hotel is responsible for having a lawful basis to enter its staff\'s data and for telling its staff how it is used.',
+          'The hotel decides who gets a manager account and keeps sign-in details safe.',
+          'The hotel does not enter guest data or other data that Lodgora does not need.'
+        ]} />
+      </S>
+
+      <S title="8. End of the agreement">
+        <p>
+          When the agreement ends, we delete the hotel's data within 90 days, or earlier if the hotel asks, and the hotel can ask for an export first. We
+          may keep only what the law requires us to keep, such as accounting records.
+        </p>
+      </S>
+
+      <S title="9. Law">
+        <p>This agreement follows Finnish law and the GDPR.</p>
+      </S>
+
+      {SITE.contactEmail && (
+        <S title="10. Contact">
+          <p>Questions about data processing: <a className="text-[#0D7C77] underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a></p>
         </S>
       )}
     </Page>

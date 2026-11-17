@@ -9,10 +9,10 @@ export const SITE = {
   // Dados de quem explora o serviço. Aparecem nas páginas de privacidade e termos.
   // Preenche quando tiveres o contabilista/empresa definidos. O que ficar vazio não aparece.
   legal: {
-    name: '',        // nome da empresa ou do empresário, por exemplo "Maria Silva (toiminimi)"
+    name: 'Matilde Matosa',        // nome da empresa ou do empresário, por exemplo "Maria Silva (toiminimi)"
     businessId: '',  // Y-tunnus, se existir
     address: '',     // morada para correspondência
-    updated: '1 November 2026'
+    updated: '16 November 2026'
   },
   plans: [
     { name: 'Small', rooms: 'Up to 20 rooms', max: 20, price: 39 },

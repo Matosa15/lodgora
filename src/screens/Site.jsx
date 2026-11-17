@@ -315,6 +315,7 @@ export function Footer() {
           <a href={demoHref} className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Demo</a>
           <a href="/privacy" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Privacy</a>
           <a href="/terms" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Terms</a>
+          <a href="/dpa" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Data processing</a>
           {SITE.contactEmail && <a href={mailto('Lodgora')} className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Contact</a>}
         </span>
       </div>
