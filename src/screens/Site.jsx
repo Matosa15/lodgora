@@ -91,9 +91,9 @@ function Hero() {
         </div>
         <div className="relative rounded-[2rem] sm:rounded-[2.75rem] overflow-hidden" style={{ background: GREY }}>
           <div className="relative mx-auto w-full max-w-[34rem] aspect-[4/5] sm:aspect-[4/4.7]">
-            <img src="/site-iphone-hk.webp" width="864" height="1732" alt="The housekeeper screen on a phone with a cleaning timer running" className="absolute left-[7%] top-[7%] w-[48%] h-auto drop-shadow-[0_36px_40px_rgba(11,11,15,.28)]" />
-            <img src="/site-iphone-mt.webp" width="864" height="1732" alt="The maintenance screen on a phone with a list of open problems" className="absolute right-[5%] bottom-[5%] w-[37%] h-auto drop-shadow-[0_36px_40px_rgba(11,11,15,.28)]" />
-            <div className={`${chip} left-[3%] bottom-[16%]`}><span className="w-2 h-2 rounded-full bg-[#0D7C77]" aria-hidden="true" /><span className="text-[13px] leading-tight"><b className="block font-semibold" style={{ color: INK }}>Room 203 is ready</b><span className="text-slate-500">Approved just now</span></span></div>
+            <img src="/site-iphone-hk.webp" width="1296" height="2598" alt="The housekeeper screen on a phone with a cleaning timer running" className="absolute left-[7%] top-[7%] w-[48%] h-auto drop-shadow-[0_36px_40px_rgba(11,11,15,.28)]" />
+            <img src="/site-iphone-mt.webp" width="1296" height="2598" alt="The maintenance screen on a phone with a list of open problems" className="absolute right-[5%] bottom-[5%] w-[37%] h-auto drop-shadow-[0_36px_40px_rgba(11,11,15,.28)]" />
+            <div className={`${chip} left-[3%] bottom-[5%]`}><span className="w-2 h-2 rounded-full bg-[#0D7C77]" aria-hidden="true" /><span className="text-[13px] leading-tight"><b className="block font-semibold" style={{ color: INK }}>Room 203 is ready</b><span className="text-slate-500">Approved just now</span></span></div>
             <div className={`${chip} right-[4%] top-[3.5%]`}><span className="w-2 h-2 rounded-full bg-[#F97316]" aria-hidden="true" /><span className="text-[13px] leading-tight"><b className="block font-semibold" style={{ color: INK }}>Leak in room 106</b><span className="text-slate-500">Sent to Tom, urgent</span></span></div>
           </div>
         </div>
@@ -310,7 +310,7 @@ export function Footer() {
         <span className="flex items-center gap-2"><LogoMark className="w-6 h-6" /><span className="font-geist font-semibold" style={{ color: INK }}>Lodgora</span></span>
         <span>Housekeeping and maintenance for independent hotels.</span>
         <span className="text-slate-400">© 2026 Lodgora</span>
-        <span className="sm:ml-auto flex gap-5">
+        <span className="sm:ml-auto flex flex-wrap gap-x-5 gap-y-2">
           <a href="/app" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Sign in</a>
           <a href={demoHref} className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Demo</a>
           <a href="/privacy" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">Privacy</a>
