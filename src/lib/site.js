@@ -15,8 +15,8 @@ export const SITE = {
     updated: '16 November 2026'
   },
   plans: [
-    { name: 'Small', rooms: 'Up to 20 rooms', max: 20, price: 39 },
-    { name: 'Medium', rooms: '21 to 50 rooms', max: 50, price: 69 },
-    { name: 'Large', rooms: '51 to 100 rooms', max: 100, price: 119 }
+    { name: 'Small', rooms: 'Up to 20 rooms', roomsFi: 'Enintään 20 huonetta', max: 20, price: 39 },
+    { name: 'Medium', rooms: '21 to 50 rooms', roomsFi: '21–50 huonetta', max: 50, price: 69 },
+    { name: 'Large', rooms: '51 to 100 rooms', roomsFi: '51–100 huonetta', max: 100, price: 119 }
   ]
 };

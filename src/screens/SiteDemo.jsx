@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon, LogoMark } from '../components/ui';
 import { SITE } from '../lib/site';
+import { LANG, t } from '../lib/i18n';
 
 const INK = '#172B4D';
 const TEAL = '#0D7C77';
@@ -29,13 +30,13 @@ export function Reveal({ children, className = '', delay = 0 }) {
 /* ---------- Telemóvel + ecrã do gerente, ligados ---------- */
 
 const START_ROOMS = [
-  { n: '214', type: 'Double', floor: 2, state: 'cleaning', secs: 754, running: true },
-  { n: '216', type: 'Twin', floor: 2, state: 'todo' },
-  { n: '218', type: 'Suite', floor: 2, state: 'todo' },
-  { n: '220', type: 'Double', floor: 2, state: 'todo' }
+  { n: '214', type: t('Double', 'Kahden hengen'), floor: 2, state: 'cleaning', secs: 754, running: true },
+  { n: '216', type: t('Twin', 'Twin'), floor: 2, state: 'todo' },
+  { n: '218', type: t('Suite', 'Sviitti'), floor: 2, state: 'todo' },
+  { n: '220', type: t('Double', 'Kahden hengen'), floor: 2, state: 'todo' }
 ];
 const clock = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-const took = (s) => (s < 60 ? `${s} sec` : `${Math.round(s / 60)} min`);
+const took = (s) => (s < 60 ? `${s} s` : `${Math.round(s / 60)} min`);
 
 function StatusBar() {
   return (
@@ -63,25 +64,25 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
       <span aria-hidden="true" className="absolute -right-[3px] top-44 h-16 w-[3px] rounded-r bg-[#1b2740]" />
       <div className="rounded-[3.1rem] p-[11px]"
         style={{ background: 'linear-gradient(160deg,#3a4c70 0%,#14203a 40%,#0a1224 100%)', boxShadow: '0 40px 70px -28px rgba(23,43,77,.6), 0 18px 30px -18px rgba(23,43,77,.5), inset 0 0 0 1px rgba(255,255,255,.12)' }}>
-        <div className="relative rounded-[2.4rem] bg-[#F3F6F9] overflow-hidden h-[37.5rem] flex flex-col" role="group" aria-label="Interactive example of the housekeeper screen">
+        <div className="relative rounded-[2.4rem] bg-[#F3F6F9] overflow-hidden h-[37.5rem] flex flex-col" role="group" aria-label={t('Interactive example of the housekeeper screen', 'Interaktiivinen esimerkki siivoojan näkymästä')}>
           <StatusBar />
           <div className="bg-[#F3F6F9] px-4 pb-3 flex items-center gap-2.5 flex-none">
             <LogoMark className="w-7 h-7" />
             <div className="leading-tight min-w-0">
               <p className="text-[13px] font-bold truncate" style={{ color: INK }}>Northbridge Hotel</p>
-              <p className="text-[11px] text-slate-500">Housekeeping</p>
+              <p className="text-[11px] text-slate-500">{t('Housekeeping', 'Siivous')}</p>
             </div>
             <span className="ml-auto w-8 h-8 rounded-full bg-[#E4F3F2] text-[#0D7C77] text-[11px] font-bold flex items-center justify-center" aria-hidden="true">EC</span>
           </div>
 
           <div className="flex-1 overflow-y-auto px-3.5 pt-4 pb-8 space-y-2.5">
             <div className="px-0.5 pb-1">
-              <p className="font-geist tracking-[-0.03em] text-[1.3rem] font-bold leading-tight" style={{ color: INK }}>Good morning, Emma</p>
+              <p className="font-geist tracking-[-0.03em] text-[1.3rem] font-bold leading-tight" style={{ color: INK }}>{t('Good morning, Emma', 'Huomenta, Emma')}</p>
               <div className="mt-2 flex items-center gap-2.5">
                 <div className="h-1.5 flex-1 rounded-full bg-slate-200 overflow-hidden" aria-hidden="true">
                   <div className="h-full rounded-full bg-[#0D7C77] transition-[width] duration-500" style={{ width: `${(done / rooms.length) * 100}%` }} />
                 </div>
-                <span className="text-[11px] font-semibold text-slate-500 tabular-nums">{done} of {rooms.length} done</span>
+                <span className="text-[11px] font-semibold text-slate-500 tabular-nums">{t(`${done} of ${rooms.length} done`, `${done}/${rooms.length} valmiina`)}</span>
               </div>
             </div>
 
@@ -91,24 +92,24 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
                   <div key={r.n} className="rounded-3xl bg-white p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-geist tracking-[-0.03em] text-[1.65rem] font-bold leading-none" style={{ color: INK }}>Room {r.n}</p>
-                        <p className="text-xs text-slate-500 mt-1.5">{r.type} · Floor {r.floor}</p>
+                        <p className="font-geist tracking-[-0.03em] text-[1.65rem] font-bold leading-none" style={{ color: INK }}>{t('Room', 'Huone')} {r.n}</p>
+                        <p className="text-xs text-slate-500 mt-1.5">{r.type} · {t('Floor', 'Kerros')} {r.floor}</p>
                       </div>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-full ${r.running ? 'bg-[#F4F5F7] text-slate-700' : 'bg-amber-50 text-amber-700'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${r.running ? 'bg-blue-500' : 'bg-amber-500'}`} />{r.running ? 'Cleaning' : 'Paused'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${r.running ? 'bg-blue-500' : 'bg-amber-500'}`} />{r.running ? t('Cleaning', 'Siivotaan') : t('Paused', 'Tauolla')}
                       </span>
                     </div>
                     <div className={`mt-3 rounded-2xl py-3 text-center ${r.running ? 'bg-[#F4F5F7]' : 'bg-amber-50'}`}>
-                      <p className="text-[11px] font-semibold text-slate-500">{r.running ? 'Cleaning time' : 'Timer paused'}</p>
+                      <p className="text-[11px] font-semibold text-slate-500">{r.running ? t('Cleaning time', 'Siivousaika') : t('Timer paused', 'Ajastin tauolla')}</p>
                       <p className="font-geist tracking-[-0.03em] text-[2.6rem] leading-[1.1] font-bold tabular-nums" style={{ color: INK }}>{clock(r.secs)}</p>
                     </div>
                     <div className="mt-2.5 grid grid-cols-2 gap-2 text-sm font-semibold">
                       <button type="button" onClick={() => onToggle(r.n)} className="h-11 rounded-full bg-[#F0F1F4] text-slate-800 active:bg-[#E4E6EB] inline-flex items-center justify-center gap-1.5">
-                        <Icon name={r.running ? 'pause' : 'play'} className="w-4 h-4" />{r.running ? 'Pause' : 'Resume'}
+                        <Icon name={r.running ? 'pause' : 'play'} className="w-4 h-4" />{r.running ? t('Pause', 'Tauko') : t('Resume', 'Jatka')}
                       </button>
-                      <button type="button" onClick={() => onFinish(r.n)} aria-label={`Finish room ${r.n}`}
+                      <button type="button" onClick={() => onFinish(r.n)} aria-label={t(`Finish room ${r.n}`, `Merkitse huone ${r.n} valmiiksi`)}
                         className={`h-11 rounded-full bg-[#0B0B0F] text-white active:bg-[#2A2B33] inline-flex items-center justify-center gap-1.5 ${hint === 'finish' ? 'pulse-teal' : ''}`}>
-                        <Icon name="check" className="w-4 h-4" />Finish
+                        <Icon name="check" className="w-4 h-4" />{t('Finish', 'Valmis')}
                       </button>
                     </div>
                   </div>
@@ -118,17 +119,17 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
               return (
                 <div key={r.n} className={`rounded-3xl bg-white px-4 py-3.5 flex items-center gap-3`}>
                   <div className="min-w-0 flex-1">
-                    <p className="font-geist tracking-[-0.03em] text-lg font-bold leading-none" style={{ color: INK }}>Room {r.n}</p>
+                    <p className="font-geist tracking-[-0.03em] text-lg font-bold leading-none" style={{ color: INK }}>{t('Room', 'Huone')} {r.n}</p>
                     <p className="text-[11px] mt-1.5 text-slate-500 truncate">
-                      {r.state === 'todo' && (r.sentBack ? 'Sent back by the manager' : `${r.type} · needs cleaning`)}
-                      {r.state === 'review' && `Cleaned in ${took(r.secs)} · waiting for inspection`}
-                      {r.state === 'ready' && `Approved · cleaned in ${took(r.secs)}`}
+                      {r.state === 'todo' && (r.sentBack ? t('Sent back by the manager', 'Esimies lähetti takaisin') : `${r.type} · ${t('needs cleaning', 'odottaa siivousta')}`)}
+                      {r.state === 'review' && t(`Cleaned in ${took(r.secs)} · waiting for inspection`, `Siivottu ajassa ${took(r.secs)} · odottaa tarkastusta`)}
+                      {r.state === 'ready' && t(`Approved · cleaned in ${took(r.secs)}`, `Hyväksytty · siivottu ajassa ${took(r.secs)}`)}
                     </p>
                   </div>
                   {r.state === 'todo' && (active
-                    ? <span className="text-[11px] font-medium text-slate-400">Up next</span>
-                    : <button type="button" onClick={() => onStart(r.n)} aria-label={`Start cleaning room ${r.n}`}
-                        className={`h-9 px-4 rounded-full bg-[#0B0B0F] text-white text-[13px] font-semibold active:bg-[#2A2B33] ${hint === 'start' ? 'pulse-teal' : ''}`}>Start</button>)}
+                    ? <span className="text-[11px] font-medium text-slate-400">{t('Up next', 'Seuraavana')}</span>
+                    : <button type="button" onClick={() => onStart(r.n)} aria-label={t(`Start cleaning room ${r.n}`, `Aloita huoneen ${r.n} siivous`)}
+                        className={`h-9 px-4 rounded-full bg-[#0B0B0F] text-white text-[13px] font-semibold active:bg-[#2A2B33] ${hint === 'start' ? 'pulse-teal' : ''}`}>{t('Start', 'Aloita')}</button>)}
                   {r.state === 'review' && <Icon name="inspect" className="w-5 h-5 text-amber-500" />}
                   {r.state === 'ready' && <Icon name="check" className="w-5 h-5 text-emerald-500" />}
                 </div>
@@ -147,7 +148,7 @@ function Phone({ rooms, onStart, onToggle, onFinish, toast, hint }) {
 
 const ACCENT = { todo: '#F97316', cleaning: '#3B82F6', review: '#F59E0B', ready: '#10B981' };
 const DOT = { todo: 'bg-orange-500', cleaning: 'bg-blue-500', review: 'bg-amber-500', ready: 'bg-emerald-500' };
-const WORD = { todo: 'Dirty', cleaning: 'Cleaning', review: 'Awaiting inspection', ready: 'Ready' };
+const WORD = { todo: t('Dirty', 'Siivoamatta'), cleaning: t('Cleaning', 'Siivotaan'), review: t('Awaiting inspection', 'Odottaa tarkastusta'), ready: t('Ready', 'Valmis') };
 
 function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
   const review = rooms.filter((r) => r.state === 'review');
@@ -156,12 +157,12 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
     <div className="rounded-[2rem] bg-[#F4F5F7] overflow-hidden w-full max-w-md flex flex-col">
       <div className="px-5 py-4 flex items-center gap-2.5">
         <LogoMark className="w-6 h-6" />
-        <p className="text-sm font-bold" style={{ color: INK }}>Manager screen</p>
-        <span className="ml-auto text-xs font-semibold text-slate-500 tabular-nums" aria-live="polite">{ready} of {rooms.length} ready</span>
+        <p className="text-sm font-bold" style={{ color: INK }}>{t('Manager screen', 'Esimiehen näkymä')}</p>
+        <span className="ml-auto text-xs font-semibold text-slate-500 tabular-nums" aria-live="polite">{t(`${ready} of ${rooms.length} ready`, `${ready}/${rooms.length} valmiina`)}</span>
       </div>
 
       <div className="px-5 pt-4">
-        <ul className="grid grid-cols-4 gap-2" aria-label="Room status">
+        <ul className="grid grid-cols-4 gap-2" aria-label={t('Room status', 'Huoneiden tila')}>
           {rooms.map((r) => (
             <li key={r.n} className="rounded-2xl px-3 py-2.5 bg-white">
               <p className="text-xl font-semibold tabular-nums tracking-tight leading-none" style={{ color: INK }}>{r.n}</p>
@@ -174,20 +175,20 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
       </div>
 
       <div className="px-5 pt-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Waiting for your inspection</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('Waiting for your inspection', 'Odottaa tarkastustasi')}</p>
         {review.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500 rounded-2xl bg-white px-4 py-5 text-center">Nothing to inspect yet. Press <strong className="text-slate-700">Finish</strong> on the phone.</p>
+          <p className="mt-2 text-sm text-slate-500 rounded-2xl bg-white px-4 py-5 text-center">{t(<>Nothing to inspect yet. Press <strong className="text-slate-700">Finish</strong> on the phone.</>, <>Ei vielä tarkastettavaa. Paina puhelimessa <strong className="text-slate-700">Valmis</strong>.</>)}</p>
         ) : (
           <ul className="mt-2 space-y-2">
             {review.map((r) => (
               <li key={r.n} className="feed-in rounded-2xl bg-white px-3.5 py-3 flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold" style={{ color: INK }}>Room {r.n}</p>
-                  <p className="text-xs text-slate-500">Cleaned in {took(r.secs)} by Emma Clarke</p>
+                  <p className="font-semibold" style={{ color: INK }}>{t('Room', 'Huone')} {r.n}</p>
+                  <p className="text-xs text-slate-500">{t(`Cleaned in ${took(r.secs)} by Emma Clarke`, `Siivonnut Emma Clarke, ${took(r.secs)}`)}</p>
                 </div>
-                <button type="button" onClick={() => onBack(r.n)} className="h-9 px-3 rounded-full bg-[#F0F1F4] text-xs font-semibold text-slate-700 hover:bg-[#E4E6EB]">Send back</button>
-                <button type="button" onClick={() => onApprove(r.n)} aria-label={`Approve room ${r.n}`}
-                  className={`h-9 px-4 rounded-full bg-[#0B0B0F] text-white text-xs font-semibold hover:bg-[#2A2B33] ${hint === 'approve' ? 'pulse-teal' : ''}`}>Approve</button>
+                <button type="button" onClick={() => onBack(r.n)} className="h-9 px-3 rounded-full bg-[#F0F1F4] text-xs font-semibold text-slate-700 hover:bg-[#E4E6EB]">{t('Send back', 'Lähetä takaisin')}</button>
+                <button type="button" onClick={() => onApprove(r.n)} aria-label={t(`Approve room ${r.n}`, `Hyväksy huone ${r.n}`)}
+                  className={`h-9 px-4 rounded-full bg-[#0B0B0F] text-white text-xs font-semibold hover:bg-[#2A2B33] ${hint === 'approve' ? 'pulse-teal' : ''}`}>{t('Approve', 'Hyväksy')}</button>
               </li>
             ))}
           </ul>
@@ -195,7 +196,7 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
       </div>
 
       <div className="px-5 pt-5 pb-5 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Activity</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('Activity', 'Toiminta')}</p>
         <ul className="mt-2 space-y-1.5 min-h-[4.5rem]">
           {feed.slice(0, 3).map((f) => (
             <li key={f.id} className="feed-in flex gap-2 text-sm text-slate-600"><span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[#19A7A1] flex-none" />{f.text}</li>
@@ -207,15 +208,15 @@ function ManagerPanel({ rooms, feed, onApprove, onBack, hint }) {
 }
 
 const HINTS = {
-  finish: ['1', 'Press Finish on the phone, like a housekeeper would when the room is done.'],
-  approve: ['2', 'The room just arrived on the manager screen. Approve it.'],
-  start: ['3', 'Now start the next room on the phone. The timer begins on its own.'],
-  free: ['', 'Keep playing. Pause the timer, start another room, or send one back.']
+  finish: ['1', t('Press Finish on the phone, like a housekeeper would when the room is done.', 'Paina puhelimessa Valmis, kuten siivooja tekisi huoneen valmistuttua.')],
+  approve: ['2', t('The room just arrived on the manager screen. Approve it.', 'Huone ilmestyi juuri esimiehen näkymään. Hyväksy se.')],
+  start: ['3', t('Now start the next room on the phone. The timer begins on its own.', 'Aloita nyt seuraava huone puhelimella. Ajastin käynnistyy itsestään.')],
+  free: ['', t('Keep playing. Pause the timer, start another room, or send one back.', 'Kokeile vapaasti. Keskeytä ajastin, aloita toinen huone tai lähetä yksi takaisin.')]
 };
 
 export function TryIt() {
   const [rooms, setRooms] = useState(START_ROOMS);
-  const [feed, setFeed] = useState([{ id: 0, text: 'Emma started cleaning room 214.' }]);
+  const [feed, setFeed] = useState([{ id: 0, text: t('Emma started cleaning room 214.', 'Emma aloitti huoneen 214 siivouksen.') }]);
   const [toast, setToast] = useState('');
   const [steps, setSteps] = useState({ finish: false, approve: false, start: false });
   const nextId = useRef(1);
@@ -231,12 +232,12 @@ export function TryIt() {
   const say = (text) => { setToast(text); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 2600); };
   const patch = (n, fn) => setRooms((rs) => rs.map((r) => (r.n === n ? { ...r, ...fn(r) } : r)));
 
-  const start = (n) => { patch(n, () => ({ state: 'cleaning', secs: 0, running: true, sentBack: false })); log(`Emma started cleaning room ${n}.`); say(`Timer started for room ${n}`); setSteps((s) => ({ ...s, start: true })); };
-  const toggle = (n) => { const r = rooms.find((x) => x.n === n); patch(n, (x) => ({ running: !x.running })); log(`Emma ${r.running ? 'paused' : 'resumed'} the timer in room ${n}.`); };
-  const finish = (n) => { patch(n, () => ({ state: 'review', running: false })); const r = rooms.find((x) => x.n === n); log(`Emma finished room ${n} in ${took(r.secs)}.`); say('Sent to your manager for inspection'); setSteps((s) => ({ ...s, finish: true })); };
-  const approve = (n) => { patch(n, () => ({ state: 'ready' })); log(`You approved room ${n}. It is ready for the next guest.`); setSteps((s) => ({ ...s, approve: true })); };
-  const back = (n) => { patch(n, () => ({ state: 'todo', sentBack: true, secs: 0 })); log(`You sent room ${n} back to Emma.`); say(`Room ${n} was sent back`); };
-  const reset = () => { setRooms(START_ROOMS); setFeed([{ id: nextId.current++, text: 'Emma started cleaning room 214.' }]); setSteps({ finish: false, approve: false, start: false }); setToast(''); };
+  const start = (n) => { patch(n, () => ({ state: 'cleaning', secs: 0, running: true, sentBack: false })); log(t(`Emma started cleaning room ${n}.`, `Emma aloitti huoneen ${n} siivouksen.`)); say(t(`Timer started for room ${n}`, `Ajastin käynnistyi huoneelle ${n}`)); setSteps((s) => ({ ...s, start: true })); };
+  const toggle = (n) => { const r = rooms.find((x) => x.n === n); patch(n, (x) => ({ running: !x.running })); log(t(`Emma ${r.running ? 'paused' : 'resumed'} the timer in room ${n}.`, `Emma ${r.running ? 'keskeytti' : 'jatkoi'} ajastimen huoneessa ${n}.`)); };
+  const finish = (n) => { patch(n, () => ({ state: 'review', running: false })); const r = rooms.find((x) => x.n === n); log(t(`Emma finished room ${n} in ${took(r.secs)}.`, `Emma sai huoneen ${n} valmiiksi ajassa ${took(r.secs)}.`)); say(t('Sent to your manager for inspection', 'Lähetetty esimiehelle tarkastettavaksi')); setSteps((s) => ({ ...s, finish: true })); };
+  const approve = (n) => { patch(n, () => ({ state: 'ready' })); log(t(`You approved room ${n}. It is ready for the next guest.`, `Hyväksyit huoneen ${n}. Se on valmis seuraavalle vieraalle.`)); setSteps((s) => ({ ...s, approve: true })); };
+  const back = (n) => { patch(n, () => ({ state: 'todo', sentBack: true, secs: 0 })); log(t(`You sent room ${n} back to Emma.`, `Lähetit huoneen ${n} takaisin Emmalle.`)); say(t(`Room ${n} was sent back`, `Huone ${n} lähetettiin takaisin`)); };
+  const reset = () => { setRooms(START_ROOMS); setFeed([{ id: nextId.current++, text: t('Emma started cleaning room 214.', 'Emma aloitti huoneen 214 siivouksen.') }]); setSteps({ finish: false, approve: false, start: false }); setToast(''); };
 
   const hintKey = !steps.finish ? 'finish' : !steps.approve ? 'approve' : !steps.start ? 'start' : 'free';
   const [num, text] = HINTS[hintKey];
@@ -247,7 +248,7 @@ export function TryIt() {
       <div className="flex flex-wrap items-center gap-3 rounded-full bg-[#F4F5F7] px-5 py-3 max-w-4xl mx-auto">
         {num && <span className="flex-none w-7 h-7 rounded-full bg-[#0D7C77] text-white text-sm font-semibold flex items-center justify-center">{num}</span>}
         <p className="text-sm font-medium flex-1 min-w-[12rem]" style={{ color: INK }} aria-live="polite">{text}</p>
-        <button type="button" onClick={reset} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5"><Icon name="refresh" className="w-4 h-4" />Start over</button>
+        <button type="button" onClick={reset} className="text-sm font-semibold text-[#0D7C77] hover:underline inline-flex items-center gap-1.5"><Icon name="refresh" className="w-4 h-4" />{t('Start over', 'Aloita alusta')}</button>
       </div>
       <div className="mt-8 flex flex-col md:flex-row items-center md:items-stretch justify-center gap-8 lg:gap-12">
         <Phone rooms={rooms} onStart={start} onToggle={toggle} onFinish={finish} toast={toast} hint={showHint} />
@@ -261,9 +262,9 @@ export function TryIt() {
 /* ---------- Estatísticas de exemplo, com períodos e informação ao passar o rato ---------- */
 
 const PERIODS = {
-  today: { label: 'Today', unit: 'cleanings', bars: [['8:00', 2], ['9:00', 5], ['10:00', 8], ['11:00', 6], ['12:00', 4], ['13:00', 3], ['14:00', 5], ['15:00', 4]], avg: '22 min', pass: '89%', names: [['Emma', 92], ['Olivia', 85], ['Grace', 90]] },
-  week: { label: 'Last 7 days', unit: 'cleanings', bars: [['Mon', 9], ['Tue', 12], ['Wed', 8], ['Thu', 11], ['Fri', 10], ['Sat', 7], ['Sun', 12]], avg: '24 min', pass: '91%', names: [['Emma', 94], ['Olivia', 88], ['Grace', 90]] },
-  month: { label: 'Last 30 days', unit: 'cleanings', bars: [['Week 1', 58], ['Week 2', 71], ['Week 3', 66], ['Week 4', 74]], avg: '25 min', pass: '90%', names: [['Emma', 93], ['Olivia', 86], ['Grace', 91]] }
+  today: { label: t('Today', 'Tänään'), unit: 'cleanings', bars: [['8:00', 2], ['9:00', 5], ['10:00', 8], ['11:00', 6], ['12:00', 4], ['13:00', 3], ['14:00', 5], ['15:00', 4]], avg: '22 min', pass: '89%', names: [['Emma', 92], ['Olivia', 85], ['Grace', 90]] },
+  week: { label: t('Last 7 days', 'Viim. 7 päivää'), unit: 'cleanings', bars: [[t('Mon', 'Ma'), 9], [t('Tue', 'Ti'), 12], [t('Wed', 'Ke'), 8], [t('Thu', 'To'), 11], [t('Fri', 'Pe'), 10], [t('Sat', 'La'), 7], [t('Sun', 'Su'), 12]], avg: '24 min', pass: '91%', names: [['Emma', 94], ['Olivia', 88], ['Grace', 90]] },
+  month: { label: t('Last 30 days', 'Viim. 30 päivää'), unit: 'cleanings', bars: [[t('Week 1', 'Vko 1'), 58], [t('Week 2', 'Vko 2'), 71], [t('Week 3', 'Vko 3'), 66], [t('Week 4', 'Vko 4'), 74]], avg: '25 min', pass: '90%', names: [['Emma', 93], ['Olivia', 86], ['Grace', 91]] }
 };
 
 export function StatsMock() {
@@ -279,7 +280,7 @@ export function StatsMock() {
   return (
     <figure>
       <div className="rounded-3xl bg-white p-5 sm:p-7">
-        <div role="group" aria-label="Choose a period" className="inline-flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
+        <div role="group" aria-label={t('Choose a period', 'Valitse jakso')} className="inline-flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
           {Object.entries(PERIODS).map(([k, v]) => (
             <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)}
               className={`px-3 py-1.5 rounded-md transition-colors ${period === k ? 'bg-white text-[#172B4D] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{v.label}</button>
@@ -287,16 +288,16 @@ export function StatsMock() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Average time per room</p><p className="font-geist tracking-[-0.03em] text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
-          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">Approved first time</p><p className="font-geist tracking-[-0.03em] text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
+          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">{t('Average time per room', 'Keskimääräinen aika huonetta kohden')}</p><p className="font-geist tracking-[-0.03em] text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.avg}</p></div>
+          <div className="rounded-2xl bg-[#F4F5F7] px-4 py-3"><p className="text-xs text-slate-500">{t('Approved first time', 'Hyväksytty ensimmäisellä kerralla')}</p><p className="font-geist tracking-[-0.03em] text-2xl font-bold tabular-nums" style={{ color: INK }}>{d.pass}</p></div>
         </div>
 
         <p className="mt-5 text-sm font-semibold min-h-[1.25rem]" style={{ color: INK }} aria-live="polite">
-          {hover === null ? `Cleanings finished: ${total}` : `${d.bars[hover][0]}: ${d.bars[hover][1]} cleanings`}
+          {hover === null ? t(`Cleanings finished: ${total}`, `Valmiita siivouksia: ${total}`) : t(`${d.bars[hover][0]}: ${d.bars[hover][1]} cleanings`, `${d.bars[hover][0]}: ${d.bars[hover][1]} siivousta`)}
         </p>
         <div className="mt-3 flex items-end gap-2 h-32 border-b border-slate-200" onMouseLeave={() => setHover(null)}>
           {d.bars.map(([label, v], i) => (
-            <button key={period + label} type="button" aria-label={`${label}: ${v} cleanings`}
+            <button key={period + label} type="button" aria-label={t(`${label}: ${v} cleanings`, `${label}: ${v} siivousta`)}
               onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}
               className="flex-1 h-full flex justify-center items-end focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0D7C77] rounded">
               <span className={`block w-full max-w-[24px] rounded-t-[4px] transition-[height,background-color] duration-500 ${hover === i ? 'bg-[#0A6A66]' : 'bg-[#0D7C77]'}`} style={{ height: grown ? `${(v / max) * 100}%` : '0%' }} />
@@ -307,7 +308,7 @@ export function StatsMock() {
           {d.bars.map(([label]) => <span key={label} className="flex-1 text-center text-[10px] text-slate-500 truncate">{label}</span>)}
         </div>
 
-        <p className="mt-5 text-sm font-semibold" style={{ color: INK }}>Approved first time, by person</p>
+        <p className="mt-5 text-sm font-semibold" style={{ color: INK }}>{t('Approved first time, by person', 'Hyväksytty ensimmäisellä kerralla, henkilöittäin')}</p>
         <ul className="mt-3 space-y-3">
           {d.names.map(([name, pct]) => (
             <li key={name}>
@@ -317,7 +318,7 @@ export function StatsMock() {
           ))}
         </ul>
       </div>
-      <figcaption className="mt-2 text-xs text-slate-500">Example data, not from a real hotel. Try the buttons and hover over the bars.</figcaption>
+      <figcaption className="mt-2 text-xs text-slate-500">{t('Example data, not from a real hotel. Try the buttons and hover over the bars.', 'Esimerkkitietoja, ei oikeasta hotellista. Kokeile painikkeita ja vie hiiri pylväiden päälle.')}</figcaption>
     </figure>
   );
 }
@@ -331,11 +332,11 @@ export function PlanPicker() {
     <div className="bg-white rounded-3xl overflow-hidden">
       <div className="px-6 pt-6 pb-5 border-b border-slate-200">
         <label htmlFor="rooms-range" className="flex items-baseline justify-between gap-4 text-sm font-semibold" style={{ color: INK }}>
-          How many rooms does your hotel have?
+          {t('How many rooms does your hotel have?', 'Montako huonetta hotellissasi on?')}
           <span className="font-geist tracking-[-0.03em] text-3xl font-bold tabular-nums">{rooms > 100 ? '100+' : rooms}</span>
         </label>
         <input id="rooms-range" type="range" min="5" max="110" step="1" value={rooms} onChange={(e) => setRooms(Number(e.target.value))}
-          className="mt-4 w-full accent-[#0D7C77]" aria-valuetext={`${rooms > 100 ? 'More than 100' : rooms} rooms`} />
+          className="mt-4 w-full accent-[#0D7C77]" aria-valuetext={t(`${rooms > 100 ? 'More than 100' : rooms} rooms`, `${rooms > 100 ? 'Yli 100' : rooms} huonetta`)} />
         <div className="mt-1 flex justify-between text-xs text-slate-500"><span>5</span><span>100+</span></div>
       </div>
       <ul className="divide-y divide-slate-200">
@@ -344,15 +345,15 @@ export function PlanPicker() {
           return (
             <li key={p.name} className={`flex items-center justify-between gap-4 px-6 py-5 transition-colors ${on ? 'bg-[#F4F5F7]' : ''}`}>
               <div>
-                <p className="font-geist tracking-[-0.03em] font-semibold text-xl flex items-center gap-2" style={{ color: INK }}>{p.name}{on && <span className="text-[11px] font-semibold rounded-full bg-[#0D7C77] text-white px-2 py-0.5">Your plan</span>}</p>
-                <p className="text-sm text-slate-500 mt-0.5">{p.rooms}</p>
+                <p className="font-geist tracking-[-0.03em] font-semibold text-xl flex items-center gap-2" style={{ color: INK }}>{p.name}{on && <span className="text-[11px] font-semibold rounded-full bg-[#0D7C77] text-white px-2 py-0.5">{t('Your plan', 'Sinun tasosi')}</span>}</p>
+                <p className="text-sm text-slate-500 mt-0.5">{LANG === 'fi' ? p.roomsFi : p.rooms}</p>
               </div>
-              <p className="text-right"><span className={`font-geist tracking-[-0.03em] font-bold text-4xl tabular-nums transition-colors ${on ? '' : 'text-slate-400'}`} style={on ? { color: INK } : undefined}>{p.price} €</span><span className="text-sm text-slate-500"> per month</span></p>
+              <p className="text-right"><span className={`font-geist tracking-[-0.03em] font-bold text-4xl tabular-nums transition-colors ${on ? '' : 'text-slate-400'}`} style={on ? { color: INK } : undefined}>{p.price} €</span><span className="text-sm text-slate-500"> {t('per month', 'kuukaudessa')}</span></p>
             </li>
           );
         })}
       </ul>
-      {!plan && <p className="px-6 py-4 text-sm bg-[#FFF8E8] text-slate-700 border-t border-slate-200">More than 100 rooms? Get in touch and we will agree a price for your hotel.</p>}
+      {!plan && <p className="px-6 py-4 text-sm bg-[#FFF8E8] text-slate-700 border-t border-slate-200">{t('More than 100 rooms? Get in touch and we will agree a price for your hotel.', 'Yli 100 huonetta? Ota yhteyttä, niin sovimme hinnan hotellillesi.')}</p>}
     </div>
   );
 }

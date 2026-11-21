@@ -9,7 +9,8 @@ import './index.css';
 // Os links dos emails do Supabase (recuperar password) podem cair em "/": nesse caso também abrimos a aplicação.
 const fromEmailLink = /type=recovery|error_code=/.test(location.hash + location.search);
 const legalPage = { '/privacy': 'privacy', '/terms': 'terms', '/dpa': 'dpa' }[location.pathname.replace(/\/+$/, '')];
-const isApp = (location.pathname !== '/' && !legalPage) || new URLSearchParams(location.search).has('demo') || fromEmailLink;
+const isSite = /^\/(fi)?\/?$/.test(location.pathname);
+const isApp = (!isSite && !legalPage) || new URLSearchParams(location.search).has('demo') || fromEmailLink;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>{isApp ? <App /> : legalPage ? <Legal page={legalPage} /> : <Site />}</React.StrictMode>
