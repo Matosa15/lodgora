@@ -54,7 +54,7 @@ function seed() {
     { id: 's6', fullName: 'Noah Davies', username: 'noah', role: 'maintenance', active: true, pin: '1234' }
   ];
   const room = (number, floor, type, status, assignedTo = null, note = '', kind = 'room') =>
-    ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanType: 'checkout', cleanSeconds: 0, cleanRunningSince: null });
+    ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanType: 'checkout', notes: [], cleanSeconds: 0, cleanRunningSince: null });
   const area = (name, status, assignedTo = null) => room(name, 0, 'Common area', status, assignedTo, '', 'area');
   const rooms = [
     room('101', 1, 'Double', 'Ready'),
@@ -136,6 +136,7 @@ export function createDemoBackend() {
     } else if (prev === 'Awaiting inspection' && status === 'Ready') { const c = open(); if (c) c.approvedAt = nowISO; }
     else if (prev === 'Awaiting inspection' && status === 'Dirty') { const c = open(); if (c) c.sentBack = true; }
     r.status = status;
+    if (prev === 'Awaiting inspection' && status === 'Ready') r.notes = [];
   }
 
   // Mesmas regras da base de dados: o plano até hoje passa para a lista de limpeza
@@ -205,7 +206,15 @@ export function createDemoBackend() {
 
     manager: {
       rooms: {
-        async list() { return state.rooms.map((r) => ({ ...r })); },
+        async list() { return state.rooms.map((r) => ({ ...r, notes: (r.notes || []).map((n) => ({ ...n })) })); },
+        async addNote(id, text) {
+          const r = state.rooms.find((x) => x.id === id);
+          if (!r) return;
+          const body = String(text || '').trim();
+          if (!body) throw new Error('Write a short note');
+          (r.notes = r.notes || []).push({ id: newId(), author: state.managerName, byStaff: false, body: body.slice(0, 500), createdAt: new Date().toISOString() });
+          save();
+        },
         async update(id, patch) {
           const r = state.rooms.find((x) => x.id === id);
           if (r) {
@@ -327,7 +336,7 @@ export function createDemoBackend() {
     staff: {
       async rooms() {
         const s = needMe();
-        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, cleanType, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, cleanType: cleanType || 'checkout', status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
+        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, notes, cleanType, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, cleanType: cleanType || 'checkout', notes: (notes || []).map((n) => ({ ...n })), status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
       },
       async setStatus(roomId, status) {
         const s = needMe();
@@ -376,6 +385,17 @@ export function createDemoBackend() {
         if (status === 'resolved') i.needsHelp = false;
         const r = state.rooms.find((x) => x.id === i.roomId);
         log(`${status === 'resolved' ? 'Issue resolved' : status === 'in_progress' ? 'Work started' : 'Issue reopened'}${r ? ' in ' + spaceInline(r) : ''}: ${i.title}`, s.fullName);
+        save();
+      },
+      async addRoomNote(roomId, text) {
+        const s = needMe();
+        const r = state.rooms.find((x) => x.id === roomId && x.assignedTo === s.id);
+        if (!r) throw new Error('Room not found');
+        const body = String(text || '').trim();
+        if (!body) throw new Error('Write a short note');
+        if (body.length > 500) throw new Error('Use 500 characters or fewer');
+        (r.notes = r.notes || []).push({ id: newId(), author: s.fullName, byStaff: true, body, createdAt: new Date().toISOString() });
+        log(`Note added in ${spaceInline(r)}`, s.fullName);
         save();
       },
       async addIssueNote(issueId, text, cannotFix = false) {

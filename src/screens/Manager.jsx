@@ -84,7 +84,13 @@ export default function Manager({ session, signOut }) {
       await m.activity.add(msg || t(`${spaceName(room)} marked ${statusLabel(status).toLowerCase()}`, `${spaceName(room)}: tilaksi merkitty ${statusLabel(status).toLowerCase()}`));
     }, `${spaceName(room)}: ${statusLabel(status)}`),
     approve: (room) => actions.setStatus(room, 'Ready', t(`${spaceName(room)} approved`, `${spaceName(room)} hyväksytty`)),
-    sendBack: (room) => actions.setStatus(room, 'Dirty', t(`${spaceName(room)} sent back for cleaning`, `${spaceName(room)} palautettu siivottavaksi`)),
+    // Palauttaa huoneen siivottavaksi; jos esimies kirjoitti viestin, se näkyy siivoojalle
+    sendBack: (room, note) => act(async () => {
+      if (note && note.trim()) await m.rooms.addNote(room.id, note.trim());
+      await m.rooms.update(room.id, { status: 'Dirty' });
+      await m.activity.add(t(`${spaceName(room)} sent back for cleaning`, `${spaceName(room)} palautettu siivottavaksi`));
+    }, `${spaceName(room)}: ${statusLabel('Dirty')}`),
+    addRoomNote: async (room, text) => { await m.rooms.addNote(room.id, text); await d.reload(); },
     rename: async (room, name) => {
       const number = name.trim().replace(/\s+/g, ' ');
       if (!number) return t('Enter a name.', 'Anna nimi.');
@@ -525,17 +531,46 @@ function Inspections({ rooms, actions }) {
       ) : (
         <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
           {rooms.map((r) => (
-            <li key={r.id} className="py-4 flex flex-wrap items-center gap-3">
-              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#0B0B0F]">{spaceName(r)}</p><p className="text-xs text-slate-500">{typeLabel(r.type)} · {t(`cleaned by ${r.assignee || 'unknown'}`, `siivonnut ${r.assignee || 'tuntematon'}`)}{r.cleanSeconds > 0 && `, ${minutesLabel(r.cleanSeconds)}`}</p></div>
-              <div className="flex gap-2">
-                <button className={btnGhost} onClick={() => actions.sendBack(r)}>{t('Send back', 'Palauta')}</button>
-                <button className={btnPrimary} onClick={() => actions.approve(r)}><Icon name="check" className="w-4 h-4" />{t('Approve', 'Hyväksy')}</button>
-              </div>
-            </li>
+            <InspectionItem key={r.id} r={r} actions={actions} />
           ))}
         </ul>
       )}
     </Panel>
+  );
+}
+
+// Um quarto à espera de inspeção: aprovar, ou devolver com uma nota do que corrigir (a equipa pode responder)
+function InspectionItem({ r, actions }) {
+  const [backing, setBacking] = useState(false);
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const sendBack = async () => { setBusy(true); await actions.sendBack(r, note); setBusy(false); setBacking(false); setNote(''); };
+  return (
+    <li className="py-4">
+      <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#0B0B0F]">{spaceName(r)}</p><p className="text-xs text-slate-500">{typeLabel(r.type)} · {t(`cleaned by ${r.assignee || 'unknown'}`, `siivonnut ${r.assignee || 'tuntematon'}`)}{r.cleanSeconds > 0 && `, ${minutesLabel(r.cleanSeconds)}`}</p></div>
+              <div className="flex gap-2">
+                <button className={btnGhost} aria-expanded={backing} onClick={() => setBacking((v) => !v)}>{t('Send back', 'Palauta')}</button>
+                <button className={btnPrimary} onClick={() => actions.approve(r)}><Icon name="check" className="w-4 h-4" />{t('Approve', 'Hyväksy')}</button>
+              </div>
+      </div>
+      <IssueNotes notes={r.notes} />
+      {backing ? (
+        <div className="mt-3 rounded-2xl bg-[#F4F5F7] p-4">
+          <label htmlFor={`back-${r.id}`} className="text-sm font-semibold text-[#0B0B0F]">{t('What needs to be fixed?', 'Mitä pitää korjata?')}</label>
+          <textarea id={`back-${r.id}`} rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} autoFocus
+            placeholder={t('e.g. Floor under the bed, one towel missing…', 'esim. lattia sängyn alta, yksi pyyhe puuttuu…')}
+            className="mt-2 w-full px-4 py-3 border-2 border-transparent rounded-2xl text-sm bg-white focus:outline-none focus:border-[#0B0B0F] resize-none" />
+          <p className="text-xs text-slate-500 mt-1">{t('The housekeeper sees this note and can reply. You can also send the room back without a note.', 'Siivooja näkee viestin ja voi vastata. Voit palauttaa huoneen myös ilman viestiä.')}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className={btnPrimary} disabled={busy} onClick={sendBack}>{note.trim() ? t('Send back with note', 'Palauta viestin kanssa') : t('Send back', 'Palauta')}</button>
+            <button className={btnGhost} onClick={() => { setBacking(false); setNote(''); }}>{t('Cancel', 'Peruuta')}</button>
+          </div>
+        </div>
+      ) : (
+        <NoteBox collapsible label={r.notes?.length ? t('Reply', 'Vastaa') : t('Add a note', 'Lisää viesti')} onSend={(text) => actions.addRoomNote(r, text)} />
+      )}
+    </li>
   );
 }
 

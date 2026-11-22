@@ -1,7 +1,7 @@
 // Ecrã da camareira: pensado para o telemóvel. Lista dos seus quartos e um botão grande por quarto.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
-import { CleanTag, CleanTimer, Field, Icon, LangSwitch, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
+import { CleanTag, CleanTimer, Field, Icon, IssueNotes, LangSwitch, LogoMark, Modal, NoteBox, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
 import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName, tidyName, typeLabel } from '../lib/constants';
 import { t } from '../lib/i18n';
 import { tErr } from '../lib/errors';
@@ -123,6 +123,13 @@ export default function Housekeeper({ session, signOut }) {
                     <div className="flex flex-col items-end gap-1.5"><StatusBadge status={room.status} /><CleanTag room={room} /></div>
                   </div>
                   {room.note && <p className="text-sm text-slate-600 mt-3">{room.note}</p>}
+                  {room.status === 'Dirty' && room.notes?.length > 0 && (
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#0D7C77]">{t('Your manager sent this back', 'Esimiehesi palautti huoneen')}</p>
+                  )}
+                  <IssueNotes notes={room.notes} />
+                  <NoteBox collapsible label={room.notes?.length ? t('Reply to your manager', 'Vastaa esimiehelle') : t('Write a note to your manager', 'Kirjoita viesti esimiehelle')}
+                    placeholder={t('e.g. The floor is done, the towels are missing', 'esim. lattia on siivottu, pyyhkeet puuttuvat')}
+                    onSend={async (text) => { await backend.staff.addRoomNote(room.id, text); await load(); }} />
 
                   <div className="mt-4 space-y-2">
                     {room.status === 'Dirty' && (

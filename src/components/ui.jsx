@@ -1,7 +1,7 @@
 // Peças reutilizáveis: ícones, janelas, painéis, avisos, campos de formulário.
 import { LANG, setLang, t } from '../lib/i18n';
 import { cleanTypeLabel } from '../lib/constants';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import { tErr } from '../lib/errors';
 import { STATUS_STYLE, statusLabel, cleanElapsed, clock, isArea, spaceName, timeAgo } from '../lib/constants';
 
@@ -159,6 +159,7 @@ export function IssueNotes({ notes }) {
 // Caixa para escrever uma nota. Com cannotFix, aparece também o botão "I can't fix this".
 // onSend(texto, cannotFix) deve lançar um erro se falhar.
 export function NoteBox({ onSend, cannotFix = false, collapsible = false, label = t('Add a note', 'Lisää viesti'), placeholder = t('Write a short note…', 'Kirjoita lyhyt viesti…') }) {
+  const uid = useId();
   const [open, setOpen] = useState(!collapsible);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -173,8 +174,8 @@ export function NoteBox({ onSend, cannotFix = false, collapsible = false, label 
   };
   return (
     <div className="mt-2">
-      <label className="sr-only" htmlFor={`note-${label}`}>{label}</label>
-      <textarea id={`note-${label}`} rows={2} maxLength={500} value={text} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder}
+      <label className="sr-only" htmlFor={`note-${uid}`}>{label}</label>
+      <textarea id={`note-${uid}`} rows={2} maxLength={500} value={text} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder}
         className="w-full px-4 py-3 border-2 border-transparent rounded-2xl text-sm bg-[#F4F5F7] focus:outline-none focus:bg-white focus:border-[#0B0B0F] resize-none" />
       {error && <p className="text-xs text-rose-600 mt-1" role="alert">{error}</p>}
       <div className="mt-2 flex flex-wrap gap-2">
