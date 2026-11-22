@@ -559,7 +559,7 @@ function InspectionItem({ r, actions }) {
       <div className="flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#0B0B0F]">{spaceName(r)}</p><p className="text-xs text-slate-500">{typeLabel(r.type)} · {sentBack ? t(`waiting for ${r.assignee || 'a housekeeper'}`, `odottaa: ${r.assignee || 'siivooja'}`) : t(`cleaned by ${r.assignee || 'unknown'}`, `siivonnut ${r.assignee || 'tuntematon'}`)}{!sentBack && r.cleanSeconds > 0 && `, ${minutesLabel(r.cleanSeconds)}`}</p></div>
               {sentBack ? (
-                <div className="flex items-center gap-2"><StatusBadge status={r.status} /><CleanTag room={r} /></div>
+                <div className="flex flex-wrap items-center gap-2"><span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide">{t('Sent back', 'Palautettu')}</span><StatusBadge status={r.status} /><CleanTag room={r} /></div>
               ) : (
               <div className="flex gap-2">
                 <button className={btnGhost} aria-expanded={backing} onClick={() => setBacking((v) => !v)}>{t('Send back', 'Palauta')}</button>
