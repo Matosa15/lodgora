@@ -123,7 +123,7 @@ export default function Housekeeper({ session, signOut }) {
                     <div className="flex flex-col items-end gap-1.5"><StatusBadge status={room.status} /><CleanTag room={room} /></div>
                   </div>
                   {room.note && <p className="text-sm text-slate-600 mt-3">{room.note}</p>}
-                  {room.status === 'Dirty' && room.notes?.length > 0 && (
+                  {room.sentBack && ['Dirty', 'Cleaning'].includes(room.status) && (
                     <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#0D7C77]">{t('Your manager sent this back', 'Esimiehesi palautti huoneen')}</p>
                   )}
                   <IssueNotes notes={room.notes} />

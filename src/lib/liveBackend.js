@@ -21,7 +21,7 @@ function check({ data, error }) {
 
 const toRoom = (r) => ({
   id: r.id, kind: r.kind || 'room', number: r.number, floor: r.floor, type: r.type, status: r.status,
-  assignedTo: r.assigned_to || null, note: r.note || '', cleanType: r.clean_type || 'checkout',
+  assignedTo: r.assigned_to || null, note: r.note || '', cleanType: r.clean_type || 'checkout', sentBack: !!r.sent_back,
   notes: (r.notes || []).map((n) => ({ id: n.id, author: n.author, byStaff: n.by_staff, body: n.body, createdAt: n.created_at })).sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1)),
   cleanSeconds: r.clean_seconds || 0, cleanRunningSince: r.clean_running_since || null
 });
@@ -153,7 +153,7 @@ export function createLiveBackend(url, key) {
       rooms: {
         async list() {
           const rows = check(await supabase.from('rooms')
-            .select('id, kind, number, floor, type, status, assigned_to, note, clean_type, clean_seconds, clean_running_since, notes:room_notes(id, author, by_staff, body, created_at)').order('number'));
+            .select('id, kind, number, floor, type, status, assigned_to, note, clean_type, sent_back, clean_seconds, clean_running_since, notes:room_notes(id, author, by_staff, body, created_at)').order('number'));
           return rows.map(toRoom);
         },
         async update(id, patch) {

@@ -136,6 +136,8 @@ export function createDemoBackend() {
     } else if (prev === 'Awaiting inspection' && status === 'Ready') { const c = open(); if (c) c.approvedAt = nowISO; }
     else if (prev === 'Awaiting inspection' && status === 'Dirty') { const c = open(); if (c) c.sentBack = true; }
     r.status = status;
+    if (prev === 'Awaiting inspection' && status === 'Dirty') r.sentBack = true;
+    else if (['Ready', 'Occupied', 'Out of service'].includes(status)) r.sentBack = false;
     if (prev === 'Awaiting inspection' && status === 'Ready') r.notes = [];
   }
 
@@ -336,7 +338,7 @@ export function createDemoBackend() {
     staff: {
       async rooms() {
         const s = needMe();
-        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, notes, cleanType, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, cleanType: cleanType || 'checkout', notes: (notes || []).map((n) => ({ ...n })), status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
+        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, notes, sentBack, cleanType, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, cleanType: cleanType || 'checkout', sentBack: !!sentBack, notes: (notes || []).map((n) => ({ ...n })), status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
       },
       async setStatus(roomId, status) {
         const s = needMe();

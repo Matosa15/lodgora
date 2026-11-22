@@ -60,7 +60,7 @@ export default function Manager({ session, signOut }) {
     spaces: rooms.length,
     ready: onlyRooms.filter((r) => r.status === 'Ready').length,
     cleaning: count('Dirty') + count('Cleaning'),
-    inspection: count('Awaiting inspection'),
+    inspection: count('Awaiting inspection') + rooms.filter((r) => r.sentBack && ['Dirty', 'Cleaning'].includes(r.status)).length,
     issues: openIssues.length
   };
   const badges = { rooms: stats.spaces, inspection: stats.inspection, issues: stats.issues };
@@ -200,7 +200,7 @@ export default function Manager({ session, signOut }) {
   } else if (page === 'Planner') {
     body = <Planner rooms={rooms} plan={d.plan} staff={d.staff} search={search} onSet={actions.planSet} onClear={actions.planClear} onAddRooms={() => setModal({ type: 'addRooms' })} />;
   } else if (page === 'Inspections') {
-    body = <Inspections rooms={fRooms.filter((r) => r.status === 'Awaiting inspection')} actions={actions} />;
+    body = <Inspections rooms={fRooms.filter((r) => r.status === 'Awaiting inspection' || (r.sentBack && ['Dirty', 'Cleaning'].includes(r.status)))} actions={actions} />;
   } else if (page === 'Maintenance') {
     body = <Maintenance issues={fIssues} technicians={technicians} staffById={staffById} onReport={() => setModal({ type: 'issue' })} onAddTech={() => setModal({ type: 'staff', role: 'maintenance' })} actions={actions} />;
   } else if (page === 'Statistics') {
@@ -524,23 +524,32 @@ function ReadinessPanel({ title, subtitle, rooms, search, statusFilter, setStatu
 /* ---------------- Inspeções ---------------- */
 
 function Inspections({ rooms, actions }) {
+  const waiting = rooms.filter((r) => r.status === 'Awaiting inspection');
+  const back = rooms.filter((r) => r.status !== 'Awaiting inspection');
+  const list = (items) => (
+    <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
+      {items.map((r) => <InspectionItem key={r.id} r={r} actions={actions} />)}
+    </ul>
+  );
   return (
-    <Panel title={t('Awaiting inspection', 'Odottaa tarkastusta')} subtitle={t(`${rooms.length} item${rooms.length === 1 ? '' : 's'}`, `${rooms.length} ${rooms.length === 1 ? 'kohde' : 'kohdetta'}`)}>
-      {rooms.length === 0 ? (
-        <EmptyState icon="check" title={t('Nothing to inspect', 'Ei tarkastettavaa')} text={t('Rooms and areas appear here when a housekeeper finishes cleaning them.', 'Huoneet ja tilat ilmestyvät tähän, kun siivooja on saanut ne valmiiksi.')} />
-      ) : (
-        <ul className="px-5 sm:px-6 pb-4 divide-y divide-slate-100">
-          {rooms.map((r) => (
-            <InspectionItem key={r.id} r={r} actions={actions} />
-          ))}
-        </ul>
+    <div className="space-y-6">
+      <Panel title={t('Awaiting inspection', 'Odottaa tarkastusta')} subtitle={t(`${waiting.length} item${waiting.length === 1 ? '' : 's'}`, `${waiting.length} ${waiting.length === 1 ? 'kohde' : 'kohdetta'}`)}>
+        {waiting.length === 0 ? (
+          <EmptyState icon="check" title={t('Nothing to inspect', 'Ei tarkastettavaa')} text={t('Rooms and areas appear here when a housekeeper finishes cleaning them.', 'Huoneet ja tilat ilmestyvät tähän, kun siivooja on saanut ne valmiiksi.')} />
+        ) : list(waiting)}
+      </Panel>
+      {back.length > 0 && (
+        <Panel title={t('Sent back', 'Palautettu')} subtitle={t(`${back.length} waiting for the housekeeper. They stay here until you approve them.`, `${back.length} odottaa siivoojaa. Ne pysyvät tässä, kunnes hyväksyt ne.`)}>
+          {list(back)}
+        </Panel>
       )}
-    </Panel>
+    </div>
   );
 }
 
 // Um quarto à espera de inspeção: aprovar, ou devolver com uma nota do que corrigir (a equipa pode responder)
 function InspectionItem({ r, actions }) {
+  const sentBack = r.status !== 'Awaiting inspection';
   const [backing, setBacking] = useState(false);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -548,11 +557,15 @@ function InspectionItem({ r, actions }) {
   return (
     <li className="py-4">
       <div className="flex flex-wrap items-center gap-3">
-              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#0B0B0F]">{spaceName(r)}</p><p className="text-xs text-slate-500">{typeLabel(r.type)} · {t(`cleaned by ${r.assignee || 'unknown'}`, `siivonnut ${r.assignee || 'tuntematon'}`)}{r.cleanSeconds > 0 && `, ${minutesLabel(r.cleanSeconds)}`}</p></div>
+              <div className="min-w-0 flex-1 basis-48"><p className="font-bold text-[#0B0B0F]">{spaceName(r)}</p><p className="text-xs text-slate-500">{typeLabel(r.type)} · {sentBack ? t(`waiting for ${r.assignee || 'a housekeeper'}`, `odottaa: ${r.assignee || 'siivooja'}`) : t(`cleaned by ${r.assignee || 'unknown'}`, `siivonnut ${r.assignee || 'tuntematon'}`)}{!sentBack && r.cleanSeconds > 0 && `, ${minutesLabel(r.cleanSeconds)}`}</p></div>
+              {sentBack ? (
+                <div className="flex items-center gap-2"><StatusBadge status={r.status} /><CleanTag room={r} /></div>
+              ) : (
               <div className="flex gap-2">
                 <button className={btnGhost} aria-expanded={backing} onClick={() => setBacking((v) => !v)}>{t('Send back', 'Palauta')}</button>
                 <button className={btnPrimary} onClick={() => actions.approve(r)}><Icon name="check" className="w-4 h-4" />{t('Approve', 'Hyväksy')}</button>
               </div>
+              )}
       </div>
       <IssueNotes notes={r.notes} />
       {backing ? (
