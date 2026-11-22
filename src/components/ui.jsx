@@ -1,5 +1,7 @@
 // Peças reutilizáveis: ícones, janelas, painéis, avisos, campos de formulário.
+import { LANG, setLang, t } from '../lib/i18n';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { tErr } from '../lib/errors';
 import { STATUS_STYLE, statusLabel, cleanElapsed, clock, isArea, spaceName, timeAgo } from '../lib/constants';
 
 const ICONS = {
@@ -98,7 +100,7 @@ export function Modal({ title, subtitle, onClose, children, sheet = false }) {
             <h3 className="text-lg font-semibold text-[#0B0B0F]">{title}</h3>
             {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
-          <button onClick={onClose} aria-label="Close"
+          <button onClick={onClose} aria-label={t('Close', 'Sulje')}
             className="w-9 h-9 rounded-full bg-[#F4F5F7] hover:bg-[#E4E6EB] flex items-center justify-center text-slate-500 flex-none">
             <Icon name="x" className="w-4 h-4" />
           </button>
@@ -117,20 +119,20 @@ export function WherePicker({ id, rooms, value, onChange }) {
   const hasAreas = sorted.some(isArea);
   const current = sorted.find((r) => r.id === value);
   const [mode, setMode] = useState(current ? (isArea(current) ? 'area' : 'room') : (hasRooms ? 'room' : hasAreas ? 'area' : 'none'));
-  const tabs = [hasRooms && ['room', 'A room'], hasAreas && ['area', 'A common area'], ['none', 'Somewhere else']].filter(Boolean);
+  const tabs = [hasRooms && ['room', t('A room', 'Huone')], hasAreas && ['area', t('A common area', 'Yleinen tila')], ['none', t('Somewhere else', 'Muu paikka')]].filter(Boolean);
   const pick = (m) => { setMode(m); onChange(''); };
   const list = sorted.filter((r) => (mode === 'area') === isArea(r));
   return (
     <div>
-      <div className="flex gap-1.5 flex-wrap" role="group" aria-label="What is it about?">
+      <div className="flex gap-1.5 flex-wrap" role="group" aria-label={t('What is it about?', 'Mitä asia koskee?')}>
         {tabs.map(([k, label]) => (
           <button key={k} type="button" onClick={() => pick(k)} aria-pressed={mode === k}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${mode === k ? 'bg-[#0B0B0F] text-white' : 'bg-[#F4F5F7] text-slate-600 hover:bg-[#E4E6EB]'}`}>{label}</button>
         ))}
       </div>
       {mode !== 'none' && (
-        <select id={id} aria-label={mode === 'area' ? 'Which common area' : 'Which room'} className={`${inputCls} mt-2`} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">{mode === 'area' ? 'Choose a common area…' : 'Choose a room…'}</option>
+        <select id={id} aria-label={mode === 'area' ? t('Which common area', 'Mikä yleinen tila') : t('Which room', 'Mikä huone')} className={`${inputCls} mt-2`} value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">{mode === 'area' ? t('Choose a common area…', 'Valitse yleinen tila…') : t('Choose a room…', 'Valitse huone…')}</option>
           {list.map((r) => <option key={r.id} value={r.id}>{spaceName(r)}</option>)}
         </select>
       )}
@@ -142,7 +144,7 @@ export function WherePicker({ id, rooms, value, onChange }) {
 export function IssueNotes({ notes }) {
   if (!notes || notes.length === 0) return null;
   return (
-    <ul className="mt-2 space-y-1.5" aria-label="Notes">
+    <ul className="mt-2 space-y-1.5" aria-label={t('Notes', 'Viestit')}>
       {notes.map((n) => (
         <li key={n.id} className={`rounded-2xl px-3.5 py-2.5 text-sm ${n.byStaff ? 'bg-[#F4F5F7]' : 'bg-[#E4F3F2]'}`}>
           <p className="text-slate-800 break-words">{n.body}</p>
@@ -155,17 +157,17 @@ export function IssueNotes({ notes }) {
 
 // Caixa para escrever uma nota. Com cannotFix, aparece também o botão "I can't fix this".
 // onSend(texto, cannotFix) deve lançar um erro se falhar.
-export function NoteBox({ onSend, cannotFix = false, collapsible = false, label = 'Add a note', placeholder = 'Write a short note…' }) {
+export function NoteBox({ onSend, cannotFix = false, collapsible = false, label = t('Add a note', 'Lisää viesti'), placeholder = t('Write a short note…', 'Kirjoita lyhyt viesti…') }) {
   const [open, setOpen] = useState(!collapsible);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   if (!open) return <button type="button" className="mt-2 text-xs font-semibold text-[#0D7C77] hover:underline" onClick={() => setOpen(true)}>{label}</button>;
   const send = async (blocked) => {
-    if (!text.trim()) { setError(blocked ? 'Say what is wrong, so your manager can help.' : 'Write a short note first.'); return; }
+    if (!text.trim()) { setError(blocked ? t('Say what is wrong, so your manager can help.', 'Kerro, mikä on vialla, niin esimiehesi voi auttaa.') : t('Write a short note first.', 'Kirjoita ensin lyhyt viesti.')); return; }
     setBusy(true);
     try { await onSend(text.trim(), blocked); setText(''); setError(''); if (collapsible) setOpen(false); }
-    catch (e) { setError(e.message || 'Could not send the note'); }
+    catch (e) { setError(tErr(e.message) || t('Could not send the note', 'Viestin lähetys epäonnistui')); }
     finally { setBusy(false); }
   };
   return (
@@ -175,9 +177,9 @@ export function NoteBox({ onSend, cannotFix = false, collapsible = false, label 
         className="w-full px-4 py-3 border-2 border-transparent rounded-2xl text-sm bg-[#F4F5F7] focus:outline-none focus:bg-white focus:border-[#0B0B0F] resize-none" />
       {error && <p className="text-xs text-rose-600 mt-1" role="alert">{error}</p>}
       <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" disabled={busy} onClick={() => send(false)} className="px-4 py-2 rounded-full text-sm font-semibold bg-[#0B0B0F] hover:bg-[#2A2B33] text-white disabled:opacity-60">Send note</button>
-        {cannotFix && <button type="button" disabled={busy} onClick={() => send(true)} className="px-4 py-2 rounded-full text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-60">I can't fix this</button>}
-        {collapsible && <button type="button" onClick={() => { setOpen(false); setError(''); }} className="px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-800">Cancel</button>}
+        <button type="button" disabled={busy} onClick={() => send(false)} className="px-4 py-2 rounded-full text-sm font-semibold bg-[#0B0B0F] hover:bg-[#2A2B33] text-white disabled:opacity-60">{t('Send note', 'Lähetä viesti')}</button>
+        {cannotFix && <button type="button" disabled={busy} onClick={() => send(true)} className="px-4 py-2 rounded-full text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-60">{t('I can\'t fix this', 'En pysty korjaamaan tätä')}</button>}
+        {collapsible && <button type="button" onClick={() => { setOpen(false); setError(''); }} className="px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-800">{t('Cancel', 'Peruuta')}</button>}
       </div>
     </div>
   );
@@ -209,7 +211,7 @@ export function EmptyState({ icon = 'inbox', title, text, children }) {
   );
 }
 
-export function Spinner({ label = 'Loading' }) {
+export function Spinner({ label = t('Loading', 'Ladataan') }) {
   return (
     <div className="flex items-center justify-center gap-3 py-16 text-slate-500" role="status">
       <span className="w-5 h-5 border-2 border-slate-300 border-t-[#19A7A1] rounded-full animate-spin"></span>
@@ -247,11 +249,11 @@ export function ToastProvider({ children }) {
   );
 }
 
-export function CopyButton({ text, label = 'Copy' }) {
+export function CopyButton({ text, label = t('Copy', 'Kopioi') }) {
   const toast = useToast();
   const copy = async () => {
-    try { await navigator.clipboard.writeText(text); toast('Copied'); }
-    catch { toast('Could not copy. Select the text and copy it by hand.', 'error'); }
+    try { await navigator.clipboard.writeText(text); toast(t('Copied', 'Kopioitu')); }
+    catch { toast(t('Could not copy. Select the text and copy it by hand.', 'Kopiointi ei onnistunut. Valitse teksti ja kopioi se käsin.'), 'error'); }
   };
   return (
     <button type="button" onClick={copy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D7C77] px-2 py-1 rounded hover:bg-teal-50">
@@ -268,13 +270,25 @@ export function CleanTimer({ room, big = false, className = '' }) {
   useEffect(() => {
     if (!running) return undefined;
     setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
   }, [running, room.cleanRunningSince]);
   return (
     <span className={`tabular-nums ${big ? 'text-5xl font-bold' : 'font-semibold'} ${className}`}
-      role="timer" aria-label={`Cleaning time ${clock(cleanElapsed(room, now))}${running ? '' : ', paused'}`}>
+      role="timer" aria-label={`${t('Cleaning time', 'Siivousaika')} ${clock(cleanElapsed(room, now))}${running ? '' : t(', paused', ', tauolla')}`}>
       {clock(cleanElapsed(room, now))}
     </span>
+  );
+}
+
+/* ---------- Escolha de língua (EN / FI) ---------- */
+export function LangSwitch({ className = '' }) {
+  return (
+    <div role="group" aria-label={t('Language', 'Kieli')} className={`inline-flex rounded-full bg-[#F4F5F7] p-0.5 text-xs font-semibold ${className}`}>
+      {[['en', 'EN'], ['fi', 'FI']].map(([code, label]) => (
+        <button key={code} type="button" lang={code} aria-pressed={LANG === code} onClick={() => { if (LANG !== code) setLang(code); }}
+          className={`px-2.5 py-1 rounded-full transition-colors ${LANG === code ? 'bg-[#0B0B0F] text-white' : 'text-slate-500 hover:text-[#0B0B0F]'}`}>{label}</button>
+      ))}
+    </div>
   );
 }

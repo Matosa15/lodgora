@@ -6,6 +6,7 @@ import Manager from './screens/Manager';
 import Housekeeper from './screens/Housekeeper';
 import Technician from './screens/Technician';
 import ResetPassword from './screens/ResetPassword';
+import { t } from './lib/i18n';
 
 export default function App() {
   // undefined = a verificar se já há sessão; null = sem sessão
@@ -21,7 +22,7 @@ export default function App() {
 
   // Link do email expirado ou já usado: o Supabase devolve o erro no endereço
   const linkError = /error_code=otp_expired|error=access_denied/.test(location.hash)
-    ? 'That link has expired or was already used. Choose Manager and press "Forgot your password?" to get a new one.' : '';
+    ? t('That link has expired or was already used. Choose Manager and press "Forgot your password?" to get a new one.', 'Linkki on vanhentunut tai se on jo käytetty. Valitse Esimies ja paina "Unohditko salasanasi?" saadaksesi uuden.') : '';
 
   const signOut = async () => {
     await backend.auth.signOut();
@@ -30,7 +31,7 @@ export default function App() {
 
   let screen;
   if (recovery) screen = <ResetPassword onDone={(sess) => { setRecovery(false); setSession(sess); }} onCancel={() => { setRecovery(false); setSession(null); backend.auth.signOut(); }} />;
-  else if (session === undefined) screen = <Spinner label="Loading" />;
+  else if (session === undefined) screen = <Spinner label={t('Loading', 'Ladataan')} />;
   else if (!session) screen = <Login onSession={setSession} notice={linkError} />;
   else if (session.kind === 'manager') screen = <Manager session={session} signOut={signOut} />;
   else if (session.role === 'maintenance') screen = <Technician session={session} signOut={signOut} />;

@@ -10,7 +10,7 @@ const INK = '#0B0B0F';
 const GREY = '#F4F5F7';
 const H2 = 'font-geist font-semibold text-[2rem] sm:text-[3.1rem] leading-[1.04] tracking-[-0.04em]';
 
-const demoHref = '/app?demo';
+const demoHref = LANG === 'fi' ? '/app?demo&lang=fi' : '/app?demo&lang=en';
 const mailto = (subject) => `mailto:${SITE.contactEmail}?subject=${encodeURIComponent(subject)}`;
 // Pedido de demo/piloto: abre o formulário (noutro separador) ou, sem formulário, um email
 const request = (subject) => (SITE.requestUrl ? { href: SITE.requestUrl, target: '_blank', rel: 'noopener noreferrer' } : { href: mailto(subject) });
@@ -66,7 +66,7 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <a href={LANG === 'fi' ? '/' : '/fi'} hrefLang={LANG === 'fi' ? 'en' : 'fi'} lang={LANG === 'fi' ? 'en' : 'fi'} className="px-2 py-2 text-sm font-semibold text-slate-500 hover:text-[#0B0B0F]" aria-label={LANG === 'fi' ? 'English' : 'Suomeksi'}>{LANG === 'fi' ? 'EN' : 'FI'}</a>
-          <a href="/app" className="px-3 py-2 text-sm font-semibold text-[#172B4D] hover:underline">{t('Sign in', 'Kirjaudu')}</a>
+          <a href={LANG === 'fi' ? '/app?lang=fi' : '/app'} className="px-3 py-2 text-sm font-semibold text-[#172B4D] hover:underline">{t('Sign in', 'Kirjaudu')}</a>
           <a href={demoHref} className={`${btnPrimary} !py-2 !px-5 !text-sm`}>{t('Try the demo', 'Demo')}</a>
         </div>
       </div>
@@ -317,7 +317,7 @@ export function Footer() {
         <span>{t('Housekeeping and maintenance for independent hotels.', 'Siivouksen ja huollon hallinta itsenäisille hotelleille.')}</span>
         <span className="text-slate-400">© 2026 Lodgora</span>
         <span className="sm:ml-auto flex flex-wrap gap-x-5 gap-y-2">
-          <a href="/app" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">{t('Sign in', 'Kirjaudu')}</a>
+          <a href={LANG === 'fi' ? '/app?lang=fi' : '/app'} className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">{t('Sign in', 'Kirjaudu')}</a>
           <a href={demoHref} className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">{t('Demo', 'Demo')}</a>
           <a href="/privacy" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">{t('Privacy', 'Tietosuoja')}</a>
           <a href="/terms" className="hover:text-[#0B0B0F] underline-offset-2 hover:underline">{t('Terms', 'Käyttöehdot')}</a>

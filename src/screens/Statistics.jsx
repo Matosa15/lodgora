@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { backend } from '../lib/backend';
 import { buildStats, durationLabel, MIN_REAL_SECONDS, percentLabel, periodStart, PERIODS } from '../lib/stats';
-import { PRIORITY_STYLE, STATUS_STYLE, statusLabel } from '../lib/constants';
+import { PRIORITY_STYLE, STATUS_STYLE, statusLabel, priorityLabel, typeLabel, areaLabel } from '../lib/constants';
+import { t, LOCALE } from '../lib/i18n';
 import { EmptyState, Icon, Panel, Spinner, btnGhost, btnPrimary } from '../components/ui';
 
 const BAR = '#0D7C77'; // uma só cor para magnitudes, a do Lodgora
@@ -16,7 +17,7 @@ export default function Statistics({ rooms, issues }) {
     try {
       setCleanings(await backend.manager.cleanings.list(periodStart(period).toISOString()));
       setError('');
-    } catch (e) { setError(e.message || 'Could not load the statistics'); }
+    } catch (e) { setError(e.message || t('Could not load the statistics', 'Tilastoja ei voitu ladata')); }
   }, [period]);
 
   useEffect(() => {
@@ -28,87 +29,91 @@ export default function Statistics({ rooms, issues }) {
   }, [load]);
 
   const stats = useMemo(() => buildStats({ cleanings: cleanings || [], issues, rooms, period }), [cleanings, issues, rooms, period]);
-  const periodLabel = PERIODS.find((p) => p.id === period).label.toLowerCase();
+  const PERIOD_FI = { today: 'Tänään', '7d': 'Viim. 7 päivää', '30d': 'Viim. 30 päivää' };
+  const PERIOD_IN_FI = { today: 'tänään', '7d': 'viimeisten 7 päivän aikana', '30d': 'viimeisten 30 päivän aikana' };
+  const periodName = (p) => t(p.label, PERIOD_FI[p.id]);
+  const periodLabel = t(PERIODS.find((p) => p.id === period).label.toLowerCase(), PERIOD_FI[period].toLowerCase());
+  const inPeriod = t(`in ${periodLabel}`, PERIOD_IN_FI[period]);
 
   if (error) {
     return (
-      <Panel title="We could not load the statistics">
-        <EmptyState icon="alert" title="Connection problem" text={error}><button className={btnPrimary} onClick={load}>Try again</button></EmptyState>
+      <Panel title={t('We could not load the statistics', 'Tilastoja ei voitu ladata')}>
+        <EmptyState icon="alert" title={t('Connection problem', 'Yhteysongelma')} text={error}><button className={btnPrimary} onClick={load}>{t('Try again', 'Yritä uudelleen')}</button></EmptyState>
       </Panel>
     );
   }
-  if (cleanings === null) return <Spinner label="Loading statistics" />;
+  if (cleanings === null) return <Spinner label={t('Loading statistics', 'Ladataan tilastoja')} />;
 
   const noData = stats.done === 0;
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex gap-1.5" role="group" aria-label="Time period">
+        <div className="flex gap-1.5" role="group" aria-label={t('Time period', 'Ajanjakso')}>
           {PERIODS.map((p) => (
             <button key={p.id} onClick={() => setPeriod(p.id)} aria-pressed={period === p.id}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${period === p.id ? 'bg-[#0B0B0F] text-white' : 'bg-white text-slate-600 hover:bg-[#E4E6EB]'}`}>{p.label}</button>
+              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${period === p.id ? 'bg-[#0B0B0F] text-white' : 'bg-white text-slate-600 hover:bg-[#E4E6EB]'}`}>{periodName(p)}</button>
           ))}
         </div>
-        <button className={`${btnGhost} ml-auto`} onClick={load}><Icon name="refresh" className="w-4 h-4" />Refresh</button>
+        <button className={`${btnGhost} ml-auto`} onClick={load}><Icon name="refresh" className="w-4 h-4" />{t('Refresh', 'Päivitä')}</button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        <Tile label="Cleanings finished" value={stats.done} sub={noData ? 'None yet' : `${stats.sentBack} sent back for redoing`} />
-        <Tile label="Average time per room" value={durationLabel(stats.avgRoomSeconds)}
-          sub={stats.avgAreaSeconds !== null ? `Common areas: ${durationLabel(stats.avgAreaSeconds)}` : 'Per finished room cleaning'} />
-        <Tile label="Approved first time" value={percentLabel(stats.passRate)}
-          sub={stats.reviewedCount ? `Of ${stats.reviewedCount} inspected` : 'Nothing inspected yet'} />
-        <Tile label="Total cleaning time" value={durationLabel(stats.totalSeconds)} sub={`In ${periodLabel}`} />
+        <Tile label={t('Cleanings finished', 'Valmiit siivoukset')} value={stats.done} sub={noData ? t('None yet', 'Ei vielä yhtään') : t(`${stats.sentBack} sent back for redoing`, `${stats.sentBack} lähetetty takaisin uusittavaksi`)} />
+        <Tile label={t('Average time per room', 'Keskimääräinen aika huonetta kohden')} value={durationLabel(stats.avgRoomSeconds)}
+          sub={stats.avgAreaSeconds !== null ? t(`Common areas: ${durationLabel(stats.avgAreaSeconds)}`, `Yleiset tilat: ${durationLabel(stats.avgAreaSeconds)}`) : t('Per finished room cleaning', 'Valmista huonesiivousta kohden')} />
+        <Tile label={t('Approved first time', 'Hyväksytty ensimmäisellä kerralla')} value={percentLabel(stats.passRate)}
+          sub={stats.reviewedCount ? t(`Of ${stats.reviewedCount} inspected`, `${stats.reviewedCount} tarkastetusta`) : t('Nothing inspected yet', 'Ei vielä tarkastettuja')} />
+        <Tile label={t('Total cleaning time', 'Siivousaika yhteensä')} value={durationLabel(stats.totalSeconds)} sub={t(`In ${periodLabel}`, inPeriod.charAt(0).toUpperCase() + inPeriod.slice(1))} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         <div className="xl:col-span-2 min-w-0">
-          <Panel title={period === 'today' ? 'Cleanings finished by hour' : 'Cleanings finished per day'} subtitle="Rooms and common areas together">
+          <Panel title={period === 'today' ? t('Cleanings finished by hour', 'Valmiit siivoukset tunneittain') : t('Cleanings finished per day', 'Valmiit siivoukset päivittäin')} subtitle={t('Rooms and common areas together', 'Huoneet ja yleiset tilat yhteensä')}>
             {noData ? <NoData /> : (
               <div className="px-5 sm:px-6 pb-6"><Columns buckets={stats.buckets} /></div>
             )}
           </Panel>
         </div>
 
-        <Panel title="Right now" subtitle="Current status, not limited to the period">
+        <Panel title={t('Right now', 'Juuri nyt')} subtitle={t('Current status, not limited to the period', 'Nykytilanne, ei rajattu ajanjaksoon')}>
           <div className="px-5 sm:px-6 pb-6 space-y-6">
-            <StatusBar title="Rooms" data={stats.now.rooms} />
-            <StatusBar title="Common areas" data={stats.now.areas} />
+            <StatusBar title={t('Rooms', 'Huoneet')} data={stats.now.rooms} />
+            <StatusBar title={t('Common areas', 'Yleiset tilat')} data={stats.now.areas} />
           </div>
         </Panel>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         <div className="xl:col-span-2 min-w-0">
-          <Panel title="Team" subtitle={`Each housekeeper in ${periodLabel}`}>
+          <Panel title={t('Team', 'Tiimi')} subtitle={t(`Each housekeeper in ${periodLabel}`, `Jokainen siivooja ${inPeriod}`)}>
             {stats.byStaff.length === 0 ? <NoData /> : <TeamTable rows={stats.byStaff} />}
           </Panel>
         </div>
 
-        <Panel title="Average time by type" subtitle="Longest first">
+        <Panel title={t('Average time by type', 'Keskimääräinen aika tyypeittäin')} subtitle={t('Longest first', 'Pisin ensin')}>
           {stats.bySpace.length === 0 ? <NoData small /> : (
             <div className="px-5 sm:px-6 pb-6">
-              <HBars rows={stats.bySpace.slice(0, 8).map((r) => ({ name: r.name, tag: r.isArea ? 'Area' : '', value: r.avgSeconds, text: durationLabel(r.avgSeconds), note: `${r.count}×` }))} />
+              <HBars rows={stats.bySpace.slice(0, 8).map((r) => ({ name: r.isArea ? areaLabel(r.name) : typeLabel(r.name), tag: r.isArea ? t('Area', 'Tila') : '', value: r.avgSeconds, text: durationLabel(r.avgSeconds), note: `${r.count}×` }))} />
             </div>
           )}
         </Panel>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <Panel title="Maintenance" subtitle={`Issues in ${periodLabel}`}>
+        <Panel title={t('Maintenance', 'Huolto')} subtitle={t(`Issues in ${periodLabel}`, `Viat ${inPeriod}`)}>
           <div className="px-5 sm:px-6 pb-6 space-y-5">
             <div className="grid grid-cols-2 gap-3">
-              <Mini label="Reported" value={stats.issues.reported} />
-              <Mini label="Resolved" value={stats.issues.resolved} />
-              <Mini label="Open now" value={stats.issues.open} />
-              <Mini label="Average time to fix" value={durationLabel(stats.issues.avgFixSeconds)} />
+              <Mini label={t('Reported', 'Ilmoitettu')} value={stats.issues.reported} />
+              <Mini label={t('Resolved', 'Korjattu')} value={stats.issues.resolved} />
+              <Mini label={t('Open now', 'Avoinna nyt')} value={stats.issues.open} />
+              <Mini label={t('Average time to fix', 'Keskimääräinen korjausaika')} value={durationLabel(stats.issues.avgFixSeconds)} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-600 mb-2">Open now by priority</p>
+              <p className="text-xs font-semibold text-slate-600 mb-2">{t('Open now by priority', 'Avoinna nyt kiireellisyyden mukaan')}</p>
               <ul className="flex flex-wrap gap-2">
                 {stats.issues.openByPriority.map((p) => (
-                  <li key={p.priority} className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${PRIORITY_STYLE[p.priority]}`}>{p.priority} <span className="tabular-nums">{p.count}</span></li>
+                  <li key={p.priority} className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${PRIORITY_STYLE[p.priority]}`}>{priorityLabel(p.priority)} <span className="tabular-nums">{p.count}</span></li>
                 ))}
               </ul>
             </div>
@@ -116,15 +121,14 @@ export default function Statistics({ rooms, issues }) {
         </Panel>
 
         <div className="xl:col-span-2 min-w-0">
-          <Panel title="Latest cleanings" subtitle="The most recent ones in this period">
+          <Panel title={t('Latest cleanings', 'Viimeisimmät siivoukset')} subtitle={t('The most recent ones in this period', 'Tämän jakson uusimmat')}>
             {stats.recent.length === 0 ? <NoData /> : <RecentTable rows={stats.recent} sameDay={period === 'today'} />}
           </Panel>
         </div>
       </div>
 
       <p className="text-xs text-slate-500">
-        A cleaning is counted when the housekeeper presses Finish. Cleanings under {MIN_REAL_SECONDS} seconds are counted but left out of the average times.
-        “Approved first time” is the share of inspected cleanings that you approved without sending them back.
+        {t(`A cleaning is counted when the housekeeper presses Finish. Cleanings under ${MIN_REAL_SECONDS} seconds are counted but left out of the average times. “Approved first time” is the share of inspected cleanings that you approved without sending them back.`, `Siivous lasketaan, kun siivooja painaa Valmis. Alle ${MIN_REAL_SECONDS} sekunnin siivoukset lasketaan mukaan, mutta jätetään pois keskiarvoista. ”Hyväksytty ensimmäisellä kerralla” on niiden tarkastettujen siivousten osuus, jotka hyväksyit lähettämättä niitä takaisin.`)}
       </p>
     </>
   );
@@ -153,8 +157,8 @@ function Mini({ label, value }) {
 
 function NoData({ small }) {
   return (
-    <EmptyState icon="chart" title="No cleanings in this period yet"
-      text={small ? 'Appears when your team finishes cleanings.' : 'Cleanings show up here when your housekeepers press Finish.'} />
+    <EmptyState icon="chart" title={t('No cleanings in this period yet', 'Ei vielä siivouksia tällä jaksolla')}
+      text={small ? t('Appears when your team finishes cleanings.', 'Näkyy, kun tiimisi saa siivouksia valmiiksi.') : t('Cleanings show up here when your housekeepers press Finish.', 'Siivoukset näkyvät tässä, kun siivoojat painavat Valmis.')} />
   );
 }
 
@@ -164,9 +168,9 @@ function Columns({ buckets }) {
   const every = buckets.length > 16 ? Math.ceil(buckets.length / 8) : 1;
   return (
     <div>
-      <div className="flex items-end gap-1 h-44 border-b border-slate-200" role="list" aria-label="Cleanings finished">
+      <div className="flex items-end gap-1 h-44 border-b border-slate-200" role="list" aria-label={t('Cleanings finished', 'Valmiit siivoukset')}>
         {buckets.map((b, i) => (
-          <div key={b.key} role="listitem" tabIndex={0} aria-label={`${b.label}: ${b.count} ${b.count === 1 ? 'cleaning' : 'cleanings'}, ${durationLabel(b.seconds)} in total`}
+          <div key={b.key} role="listitem" tabIndex={0} aria-label={t(`${b.label}: ${b.count} ${b.count === 1 ? 'cleaning' : 'cleanings'}, ${durationLabel(b.seconds)} in total`, `${b.label}: ${b.count} ${b.count === 1 ? 'siivous' : 'siivousta'}, yhteensä ${durationLabel(b.seconds)}`)}
             className="group relative flex-1 min-w-0 h-full flex flex-col items-center justify-end outline-none">
             {b.count === max && b.count > 0 && <span className="text-[11px] font-semibold text-[#0B0B0F] mb-1 tabular-nums">{b.count}</span>}
             <div className="w-full max-w-[24px] rounded-t-[4px] transition-opacity group-hover:opacity-80 group-focus:opacity-80"
@@ -211,8 +215,8 @@ function StatusBar({ title, data }) {
   const shown = data.byStatus.filter((s) => s.count > 0);
   return (
     <div>
-      <div className="flex items-baseline justify-between"><p className="text-sm font-semibold text-[#0B0B0F]">{title}</p><p className="text-xs text-slate-500 tabular-nums">{data.total} in total</p></div>
-      {data.total === 0 ? <p className="text-xs text-slate-500 mt-2">None added yet.</p> : (
+      <div className="flex items-baseline justify-between"><p className="text-sm font-semibold text-[#0B0B0F]">{title}</p><p className="text-xs text-slate-500 tabular-nums">{t(`${data.total} in total`, `${data.total} yhteensä`)}</p></div>
+      {data.total === 0 ? <p className="text-xs text-slate-500 mt-2">{t('None added yet.', 'Ei vielä lisättyjä.')}</p> : (
         <>
           <div className="flex gap-0.5 h-3 mt-2" role="img" aria-label={`${title}: ${shown.map((s) => `${s.count} ${statusLabel(s.status)}`).join(', ')}`}>
             {shown.map((s) => <span key={s.status} title={`${statusLabel(s.status)}: ${s.count}`} className={`first:rounded-l-full last:rounded-r-full ${STATUS_STYLE[s.status].dot}`} style={{ flex: s.count }} />)}
@@ -239,11 +243,11 @@ function TeamTable({ rows }) {
       <table className="w-full text-sm min-w-[34rem]">
         <thead>
           <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-            <th className="font-medium py-2 pr-3">Name</th>
-            <th className="font-medium py-2 pr-3">Cleanings</th>
-            <th className="font-medium py-2 pr-3">Average time</th>
-            <th className="font-medium py-2 pr-3">Total time</th>
-            <th className="font-medium py-2">Approved first time</th>
+            <th className="font-medium py-2 pr-3">{t('Name', 'Nimi')}</th>
+            <th className="font-medium py-2 pr-3">{t('Cleanings', 'Siivoukset')}</th>
+            <th className="font-medium py-2 pr-3">{t('Average time', 'Keskimääräinen aika')}</th>
+            <th className="font-medium py-2 pr-3">{t('Total time', 'Aika yhteensä')}</th>
+            <th className="font-medium py-2">{t('Approved first time', 'Hyväksytty ensimmäisellä kerralla')}</th>
           </tr>
         </thead>
         <tbody>
@@ -258,7 +262,7 @@ function TeamTable({ rows }) {
               </td>
               <td className="py-3 pr-3 tabular-nums">{durationLabel(r.avgSeconds)}</td>
               <td className="py-3 pr-3 tabular-nums">{durationLabel(r.totalSeconds)}</td>
-              <td className="py-3 tabular-nums">{percentLabel(r.passRate)}{r.sentBack > 0 && <span className="text-xs text-slate-500"> ({r.sentBack} sent back)</span>}</td>
+              <td className="py-3 tabular-nums">{percentLabel(r.passRate)}{r.sentBack > 0 && <span className="text-xs text-slate-500"> ({t(`${r.sentBack} sent back`, `${r.sentBack} lähetetty takaisin`)})</span>}</td>
             </tr>
           ))}
         </tbody>
@@ -268,23 +272,23 @@ function TeamTable({ rows }) {
 }
 
 const RESULT = {
-  approved: { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700' },
-  sent_back: { label: 'Sent back', cls: 'bg-rose-50 text-rose-700' },
-  pending: { label: 'Waiting', cls: 'bg-amber-50 text-amber-700' }
+  approved: { label: t('Approved', 'Hyväksytty'), cls: 'bg-emerald-50 text-emerald-700' },
+  sent_back: { label: t('Sent back', 'Lähetetty takaisin'), cls: 'bg-rose-50 text-rose-700' },
+  pending: { label: t('Waiting', 'Odottaa'), cls: 'bg-amber-50 text-amber-700' }
 };
 
 function RecentTable({ rows, sameDay }) {
-  const when = (iso) => new Date(iso).toLocaleString('en-GB', sameDay ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const when = (iso) => new Date(iso).toLocaleString(LOCALE, sameDay ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   return (
     <div className="px-5 sm:px-6 pb-5 overflow-x-auto">
       <table className="w-full text-sm min-w-[34rem]">
         <thead>
           <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-            <th className="font-medium py-2 pr-3">Finished</th>
-            <th className="font-medium py-2 pr-3">Where</th>
-            <th className="font-medium py-2 pr-3">Who</th>
-            <th className="font-medium py-2 pr-3">Time</th>
-            <th className="font-medium py-2">Result</th>
+            <th className="font-medium py-2 pr-3">{t('Finished', 'Valmistui')}</th>
+            <th className="font-medium py-2 pr-3">{t('Where', 'Missä')}</th>
+            <th className="font-medium py-2 pr-3">{t('Who', 'Kuka')}</th>
+            <th className="font-medium py-2 pr-3">{t('Time', 'Aika')}</th>
+            <th className="font-medium py-2">{t('Result', 'Tulos')}</th>
           </tr>
         </thead>
         <tbody>
@@ -293,7 +297,7 @@ function RecentTable({ rows, sameDay }) {
             return (
               <tr key={c.id} className="border-b border-slate-100 last:border-0">
                 <td className="py-2.5 pr-3 text-slate-500 whitespace-nowrap tabular-nums">{when(c.finishedAt)}</td>
-                <td className="py-2.5 pr-3 font-semibold text-[#0B0B0F] whitespace-nowrap">{c.kind === 'area' ? c.label : `Room ${c.label}`}</td>
+                <td className="py-2.5 pr-3 font-semibold text-[#0B0B0F] whitespace-nowrap">{c.kind === 'area' ? areaLabel(c.label) : t(`Room ${c.label}`, `Huone ${c.label}`)}</td>
                 <td className="py-2.5 pr-3 whitespace-nowrap">{c.staffName || '–'}</td>
                 <td className="py-2.5 pr-3 tabular-nums whitespace-nowrap">{durationLabel(c.seconds)}</td>
                 <td className="py-2.5"><span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${res.cls}`}>{res.label}</span></td>

@@ -1,10 +1,11 @@
 // Cálculo das estatísticas a partir do histórico de limpezas e das avarias.
 // Funções puras: recebem dados e devolvem números, sem tocar na interface.
 
+import { LOCALE, t } from './i18n';
 export const PERIODS = [
-  { id: 'today', label: 'Today', days: 1 },
-  { id: '7d', label: 'Last 7 days', days: 7 },
-  { id: '30d', label: 'Last 30 days', days: 30 }
+  { id: 'today', label: t('Today', 'Tänään'), days: 1 },
+  { id: '7d', label: t('Last 7 days', 'Viim. 7 päivää'), days: 7 },
+  { id: '30d', label: t('Last 30 days', 'Viim. 30 päivää'), days: 30 }
 ];
 // Limpezas com menos de 30 s são toques por engano: contam, mas não entram nas médias de tempo
 export const MIN_REAL_SECONDS = 30;
@@ -43,7 +44,7 @@ export function buildStats({ cleanings, issues, rooms, period, now = new Date() 
     const days = PERIODS.find((p) => p.id === period).days;
     buckets = Array.from({ length: days }, (_, i) => {
       const d = new Date(since); d.setDate(d.getDate() + i);
-      return { key: d.toDateString(), date: d, label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), count: 0, seconds: 0 };
+      return { key: d.toDateString(), date: d, label: d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' }), count: 0, seconds: 0 };
     });
     const index = Object.fromEntries(buckets.map((b, i) => [b.key, i]));
     c.forEach((x) => {
@@ -58,13 +59,13 @@ export function buildStats({ cleanings, issues, rooms, period, now = new Date() 
     return [...map.entries()];
   };
 
-  const byStaff = group(c, (x) => x.staffName || 'Unknown').map(([name, list]) => ({
+  const byStaff = group(c, (x) => x.staffName || t('Unknown', 'Tuntematon')).map(([name, list]) => ({
     name, count: list.length, avgSeconds: avg(realSeconds(list)),
     totalSeconds: list.reduce((a, b) => a + b.seconds, 0), passRate: passRate(list),
     sentBack: list.filter((x) => x.sentBack).length
   })).sort((a, b) => b.count - a.count);
 
-  const bySpace = group(c, (x) => (x.kind === 'area' ? x.label : x.type || 'Unknown')).map(([name, list]) => ({
+  const bySpace = group(c, (x) => (x.kind === 'area' ? x.label : x.type || t('Unknown', 'Tuntematon'))).map(([name, list]) => ({
     name, isArea: list[0].kind === 'area', count: list.length, avgSeconds: avg(realSeconds(list))
   })).filter((x) => x.avgSeconds !== null).sort((a, b) => b.avgSeconds - a.avgSeconds);
 

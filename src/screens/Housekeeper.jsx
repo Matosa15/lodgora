@@ -1,8 +1,10 @@
 // Ecrã da camareira: pensado para o telemóvel. Lista dos seus quartos e um botão grande por quarto.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
-import { CleanTimer, Field, Icon, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
-import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName, tidyName } from '../lib/constants';
+import { CleanTimer, Field, Icon, LangSwitch, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
+import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName, tidyName, typeLabel } from '../lib/constants';
+import { t } from '../lib/i18n';
+import { tErr } from '../lib/errors';
 
 const ORDER = { Cleaning: 0, Dirty: 1, 'Awaiting inspection': 2, Ready: 3, Occupied: 4, 'Out of service': 5 };
 
@@ -29,7 +31,7 @@ export default function Housekeeper({ session, signOut }) {
     } catch (e) {
       if (!alive.current) return;
       if (/expired/i.test(e.message)) { signOut(); return; }
-      setError(e.message || 'Could not load your rooms');
+      setError(tErr(e.message) || t('Could not load your rooms', 'Huoneiden lataus epäonnistui'));
     }
   }, [signOut]);
 
@@ -47,14 +49,14 @@ export default function Housekeeper({ session, signOut }) {
       await backend.staff.setStatus(room.id, status);
       toast(message);
       await load();
-    } catch (e) { toast(e.message, 'error'); }
+    } catch (e) { toast(tErr(e.message), 'error'); }
     finally { setBusyId(null); }
   };
 
   const timer = async (room, action) => {
     setBusyId(room.id);
     try { await backend.staff.timer(room.id, action); await load(); }
-    catch (e) { toast(e.message, 'error'); }
+    catch (e) { toast(tErr(e.message), 'error'); }
     finally { setBusyId(null); }
   };
 
@@ -69,25 +71,26 @@ export default function Housekeeper({ session, signOut }) {
           <LogoMark className="w-8 h-8" />
           <div className="min-w-0 flex-1 leading-tight">
             <p className="text-sm font-bold text-[#0B0B0F] truncate">{tidyName(session.name)}</p>
-            <p className="text-xs text-slate-500 truncate">Housekeeping · {tidyName(session.hotel.name)}</p>
+            <p className="text-xs text-slate-500 truncate">{t('Housekeeping', 'Siivous')} · {tidyName(session.hotel.name)}</p>
           </div>
-          <button onClick={load} aria-label="Refresh" className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
+          <button onClick={load} aria-label={t('Refresh', 'Päivitä')} className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
             <Icon name="refresh" className="w-[18px] h-[18px]" />
           </button>
-          <button onClick={signOut} aria-label="Sign out" className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
+          <LangSwitch className="flex-none" />
+          <button onClick={signOut} aria-label={t('Sign out', 'Kirjaudu ulos')} className="w-10 h-10 rounded-full bg-[#F4F5F7] flex items-center justify-center text-slate-600 hover:bg-[#E4E6EB]">
             <Icon name="logout" className="w-[18px] h-[18px]" />
           </button>
         </div>
       </header>
 
       <main className="max-w-xl mx-auto px-4 py-5 pb-safe space-y-4">
-        {rooms === null && !error && <Spinner label="Loading your rooms" />}
+        {rooms === null && !error && <Spinner label={t('Loading your rooms', 'Ladataan huoneitasi')} />}
 
         {error && (
           <div className="rounded-xl border border-rose-200 bg-white p-5 text-center" role="alert">
-            <p className="font-semibold text-slate-800">We could not load your rooms</p>
+            <p className="font-semibold text-slate-800">{t('We could not load your rooms', 'Huoneiden lataus ei onnistunut')}</p>
             <p className="text-sm text-slate-500 mt-1">{error}</p>
-            <button className={`${btnPrimary} mt-4`} onClick={load}>Try again</button>
+            <button className={`${btnPrimary} mt-4`} onClick={load}>{t('Try again', 'Yritä uudelleen')}</button>
           </div>
         )}
 
@@ -95,7 +98,7 @@ export default function Housekeeper({ session, signOut }) {
           <>
             <section className="bg-white rounded-3xl p-4 shadow-sm">
               <div className="flex items-baseline justify-between">
-                <p className="text-sm text-slate-500">Your cleaning today</p>
+                <p className="text-sm text-slate-500">{t('Your cleaning today', 'Siivouksesi tänään')}</p>
                 <p className="text-2xl font-bold text-[#0B0B0F] tabular-nums">{done}<span className="text-base text-slate-400 font-semibold"> / {sorted.length}</span></p>
               </div>
               <div className="h-2 bg-slate-100 rounded-full mt-3 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
@@ -106,8 +109,8 @@ export default function Housekeeper({ session, signOut }) {
             {sorted.length === 0 ? (
               <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center text-slate-500">
                 <Icon name="bed" className="w-7 h-7 mx-auto mb-2" />
-                <p className="font-semibold text-slate-800">Nothing assigned yet</p>
-                <p className="text-sm mt-1">Your manager will assign rooms and areas to you. This page updates by itself.</p>
+                <p className="font-semibold text-slate-800">{t('Nothing assigned yet', 'Ei vielä tehtäviä')}</p>
+                <p className="text-sm mt-1">{t('Your manager will assign rooms and areas to you. This page updates by itself.', 'Esimiehesi antaa sinulle huoneita ja tiloja. Tämä sivu päivittyy itsestään.')}</p>
               </div>
             ) : (
               sorted.map((room) => (
@@ -115,7 +118,7 @@ export default function Housekeeper({ session, signOut }) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="text-2xl font-bold text-[#0B0B0F] leading-none">{spaceName(room)}</h2>
-                      <p className="text-sm text-slate-500 mt-1">{isArea(room) ? room.type : `${room.type} · Floor ${room.floor}`}</p>
+                      <p className="text-sm text-slate-500 mt-1">{isArea(room) ? typeLabel(room.type) : `${typeLabel(room.type)} · ${t('Floor', 'Kerros')} ${room.floor}`}</p>
                     </div>
                     <StatusBadge status={room.status} />
                   </div>
@@ -124,49 +127,49 @@ export default function Housekeeper({ session, signOut }) {
                   <div className="mt-4 space-y-2">
                     {room.status === 'Dirty' && (
                       <button className={`${btnPrimary} w-full py-4 text-base`} disabled={busyId === room.id}
-                        onClick={() => change(room, 'Cleaning', `Started ${spaceInline(room)}`)}>
-                        Start cleaning
+                        onClick={() => change(room, 'Cleaning', t(`Started ${spaceInline(room)}`, `Aloitettu: ${spaceInline(room)}`))}>
+                        {t('Start cleaning', 'Aloita siivous')}
                       </button>
                     )}
                     {room.status === 'Cleaning' && (
                       <>
                         <div className={`rounded-2xl p-4 text-center ${room.cleanRunningSince ? 'bg-[#F4F5F7] text-[#0B0B0F]' : 'bg-amber-50 text-amber-700'}`}>
                           <p className="text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5">
-                            <Icon name="timer" className="w-3.5 h-3.5" />{room.cleanRunningSince ? 'Cleaning time' : 'Paused'}
+                            <Icon name="timer" className="w-3.5 h-3.5" />{room.cleanRunningSince ? t('Cleaning time', 'Siivousaika') : t('Paused', 'Tauolla')}
                           </p>
                           <CleanTimer room={room} big className="block mt-1" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           {room.cleanRunningSince ? (
                             <button className={`${btnGhost} py-3.5`} disabled={busyId === room.id} onClick={() => timer(room, 'pause')}>
-                              <Icon name="pause" className="w-4 h-4" />Pause
+                              <Icon name="pause" className="w-4 h-4" />{t('Pause', 'Tauko')}
                             </button>
                           ) : (
                             <button className={`${btnGhost} py-3.5`} disabled={busyId === room.id} onClick={() => timer(room, 'resume')}>
-                              <Icon name="play" className="w-4 h-4" />Resume
+                              <Icon name="play" className="w-4 h-4" />{t('Resume', 'Jatka')}
                             </button>
                           )}
                           <button className={`${btnPrimary} py-3.5`} disabled={busyId === room.id}
-                            onClick={() => change(room, 'Awaiting inspection', `Finished ${spaceInline(room)}, sent for inspection`)}>
-                            <Icon name="check" className="w-5 h-5" />Finish
+                            onClick={() => change(room, 'Awaiting inspection', t(`Finished ${spaceInline(room)}, sent for inspection`, `Valmis: ${spaceInline(room)}, lähetetty tarkastettavaksi`))}>
+                            <Icon name="check" className="w-5 h-5" />{t('Finish', 'Valmis')}
                           </button>
                         </div>
                         <button className="w-full text-sm text-slate-500 py-1 hover:text-slate-800" disabled={busyId === room.id}
-                          onClick={() => change(room, 'Dirty', `${spaceName(room)} back on your list`)}>
-                          I did not start this room
+                          onClick={() => change(room, 'Dirty', t(`${spaceName(room)} back on your list`, `${spaceName(room)} on takaisin listallasi`))}>
+                          {t('I did not start this room', 'En aloittanut tätä huonetta')}
                         </button>
                       </>
                     )}
                     {room.status === 'Awaiting inspection' && (
                       <p className="text-sm text-amber-700 bg-amber-50 rounded-2xl px-3 py-2.5 text-center font-medium">
-                        Waiting for the inspector{room.cleanSeconds > 0 && <span className="block text-xs font-normal">Cleaned in {minutesLabel(room.cleanSeconds)}</span>}
+                        {t('Waiting for the inspector', 'Odottaa tarkastajaa')}{room.cleanSeconds > 0 && <span className="block text-xs font-normal">{t('Cleaned in', 'Siivottu ajassa')} {minutesLabel(room.cleanSeconds)}</span>}
                       </p>
                     )}
                     {room.status === 'Ready' && (
-                      <p className="text-sm text-emerald-700 bg-emerald-50 rounded-2xl px-3 py-2.5 text-center font-medium">Approved. Ready for guests</p>
+                      <p className="text-sm text-emerald-700 bg-emerald-50 rounded-2xl px-3 py-2.5 text-center font-medium">{t('Approved. Ready for guests', 'Hyväksytty. Valmis vieraille')}</p>
                     )}
                     <button className={`${btnGhost} w-full !bg-white`} onClick={() => setReport({ roomId: room.id })}>
-                      <Icon name="wrench" className="w-4 h-4" />Report a problem here
+                      <Icon name="wrench" className="w-4 h-4" />{t('Report a problem here', 'Ilmoita vika täällä')}
                     </button>
                   </div>
                 </article>
@@ -174,13 +177,13 @@ export default function Housekeeper({ session, signOut }) {
             )}
 
             <button className={`${btnGhost} w-full !bg-white`} onClick={() => setReport({ roomId: '' })}>
-              <Icon name="plus" className="w-4 h-4" />Report another problem
+              <Icon name="plus" className="w-4 h-4" />{t('Report another problem', 'Ilmoita toinen vika')}
             </button>
           </>
         )}
       </main>
 
-      {report && <ReportModal rooms={sorted} initialRoomId={report.roomId} onClose={() => setReport(null)} onDone={() => { setReport(null); toast('Problem reported. Maintenance will see it.'); load(); }} />}
+      {report && <ReportModal rooms={sorted} initialRoomId={report.roomId} onClose={() => setReport(null)} onDone={() => { setReport(null); toast(t('Problem reported. Maintenance will see it.', 'Vika ilmoitettu. Huolto näkee sen.')); load(); }} />}
     </div>
   );
 }
@@ -194,32 +197,32 @@ export function ReportModal({ rooms, initialRoomId, onClose, onDone }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (title.trim().length < 3) { setError('Describe the problem in a few words.'); return; }
+    if (title.trim().length < 3) { setError(t('Describe the problem in a few words.', 'Kuvaile vika muutamalla sanalla.')); return; }
     setBusy(true);
     try { await backend.staff.reportIssue(roomId || null, title.trim(), priority); onDone(); }
-    catch (err) { setError(err.message); setBusy(false); }
+    catch (err) { setError(tErr(err.message)); setBusy(false); }
   };
 
   return (
-    <Modal title="Report a problem" subtitle="Maintenance and your manager will see this right away." onClose={onClose} sheet>
+    <Modal title={t('Report a problem', 'Ilmoita vika')} subtitle={t('Maintenance and your manager will see this right away.', 'Huolto ja esimiehesi näkevät tämän heti.')} onClose={onClose} sheet>
       <form onSubmit={submit} noValidate className="p-5 space-y-4">
-        <Field id="r-room" label="Where">
+        <Field id="r-room" label={t('Where', 'Missä')}>
           <WherePicker id="r-room" rooms={rooms} value={roomId} onChange={setRoomId} />
         </Field>
-        <Field id="r-title" label="What is wrong?" error={error}>
-          <input id="r-title" className={inputCls} value={title} onChange={(e) => { setTitle(e.target.value); setError(''); }} placeholder="e.g. Shower is leaking" />
+        <Field id="r-title" label={t('What is wrong?', 'Mikä on vialla?')} error={error}>
+          <input id="r-title" className={inputCls} value={title} onChange={(e) => { setTitle(e.target.value); setError(''); }} placeholder={t('e.g. Shower is leaking', 'esim. Suihku vuotaa')} />
         </Field>
-        <Field id="r-prio" label="How urgent is it?">
+        <Field id="r-prio" label={t('How urgent is it?', 'Kuinka kiireellinen se on?')}>
           <select id="r-prio" className={inputCls} value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value="urgent">Urgent: the room cannot be used</option>
-            <option value="high">High: fix today</option>
-            <option value="normal">Normal</option>
-            <option value="low">Low: when possible</option>
+            <option value="urgent">{t('Urgent: the room cannot be used', 'Kiireellinen: huonetta ei voi käyttää')}</option>
+            <option value="high">{t('High: fix today', 'Korkea: korjataan tänään')}</option>
+            <option value="normal">{t('Normal', 'Normaali')}</option>
+            <option value="low">{t('Low: when possible', 'Matala: kun ehditään')}</option>
           </select>
         </Field>
         <div className="flex gap-3 pt-1">
-          <button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>Cancel</button>
-          <button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? 'Sending…' : 'Send'}</button>
+          <button type="button" className={`${btnGhost} flex-1`} onClick={onClose}>{t('Cancel', 'Peruuta')}</button>
+          <button type="submit" className={`${btnPrimary} flex-1`} disabled={busy}>{busy ? t('Sending…', 'Lähetetään…') : t('Send', 'Lähetä')}</button>
         </div>
       </form>
     </Modal>

@@ -1,6 +1,8 @@
 // Ligação à base de dados real (Supabase).
 // Todos os dados passam por aqui. O resto da aplicação não sabe que existe Supabase.
 import { createClient } from '@supabase/supabase-js';
+import { t } from './i18n';
+import { areaLabel } from './constants';
 
 const STAFF_KEY = 'lodgora-staff-session';
 const PENDING_KEY = 'lodgora-pending-hotel';
@@ -24,7 +26,7 @@ const toRoom = (r) => ({
 });
 const toIssue = (i) => ({
   id: i.id, roomId: i.room_id, roomNumber: i.room?.number || '',
-  roomLabel: i.room ? (i.room.kind === 'area' ? i.room.number : `Room ${i.room.number}`) : '',
+  roomLabel: i.room ? (i.room.kind === 'area' ? areaLabel(i.room.number) : `${t('Room', 'Huone')} ${i.room.number}`) : '',
   roomInline: i.room ? (i.room.kind === 'area' ? i.room.number : `room ${i.room.number}`) : '',
   title: i.title, priority: i.priority, status: i.status, reportedBy: i.reported_by,
   createdAt: i.created_at, resolvedAt: i.resolved_at || null, assignedTo: i.assigned_to || null, needsHelp: !!i.needs_help,

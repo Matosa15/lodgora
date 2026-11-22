@@ -2,7 +2,8 @@
 // Serve para mostrar o Lodgora a hotéis sem base de dados e para testar a interface.
 // Tem exatamente a mesma "forma" que o liveBackend, por isso os ecrãs funcionam igual.
 
-import { dayKey, spaceInline } from './constants';
+import { dayKey, spaceInline, areaLabel } from './constants';
+import { t } from './i18n';
 
 const KEY = 'lodgora-demo-v7';
 const SESSION_KEY = 'lodgora-demo-session';
@@ -234,7 +235,7 @@ export function createDemoBackend() {
         async list() {
           return state.issues.map((i) => {
             const room = state.rooms.find((r) => r.id === i.roomId);
-            return { ...i, notes: (i.notes || []).map((n) => ({ ...n })), needsHelp: !!i.needsHelp, resolvedAt: i.resolvedAt || null, roomLabel: room ? (room.kind === 'area' ? room.number : `Room ${room.number}`) : '', roomInline: room ? spaceInline(room) : '' };
+            return { ...i, notes: (i.notes || []).map((n) => ({ ...n })), needsHelp: !!i.needsHelp, resolvedAt: i.resolvedAt || null, roomLabel: room ? (room.kind === 'area' ? areaLabel(room.number) : `${t('Room', 'Huone')} ${room.number}`) : '', roomInline: room ? spaceInline(room) : '' };
           });
         },
         async create({ roomId, title, priority }) {
@@ -360,7 +361,7 @@ export function createDemoBackend() {
         const order = { urgent: 0, high: 1, normal: 2, low: 3 };
         return state.issues
           .filter((i) => i.assignedTo === s.id && (i.status !== 'resolved' || Date.parse(i.resolvedAt) > limit))
-          .map((i) => { const r = state.rooms.find((x) => x.id === i.roomId); return { id: i.id, title: i.title, priority: i.priority, status: i.status, reportedBy: i.reportedBy, createdAt: i.createdAt, resolvedAt: i.resolvedAt || null, roomId: i.roomId, needsHelp: !!i.needsHelp, notes: (i.notes || []).slice(-20).map((n) => ({ ...n })), roomLabel: r ? (r.kind === 'area' ? r.number : `Room ${r.number}`) : '' }; })
+          .map((i) => { const r = state.rooms.find((x) => x.id === i.roomId); return { id: i.id, title: i.title, priority: i.priority, status: i.status, reportedBy: i.reportedBy, createdAt: i.createdAt, resolvedAt: i.resolvedAt || null, roomId: i.roomId, needsHelp: !!i.needsHelp, notes: (i.notes || []).slice(-20).map((n) => ({ ...n })), roomLabel: r ? (r.kind === 'area' ? areaLabel(r.number) : `${t('Room', 'Huone')} ${r.number}`) : '' }; })
           .sort((a, b) => (a.status === 'resolved') - (b.status === 'resolved') || order[a.priority] - order[b.priority] || a.createdAt.localeCompare(b.createdAt));
       },
       async setIssueStatus(issueId, status) {
