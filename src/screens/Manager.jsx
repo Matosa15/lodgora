@@ -12,7 +12,8 @@ import { tErr } from '../lib/errors';
 const roomLabelText = (l) => (LANG === 'fi' && l ? l.replace(/^Room (.+)$/, 'Huone $1') : l);
 import {
   CleanTimer, CopyButton, EmptyState, Field, Icon, LogoMark, Modal, Panel, Spinner, StatusBadge, WherePicker, IssueNotes, NoteBox,
-  LangSwitch, btnGhost, btnPrimary, btnSmall, inputCls, useToast
+  LangSwitch, btnGhost, btnPrimary, btnSmall, inputCls, useToast,
+  CleanTag
 } from '../components/ui';
 import Statistics from './Statistics';
 import Planner from './Planner';
@@ -498,6 +499,7 @@ function ReadinessPanel({ title, subtitle, rooms, search, statusFilter, setStatu
               <div><span className="text-base font-bold text-[#0B0B0F]">{spaceName(r)}</span><p className="text-xs text-slate-500">{typeLabel(r.type)}</p></div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={r.status} />
+                <CleanTag room={r} />
                 {r.status === 'Cleaning' && (
                   <span className={`inline-flex items-center gap-1 text-xs ${r.cleanRunningSince ? 'text-blue-700' : 'text-slate-500'}`}>
                     <Icon name="timer" className="w-3.5 h-3.5" /><CleanTimer room={r} />{!r.cleanRunningSince && <span>{t('paused', 'tauolla')}</span>}

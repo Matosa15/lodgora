@@ -1,5 +1,6 @@
 // Peças reutilizáveis: ícones, janelas, painéis, avisos, campos de formulário.
 import { LANG, setLang, t } from '../lib/i18n';
+import { cleanTypeLabel } from '../lib/constants';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { tErr } from '../lib/errors';
 import { STATUS_STYLE, statusLabel, cleanElapsed, clock, isArea, spaceName, timeAgo } from '../lib/constants';
@@ -290,5 +291,16 @@ export function LangSwitch({ className = '' }) {
           className={`px-2.5 py-1 rounded-full transition-colors ${LANG === code ? 'bg-[#0B0B0F] text-white' : 'text-slate-500 hover:text-[#0B0B0F]'}`}>{label}</button>
       ))}
     </div>
+  );
+}
+
+/* ---------- Etiqueta do tipo de limpeza (Check-out / Estadia) ---------- */
+export function CleanTag({ room }) {
+  if (!room || room.kind === 'area' || !['Dirty', 'Cleaning'].includes(room.status)) return null;
+  const stay = room.cleanType === 'stayover';
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${stay ? 'bg-[#E4F3F2] text-[#0D7C77]' : 'bg-[#0B0B0F] text-white'}`}>
+      {cleanTypeLabel(room.cleanType)}
+    </span>
   );
 }

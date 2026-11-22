@@ -45,6 +45,12 @@ export const AREA_PRESETS = [
   'Gym', 'Spa', 'Pool area', 'Public toilets', 'Laundry', 'Meeting room', 'Terrace', 'Garden'
 ];
 export const AREA_TYPE = 'Common area';
+// Tipos de limpeza: "checkout" = completa para o próximo hóspede; "stayover" = arrumação rápida durante a estadia
+export const CLEAN_TYPES = ['checkout', 'stayover'];
+export const cleanTypeLabel = (c) => (c === 'stayover' ? t('Stay-over', 'Välisiivous') : t('Check-out', 'Lähtösiivous'));
+export const cleanTypeHint = (c) => (c === 'stayover'
+  ? t('Quick tidy, guest is staying', 'Nopea siistiminen, vieras yöpyy edelleen')
+  : t('Full clean for the next guest', 'Perusteellinen siivous seuraavaa vierasta varten'));
 // Nomes mostrados (os guardados ficam em inglês)
 const TYPE_FI = { Single: 'Yhden hengen', Double: 'Kahden hengen', Twin: 'Twin', Triple: 'Kolmen hengen', Family: 'Perhehuone', Suite: 'Sviitti', 'Studio / Apartment': 'Studio / Huoneisto', Accessible: 'Esteetön', 'Common area': 'Yleinen tila' };
 const AREA_FI = { Lobby: 'Aula', Reception: 'Vastaanotto', Corridors: 'Käytävät', Stairs: 'Portaat', Elevators: 'Hissit', 'Breakfast room': 'Aamiaishuone', Restaurant: 'Ravintola', Bar: 'Baari', Gym: 'Kuntosali', Spa: 'Kylpylä', 'Pool area': 'Allasosasto', 'Public toilets': 'Yleiset wc-tilat', Laundry: 'Pesula', 'Meeting room': 'Kokoushuone', Terrace: 'Terassi', Garden: 'Puutarha' };

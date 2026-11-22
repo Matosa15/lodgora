@@ -21,7 +21,7 @@ function check({ data, error }) {
 
 const toRoom = (r) => ({
   id: r.id, kind: r.kind || 'room', number: r.number, floor: r.floor, type: r.type, status: r.status,
-  assignedTo: r.assigned_to || null, note: r.note || '',
+  assignedTo: r.assigned_to || null, note: r.note || '', cleanType: r.clean_type || 'checkout',
   cleanSeconds: r.clean_seconds || 0, cleanRunningSince: r.clean_running_since || null
 });
 const toIssue = (i) => ({
@@ -34,7 +34,7 @@ const toIssue = (i) => ({
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 });
 const toCleaning = (c) => ({
-  id: c.id, roomId: c.room_id, label: c.label, kind: c.kind, type: c.type, staffId: c.staff_id,
+  id: c.id, roomId: c.room_id, label: c.label, kind: c.kind, type: c.type, cleanType: c.clean_type || 'checkout', staffId: c.staff_id,
   staffName: c.staff_name || '', startedAt: c.started_at, finishedAt: c.finished_at, seconds: c.seconds,
   approvedAt: c.approved_at, sentBack: !!c.sent_back
 });
@@ -152,7 +152,7 @@ export function createLiveBackend(url, key) {
       rooms: {
         async list() {
           const rows = check(await supabase.from('rooms')
-            .select('id, kind, number, floor, type, status, assigned_to, note, clean_seconds, clean_running_since').order('number'));
+            .select('id, kind, number, floor, type, status, assigned_to, note, clean_type, clean_seconds, clean_running_since').order('number'));
           return rows.map(toRoom);
         },
         async update(id, patch) {
@@ -206,7 +206,7 @@ export function createLiveBackend(url, key) {
       cleanings: {
         async list(sinceISO) {
           const rows = check(await supabase.from('cleaning_log')
-            .select('id, room_id, label, kind, type, staff_id, staff_name, started_at, finished_at, seconds, approved_at, sent_back')
+            .select('id, room_id, label, kind, type, clean_type, staff_id, staff_name, started_at, finished_at, seconds, approved_at, sent_back')
             .gte('finished_at', sinceISO).order('finished_at', { ascending: false }).limit(5000));
           return rows.map(toCleaning);
         }
@@ -230,13 +230,13 @@ export function createLiveBackend(url, key) {
       // Planeamento: limpezas marcadas para dias futuros ('AAAA-MM-DD')
       plan: {
         async list(fromDay) {
-          const rows = check(await supabase.from('plan').select('id, room_id, day, staff_id').gte('day', fromDay).order('day').limit(5000));
-          return rows.map((p) => ({ id: p.id, roomId: p.room_id, day: p.day, staffId: p.staff_id || null }));
+          const rows = check(await supabase.from('plan').select('id, room_id, day, staff_id, clean_type').gte('day', fromDay).order('day').limit(5000));
+          return rows.map((p) => ({ id: p.id, roomId: p.room_id, day: p.day, staffId: p.staff_id || null, cleanType: p.clean_type || 'checkout' }));
         },
         // Cria ou muda vários de uma vez: [{ roomId, day, staffId }]
         async set(list) {
           if (!list.length) return;
-          const rows = list.map((p) => ({ hotel_id: hotelId, room_id: p.roomId, day: p.day, staff_id: p.staffId || null }));
+          const rows = list.map((p) => ({ hotel_id: hotelId, room_id: p.roomId, day: p.day, staff_id: p.staffId || null, clean_type: p.cleanType || 'checkout' }));
           check(await supabase.from('plan').upsert(rows, { onConflict: 'room_id,day' }));
         },
         // Tira vários do plano: [{ roomId, day }]

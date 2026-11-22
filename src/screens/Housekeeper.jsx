@@ -1,7 +1,7 @@
 // Ecrã da camareira: pensado para o telemóvel. Lista dos seus quartos e um botão grande por quarto.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { backend } from '../lib/backend';
-import { CleanTimer, Field, Icon, LangSwitch, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
+import { CleanTag, CleanTimer, Field, Icon, LangSwitch, LogoMark, Modal, Spinner, StatusBadge, WherePicker, btnGhost, btnPrimary, inputCls, useToast } from '../components/ui';
 import { STATUS_STYLE, dayKey, isArea, minutesLabel, spaceInline, spaceName, tidyName, typeLabel } from '../lib/constants';
 import { t } from '../lib/i18n';
 import { tErr } from '../lib/errors';
@@ -120,7 +120,7 @@ export default function Housekeeper({ session, signOut }) {
                       <h2 className="text-2xl font-bold text-[#0B0B0F] leading-none">{spaceName(room)}</h2>
                       <p className="text-sm text-slate-500 mt-1">{isArea(room) ? typeLabel(room.type) : `${typeLabel(room.type)} · ${t('Floor', 'Kerros')} ${room.floor}`}</p>
                     </div>
-                    <StatusBadge status={room.status} />
+                    <div className="flex flex-col items-end gap-1.5"><StatusBadge status={room.status} /><CleanTag room={room} /></div>
                   </div>
                   {room.note && <p className="text-sm text-slate-600 mt-3">{room.note}</p>}
 

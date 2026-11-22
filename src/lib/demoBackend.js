@@ -54,7 +54,7 @@ function seed() {
     { id: 's6', fullName: 'Noah Davies', username: 'noah', role: 'maintenance', active: true, pin: '1234' }
   ];
   const room = (number, floor, type, status, assignedTo = null, note = '', kind = 'room') =>
-    ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanSeconds: 0, cleanRunningSince: null });
+    ({ id: newId(), kind, number, floor, type, status, assignedTo, note, cleanType: 'checkout', cleanSeconds: 0, cleanRunningSince: null });
   const area = (name, status, assignedTo = null) => room(name, 0, 'Common area', status, assignedTo, '', 'area');
   const rooms = [
     room('101', 1, 'Double', 'Ready'),
@@ -78,6 +78,7 @@ function seed() {
   const byNumber = (n) => rooms.find((r) => r.number === n);
   const running = byNumber('102'); running.cleanRunningSince = ago(8);
   const done = byNumber('104'); done.cleanSeconds = 26 * 60;
+  byNumber('102').cleanType = 'stayover';
   byNumber('204').cleanSeconds = 31 * 60;
   const issues = [
     { id: newId(), roomId: byNumber('106').id, roomNumber: '106', title: 'Bathroom leak', priority: 'urgent', status: 'open', reportedBy: 'Front desk', createdAt: ago(34), assignedTo: 's5' },
@@ -130,7 +131,7 @@ export function createDemoBackend() {
     const open = () => state.cleanings.find((c) => c.roomId === r.id && !c.approvedAt && !c.sentBack);
     if (prev === 'Cleaning' && status === 'Awaiting inspection') {
       const st = state.staff.find((x) => x.id === r.assignedTo);
-      state.cleanings.unshift({ id: newId(), roomId: r.id, label: r.number, kind: r.kind || 'room', type: r.type, staffId: r.assignedTo, staffName: st?.fullName || '',
+      state.cleanings.unshift({ id: newId(), roomId: r.id, label: r.number, kind: r.kind || 'room', type: r.type, cleanType: r.cleanType || 'checkout', staffId: r.assignedTo, staffName: st?.fullName || '',
         startedAt: r.cleanStartedAt || nowISO, finishedAt: nowISO, seconds: r.cleanSeconds, approvedAt: null, sentBack: false });
     } else if (prev === 'Awaiting inspection' && status === 'Ready') { const c = open(); if (c) c.approvedAt = nowISO; }
     else if (prev === 'Awaiting inspection' && status === 'Dirty') { const c = open(); if (c) c.sentBack = true; }
@@ -147,6 +148,7 @@ export function createDemoBackend() {
       if (!mine.length || !['Ready', 'Occupied', 'Dirty'].includes(r.status)) return;
       const who = mine.map((p) => state.staff.find((s) => s.id === p.staffId && s.active)).find(Boolean);
       applyStatus(r, 'Dirty');
+      r.cleanType = mine[0].cleanType || 'checkout';
       if (who) r.assignedTo = who.id;
       n += 1;
     });
@@ -301,8 +303,8 @@ export function createDemoBackend() {
         async set(list) {
           list.forEach((n) => {
             const old = state.plan.find((p) => p.roomId === n.roomId && p.day === n.day);
-            if (old) old.staffId = n.staffId || null;
-            else state.plan.push({ id: newId(), roomId: n.roomId, day: n.day, staffId: n.staffId || null });
+            if (old) { old.staffId = n.staffId || null; old.cleanType = n.cleanType || 'checkout'; }
+            else state.plan.push({ id: newId(), roomId: n.roomId, day: n.day, staffId: n.staffId || null, cleanType: n.cleanType || 'checkout' });
           });
           save();
         },
@@ -325,7 +327,7 @@ export function createDemoBackend() {
     staff: {
       async rooms() {
         const s = needMe();
-        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
+        return state.rooms.filter((r) => r.assignedTo === s.id).map(({ id, kind, number, floor, type, status, note, cleanType, cleanSeconds, cleanRunningSince }) => ({ id, kind: kind || 'room', number, floor, type, cleanType: cleanType || 'checkout', status, note, cleanSeconds: cleanSeconds || 0, cleanRunningSince: cleanRunningSince || null }));
       },
       async setStatus(roomId, status) {
         const s = needMe();

@@ -87,6 +87,10 @@ export function buildStats({ cleanings, issues, rooms, period, now = new Date() 
     passRate: passRate(c),
     reviewedCount: c.filter(reviewed).length,
     sentBack: c.filter((x) => x.sentBack).length,
+    byCleanType: ['checkout', 'stayover'].map((ct) => {
+      const list = roomClean.filter((x) => (x.cleanType || 'checkout') === ct);
+      return { type: ct, count: list.length, avgSeconds: avg(realSeconds(list)) };
+    }),
     buckets, byStaff, bySpace,
     recent: c.slice().sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt)).slice(0, 12),
     issues: {

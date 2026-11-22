@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { backend } from '../lib/backend';
 import { buildStats, durationLabel, MIN_REAL_SECONDS, percentLabel, periodStart, PERIODS } from '../lib/stats';
-import { PRIORITY_STYLE, STATUS_STYLE, statusLabel, priorityLabel, typeLabel, areaLabel } from '../lib/constants';
+import { PRIORITY_STYLE, STATUS_STYLE, statusLabel, priorityLabel, typeLabel, areaLabel, cleanTypeLabel } from '../lib/constants';
 import { t, LOCALE } from '../lib/i18n';
 import { EmptyState, Icon, Panel, Spinner, btnGhost, btnPrimary } from '../components/ui';
 
@@ -92,6 +92,17 @@ export default function Statistics({ rooms, issues }) {
         </div>
 
         <Panel title={t('Average time by type', 'Keskimääräinen aika tyypeittäin')} subtitle={t('Longest first', 'Pisin ensin')}>
+          {stats.byCleanType.some((c) => c.count > 0) && (
+            <div className="px-5 sm:px-6 pb-4 grid grid-cols-2 gap-3">
+              {stats.byCleanType.map((c) => (
+                <div key={c.type} className="rounded-2xl bg-[#F4F5F7] px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{cleanTypeLabel(c.type)}</p>
+                  <p className="text-xl font-semibold text-[#0B0B0F] mt-0.5">{durationLabel(c.avgSeconds)}</p>
+                  <p className="text-xs text-slate-500">{c.count}×</p>
+                </div>
+              ))}
+            </div>
+          )}
           {stats.bySpace.length === 0 ? <NoData small /> : (
             <div className="px-5 sm:px-6 pb-6">
               <HBars rows={stats.bySpace.slice(0, 8).map((r) => ({ name: r.isArea ? areaLabel(r.name) : typeLabel(r.name), tag: r.isArea ? t('Area', 'Tila') : '', value: r.avgSeconds, text: durationLabel(r.avgSeconds), note: `${r.count}×` }))} />
