@@ -138,7 +138,7 @@ export function createDemoBackend() {
     r.status = status;
     if (prev === 'Awaiting inspection' && status === 'Dirty') r.sentBack = true;
     else if (['Ready', 'Occupied', 'Out of service'].includes(status)) r.sentBack = false;
-    if (prev === 'Awaiting inspection' && status === 'Ready') r.notes = [];
+    if (status === 'Ready' && ['Awaiting inspection', 'Dirty', 'Cleaning'].includes(prev)) r.notes = [];
   }
 
   // Mesmas regras da base de dados: o plano até hoje passa para a lista de limpeza
